@@ -7,7 +7,7 @@ import requests
 from parser import parse_xml
 from field_map import FieldMap
 
-SOLR_URL = 'http://localhost:8983/solr/asset/update'
+SOLR_URL = 'http://localhost:8983/solr/{0}/update'
 SOLR_HEADERS = {'content-type': 'application/xml'}
 
 class Document(dict):
@@ -15,7 +15,7 @@ class Document(dict):
         super(Document, self).__init__()
         self.files_path = files_path
 
-def process_document(node, field_map, files_path):
+def process_document(node, field_map, files_path, core):
     """ Process a document by extracting any attachments and POSTing to SOLR.
     """
     node_dict = node.as_dict()
@@ -39,14 +39,14 @@ def process_document(node, field_map, files_path):
 
     # POST to SOLR
     data = '<add>{0}</add>'.format(''.join(xml))
-    r = requests.post(SOLR_URL, headers=SOLR_HEADERS, data=data)
+    r = requests.post(SOLR_URL.format(core), headers=SOLR_HEADERS, data=data)
     if r.status_code != 200:
         print >>sys.stderr, data
         print >>sys.stderr, r.text
         sys.exit(1)
 
-if len(sys.argv) != 4:
-    print "Usage: {0} <map file> <xml file> <files path>".format(sys.argv[0])
+if len(sys.argv) != 5:
+    print "Usage: {0} <map file> <xml file> <files path> <SOLR core>".format(sys.argv[0])
     sys.exit(1)
 
 with open(sys.argv[1]) as f:
@@ -54,10 +54,10 @@ with open(sys.argv[1]) as f:
 
 try:
     with open(sys.argv[2]) as f:
-        print parse_xml(f, process_document, field_map, sys.argv[3]), "documents processed"
+        print parse_xml(f, process_document, field_map, sys.argv[3], sys.argv[4]), "documents processed"
 except KeyboardInterrupt:
     print >>sys.stderr, "Processing interrupted"
 
-r = requests.post(SOLR_URL, headers=SOLR_HEADERS, data='<commit/>')
+r = requests.post(SOLR_URL.format(sys.argv[4]), headers=SOLR_HEADERS, data='<commit/>')
 assert r.status_code == 200
 
