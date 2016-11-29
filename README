@@ -1,0 +1,43 @@
+Asset Management System
+
+Architecture:
+
+ * SOLR server (contains one document per asset, with ids to external resources)
+ * Python flask web server (minimal middleware between SOLR and UI)
+ * Python bulk importer
+ * Angular2 UI
+
+Starting off using the CSV field names in SOLR schema; either map these in SOLR (using store no/index no fields and copyFields) to reasonable names or (probably better?) rename/map the field names in the Python bulk import script
+
+Need to identify a server to host the system.
+
+Notes
+
+ * UI should use the Web API to populate values for drop-downs such as the Condition. This does not preclude either having a fixed list of options or allowing data entry to specify a new value. May need to standardise existing values (data quality)
+
+ * Should enumerations, such as Condition or Status, be stored by value or by index? (Again, the outcome of the decision doesn't affect UI possibilities. index feels nicer - you can then change the label easily without reindexing)
+
+Enumerations: Manufacturer, Category, Condition, Status, Location, Action (this may be removed as just an Access UI artefact), Rack, Shelf
+Not all of these are populated for every document (some are), in particular Rack and Shelf are less than half coverage; so always need a blank or n/a option
+
+Attachment352: number of attachments?? need to export the attachments (data sheets, pics)
+Comments History: should be multivalued and type date; presumably this is when comments were updated? But there are no comments? So is it when any fields were updated?
+Comments: free text, not all docs, and in particular not all docs with Comments History! But, there are no docs with Comments but not Comments History.
+Manufacturer: not on all docs, and has "Unknown" and "see notes" as well
+Model: similarly to Manufacturer, has "n/a" and "?"
+Item: again similar but just "Unknown" or missing
+Description: free text, on 315 docs
+Start stop freq: (not on all doc) should be free integers, maybe in MHz but should prefer Hz and convert in the UI
+Calibration fields: dates
+Status/Action/Due Date: these are the booking fields - where is the date it was taken? And there is no history on these
+
+
+Missing fields (in Access but not CSV export): Checked Out Location, Avail, ID, Check Out To, Serial Number, FAR, Barcode, Owner
+FAR is always blank
+Avail may be generated
+Contact Name == Check Out To
+
+Note the Contact List (name, email, phone etc)
+
+
+Have NEW csv to work with, plus XML containing the attachments
