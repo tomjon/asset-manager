@@ -34,7 +34,7 @@ def process_document(node, field_map, files_path, core):
     xml = ['<doc>']
     for field, values in doc.iteritems():
         for value in values:
-            xml.append('<field name="{0}">{1}</field>'.format(field, value.replace('&', '&amp;')))
+            xml.append('<field name="{0}"><![CDATA[{1}]]></field>'.format(field, value.replace('&', '&amp;')))
     xml.append('</doc>')
 
     # POST to SOLR
