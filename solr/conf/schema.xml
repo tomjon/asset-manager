@@ -142,7 +142,8 @@
     <field name="model" type="string" indexed="true" stored="true" required="false" multiValued="false" />
     <field name="item" type="string" indexed="true" stored="true" required="false" multiValued="false" />
     <field name="category" type="string" indexed="true" stored="true" required="false" multiValued="false" />
-    <field name="description" type="text_general" indexed="true" stored="true" required="false" multiValued="false" />
+    <field name="description" type="string" indexed="false" stored="true" required="false" multiValued="false" />
+    <field name="notes" type="string" indexed="false" stored="true" required="false" multiValued="false" />
     <field name="start_freq" type="string" indexed="true" stored="true" required="false" multiValued="false" />
     <field name="stop_freq" type="string" indexed="true" stored="true" required="false" multiValued="false" />
     <field name="owner" type="string" indexed="true" stored="true" required="false" multiValued="false" />
@@ -161,19 +162,8 @@
        is added to the index.  It's used either to index the same field differently,
        or to add multiple fields to the same field for easier/faster searching.
     -->
-    <!--copyField source="Text351" dest="_text_"/>
-    <copyField source="Text353" dest="_text_"/>
-    <copyField source="Location" dest="_text_"/>
-    <copyField source="Rack" dest="_text_"/>
-    <copyField source="Shelf" dest="_text_"/>
-    <copyField source="Manufacturer" dest="_text_"/>
-    <copyField source="Model" dest="_text_"/>
-    <copyField source="Item" dest="_text_"/>
-    <copyField source="Category" dest="_text_"/>
-    <copyField source="Description" dest="_text_"/>
-    <copyField source="Contact Name" dest="_text_"/>
-    <copyField source="Condition" dest="_text_"/>
-    <copyField source="Comments" dest="_text_"/-->
+    <copyField source="description" dest="_text_"/>
+    <copyField source="notes" dest="_text_"/>
 
     <!-- field type definitions. The "name" attribute is
        just a label to be used by field definitions.  The "class"

@@ -1,8 +1,12 @@
 import os
+import sys
 import base64
+import re
 
 FILE_DATA = 'FileData'
 FILE_NAME = 'FileName'
+
+FREQ_RE = re.compile(r'(\d+)(|k|M|G)([Hh]z)-(\d+)(|k|M|G)([Hh]z)')
 
 def map_date(nodes, doc):
     """ All we need is to add the final Z to get a SOLR date formatted string.
@@ -35,5 +39,14 @@ def map_attachment(nodes, doc):
             pass
         with open(path, 'w') as f:
             f.write(data[20:]) # first 20 bytes are metadata prepended by Access
-
     return None
+
+def map_parse_freqs(nodes, doc):
+    """ Parse start/stop frequencies and check they agree with any already defined.
+    """
+    value = nodes[0].value()
+    if value != 'n/a' and ('start_freq' not in doc or 'stop_freq' not in doc):
+        print >>sys.stderr, "Missing start/stop frequencies", value, doc
+        sys.exit(1)
+    return None
+
