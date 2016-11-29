@@ -4,6 +4,7 @@ import function
 
 class FieldMap(object):
     def __init__(self, f):
+        self._fields = []
         self._map = {}
         for line in f:
             line = line.strip()
@@ -13,6 +14,7 @@ class FieldMap(object):
             while '' in bits:
                 bits.remove('')
             in_name, out_name = bits[0], bits[1] if len(bits) > 1 else None
+            self._fields.append(in_name)
             self._map[in_name] = (out_name, bits[2] if len(bits) > 2 else None)
 
     def map(self, field, nodes, doc):
@@ -30,6 +32,6 @@ class FieldMap(object):
         return name, values
 
     def iter_fields(self):
-        for field in self._map:
+        for field in self._fields:
             yield field
 
