@@ -2,11 +2,18 @@ import os
 import sys
 import base64
 import re
+from decimal import Decimal
 
 FILE_DATA = 'FileData'
 FILE_NAME = 'FileName'
 
-FREQ_RE = re.compile(r'(\d+)(|k|M|G)([Hh]z)-(\d+)(|k|M|G)([Hh]z)')
+UNITS = ['hz', 'khz', 'mhz', 'ghz']
+FLOAT_EXPR = r'\d*\.?\d+'
+FREQ_RE = re.compile(r'^(.*?)({0})\s*({1})?-({0})\s*({1})(.*)$'.format(FLOAT_EXPR, '|'.join(UNITS)), re.IGNORECASE)
+
+class FunctionError(Exception):
+    def __init__(self, message):
+        self.message = message
 
 def map_date(nodes, doc):
     """ All we need is to add the final Z to get a SOLR date formatted string.
@@ -27,9 +34,7 @@ def map_attachment(nodes, doc):
             elif subfield.name == FILE_NAME:
                 name = subfield.value()
         assert data is not None and name is not None
-        if 'file' not in doc:
-            doc['file'] = []
-        doc['file'].append(name)
+        doc.append_list('file', name)
 
         # save attachment file
         path = os.path.join(doc.files_path, doc['id'][0], name)
@@ -41,12 +46,56 @@ def map_attachment(nodes, doc):
             f.write(data[20:]) # first 20 bytes are metadata prepended by Access
     return None
 
+# parse a range like 10hz-15ghz into start/stop freqs in Hz
+def _parse_freq_range(value):
+    def fpow(n, u):
+        e = 3 * UNITS.index(u.lower()) - 6
+        return float('{0}E{1}'.format(n, e))
+    m = FREQ_RE.search(value)
+    if m is None:
+        return None, None, None
+    g = list(m.groups())
+    # if units for start of range were omitted, use units for end of range
+    if g[2] is None:
+        g[2] = g[4]
+    comment = '{0} {1}'.format(g[0].strip(), g[5].strip())
+    return fpow(g[1], g[2]), fpow(g[3], g[4]), comment.strip()
+
+def map_non_zero(nodes, doc):
+    values = [float(node.value()) for node in nodes]
+    while 0 in values:
+        values.remove(0)
+    return values
+
 def map_parse_freqs(nodes, doc):
     """ Parse start/stop frequencies and check they agree with any already defined.
     """
+    if len(nodes) == 0:
+        return None
     value = nodes[0].value()
-    if value != 'n/a' and ('start_freq' not in doc or 'stop_freq' not in doc):
-        print >>sys.stderr, "Missing start/stop frequencies", value, doc
-        sys.exit(1)
+    if value == 'n/a':
+        if 'start_freq' in doc or 'stop_freq' in doc:
+            raise FunctionError("n/a for freq range but start/stop specified")
+	return None
+    r_start, r_stop, comment = _parse_freq_range(value)
+    if r_start is None or len(comment) > 0:
+        doc['dirty'] = [True]
+        doc.append_list('notes', u'Frequency range: {0}'.format(value))
+        if r_start is None:
+            return None
+    try:
+        start = float(doc.get('start_freq', [0])[0])
+        stop = float(doc.get('stop_freq', [0])[0])
+        if r_start != 0:
+            doc['start_freq'] = [str(r_start)]
+        if r_stop != 0:
+            doc['stop_freq'] = [str(r_stop)]
+        if (start != 0 or stop != 0) and (start != r_start or stop != r_stop):
+            # we trust the frequency range over start/stop but mark dirty
+            doc['dirty'] = [True]
+            doc.append_list('notes', u'Frequency range: {0} (start {1} stop {2})'.format(value, start, stop))
+            return None
+    except ValueError:
+        raise FunctionError("Could not parse start or stop freq")
     return None
 

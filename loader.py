@@ -15,6 +15,14 @@ class Document(dict):
         super(Document, self).__init__()
         self.files_path = files_path
 
+    def append_list(self, name, value):
+        self.extend_list(name, [value])
+
+    def extend_list(self, name, values):
+        if name not in self:
+            self[name] = []
+        self[name].extend(values)
+
 def process_document(node, field_map, files_path, core):
     """ Process a document by extracting any attachments and POSTing to SOLR.
     """
@@ -24,8 +32,8 @@ def process_document(node, field_map, files_path, core):
         if field not in node_dict:
             continue
         name, values = field_map.map(field, node_dict[field], doc)
-        if name is not None and values is not None:
-            doc[name] = values
+        if name is not None and values is not None and len(values) > 0:
+            doc.extend_list(name, values)
         node_dict.pop(field)
     if len(node_dict) > 0:
         print >>sys.stderr, "Document has unprocessed fields: {0}".format(','.join(node_dict))
@@ -34,12 +42,13 @@ def process_document(node, field_map, files_path, core):
     xml = ['<doc>']
     for field, values in doc.iteritems():
         for value in values:
-            xml.append('<field name="{0}"><![CDATA[{1}]]></field>'.format(field, value.replace('&', '&amp;')))
+            value = unicode(value).replace('&', '&amp;')
+            xml.append(u'<field name="{0}"><![CDATA[{1}]]></field>'.format(field, value))
     xml.append('</doc>')
 
     # POST to SOLR
-    data = '<add>{0}</add>'.format(''.join(xml))
-    r = requests.post(SOLR_URL.format(core), headers=SOLR_HEADERS, data=data)
+    data = u'<add>{0}</add>'.format('\n'.join(xml))
+    r = requests.post(SOLR_URL.format(core), headers=SOLR_HEADERS, data=data.encode("utf-8"))
     if r.status_code != 200:
         print >>sys.stderr, data
         print >>sys.stderr, r.text
