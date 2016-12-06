@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { HTTP_PROVIDERS } from '@angular/http';
 import { DataService } from './data.service';
 import { TableComponent } from './table.component';
-import { ItemComponent } from './item.component';
+import { AssetComponent } from './asset.component';
 
 // Add the RxJS Observable operators we need in this app
 import './rxjs-operators';
@@ -16,21 +16,20 @@ import './rxjs-operators';
                  </div>
                </div>
                <div class="row">
-                 <bams-item [item]="item"></bams-item>
+                 <bams-asset [asset]="asset"></bams-asset>
                </div>
                <div class="row">
                  <div class="col-lg-12">
-                   <bams-table [items]="items" (item)="onItem($event)"></bams-table>
+                   <bams-table [assets]="assets" (asset)="onasset($event)"></bams-table>
                  </div>
                </div>
              </div>`,
-  directives: [TableComponent, ItemComponent],
-  providers: [HTTP_PROVIDERS, DataService],
-  pipes: []
+  directives: [TableComponent, AssetComponent],
+  providers: [HTTP_PROVIDERS, DataService]
 })
 export class AppComponent {
-  items: any[] = [];
-  item: any = {};
+  assets: any[] = [];
+  asset: any = {};
 
   constructor(private dataService: DataService) { }
 
@@ -39,10 +38,10 @@ export class AppComponent {
     //                .subscribe(user => this.user = user);
 
     this.dataService.solr("*")
-                    .subscribe(items => this.items = items);
+                    .subscribe(assets => this.assets = assets);
   }
 
-  onItem(item: any) {
-    this.item = item;
+  onasset(asset: any) {
+    this.asset = asset;
   }
 }
