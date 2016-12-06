@@ -1,2 +1,2 @@
 id,id_number,file,serial,acquired,calibration_date,calibration_due,calibration_type,location,rack,shelf,manufacturer,model,item,category,description,notes,start_freq,stop_freq,owner,email,status,condition,barcode,value,price,project,dirty
-1,12345,Example.png,Ser-12345,2014-02-23T00:00:00Z,2014-02-24T00:00:00Z,2015-02-24T00:00:00Z,Standard,Stores,,,Bosch,V12-5B,19234,Examples,An example item,,10,100,,bilbo@gmail.com,,Perfect,,,1.5,,
+1,12345,Example.png,Ser-12345,2014-02-23T00:00:00Z,2014-02-24T00:00:00Z,2015-02-24T00:00:00Z,Standard,Stores,,,Bosch,V12-5B,19234,Examples,An <b>example</b> item,,10,100,,bilbo@gmail.com,,Perfect,,,1.5,,

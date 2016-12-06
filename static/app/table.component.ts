@@ -24,7 +24,7 @@ import { DataService } from './data.service';
                  <th>Condition</th>
                  <th>ID</th>
                </tr>
-               <tr *ngFor="let item of items" (click)="onRowClick(item)">
+               <tr *ngFor="let item of items" (click)="onRowClick(item)" [ngClass]="{selected: selected == item}">
                  <td>{{item.item}}</td>
                  <td>{{item.id_number}}</td>
                  <td>{{item.manufacturer}}</td>
@@ -45,11 +45,11 @@ import { DataService } from './data.service';
                  <td>{{item.id}}</td>
                </tr>
              </table>`,
-  directives: [],
-  pipes: []
+  styles: ['.selected { background: lightblue }']
 })
 export class TableComponent {
   items: any[];
+  selected: any;
 
   @Output('item') itemEmitter = new EventEmitter<any>();
 
@@ -61,6 +61,7 @@ export class TableComponent {
   }
 
   onRowClick(item: any): void {
-    this.itemEmitter.emit(item);
+    this.selected = this.selected != item ? item : undefined;
+    this.itemEmitter.emit(this.selected);
   }
 }

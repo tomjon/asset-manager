@@ -1,6 +1,12 @@
 import { Component, Input } from '@angular/core';
 import { DataService } from './data.service';
 
+/**
+ * The component makes a copy of the input item. If 'reset' is pressed, the copy
+ * is re-made from the original. If 'save' is pressed, the original is changed
+ * to match the copy (thus affecting whereever else the original might be
+ * displayed in the UI).
+ */
 @Component({
   selector: 'bams-item',
   template: `<form role="form" #form="ngForm">
@@ -15,7 +21,7 @@ import { DataService } from './data.service';
                  </div>
                  <div class="form-group">
                    <label for="description">Description</label>
-                   <input type="text" class="form-control" required [(ngModel)]="item.description" name="description" />
+                   <textarea class="form-control" required [(ngModel)]="item.description" name="description" rows="5"></textarea>
                  </div>
                  <div class="form-group">
                    <div class="col-lg-6 my-input-group">
@@ -66,26 +72,43 @@ import { DataService } from './data.service';
                </div>
                <div class="col-lg-4">
                  <div class="form-group">
-                   <label for="manufacturer">Manufacturer</label>
-                   <input type="text" class="form-control" required [(ngModel)]="item.manufacturer" name="manufacturer" />
-                 </div>
-                 <div class="form-group">
-                   <label for="model">Model</label>
-                   <input type="text" class="form-control" required [(ngModel)]="item.model" name="model" />
+                   <div class="col-lg-6 my-input-group">
+                     <label for="manufacturer">Manufacturer</label>
+                     <input type="text" class="form-control" required [(ngModel)]="item.manufacturer" name="manufacturer" />
+                   </div>
+                   <div class="col-lg-6 my-input-group">
+                     <label for="model">Model</label>
+                     <input type="text" class="form-control" required [(ngModel)]="item.model" name="model" />
+                   </div>
                  </div>
                  <img *ngFor="let src of item.file" src="/file/{{item.id}}/{{src}}" />
+                 <button (click)="onReset()">Reset</button>
+                 <button (click)="onSave()">Save</button>
                </div>
              </form>`,
-  styles: ['.my-input-group { padding: 0 5px 0 5px }',
-           '.my-input-group:last-child { padding-right: 0 }']
+  styles: ['.my-input-group { padding: 0 5px 5px 0 }',
+           '.my-input-group:last-child { padding-right: 0 }',
+           'textarea { resize: none }']
 })
 export class ItemComponent {
+  private original: any;
   private item: any = {};
 
   @Input('item') set _item(item: any) {
-    this.item = item;
-    if (this.item.calibration_date) {
-      this.item.calibration_date = this.item.calibration_date.slice(0, 10);
+    this.original = item; // could be undefined if we are asked to clear the item display fields
+    this.item = Object.assign({}, this.original);
+    for (let key of ['acquired', 'calibration_date', 'calibration_due']) {
+      if (this.item[key]) {
+        this.item[key] = this.item[key].slice(0, 10);
+      }
     }
+  }
+
+  onReset() {
+    this._item = this.original;
+  }
+
+  onSave() {
+    Object.assign(this.original, this.item);
   }
 }
