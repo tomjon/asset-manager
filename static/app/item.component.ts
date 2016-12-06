@@ -2,10 +2,18 @@ import { Component, Input } from '@angular/core';
 import { DataService } from './data.service';
 
 /**
- * The component makes a copy of the input item. If 'reset' is pressed, the copy
- * is re-made from the original. If 'save' is pressed, the original is changed
- * to match the copy (thus affecting whereever else the original might be
- * displayed in the UI).
+ * The component makes a copy of the input item.
+ *
+ * If 'reset' is pressed, the copy is re-made from the original.
+ *
+ * If 'save' is pressed, the original is changed to match the copy (thus
+ * affecting whereever else the original might be displayed in the UI), and an
+ * output event emitted.
+ *
+ * If 'delete' is pressed, the fields are cleared and an output event emitted.
+ *
+ * If 'add new' is pressed, the user is warned that a copy of the current item
+ * is about to be made, and if they accept, an output event is emitted.
  */
 @Component({
   selector: 'bams-item',
@@ -84,6 +92,8 @@ import { DataService } from './data.service';
                  <img *ngFor="let src of item.file" src="/file/{{item.id}}/{{src}}" />
                  <button (click)="onReset()">Reset</button>
                  <button (click)="onSave()">Save</button>
+                 <button (click)="onDelete()">Delete</button>
+                 <button (click)="onAdd()">Add New</button>
                </div>
              </form>`,
   styles: ['.my-input-group { padding: 0 5px 5px 0 }',
@@ -110,5 +120,13 @@ export class ItemComponent {
 
   onSave() {
     Object.assign(this.original, this.item);
+  }
+
+  onDelete() {
+    this._item = undefined;
+  }
+
+  onAdd() {
+
   }
 }

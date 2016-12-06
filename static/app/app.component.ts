@@ -20,7 +20,7 @@ import './rxjs-operators';
                </div>
                <div class="row">
                  <div class="col-lg-12">
-                   <bams-table filter="*" (item)="onItem($event)"></bams-table>
+                   <bams-table [items]="items" (item)="onItem($event)"></bams-table>
                  </div>
                </div>
              </div>`,
@@ -29,13 +29,17 @@ import './rxjs-operators';
   pipes: []
 })
 export class AppComponent {
+  items: any[] = [];
   item: any = {};
 
   constructor(private dataService: DataService) { }
 
   ngOnInit() {
     //this.dataService.getCurrentUser()
-    //                .subscribe(user => { this.user = user; this.checkSuperior() });
+    //                .subscribe(user => this.user = user);
+
+    this.dataService.solr("*")
+                    .subscribe(items => this.items = items);
   }
 
   onItem(item: any) {

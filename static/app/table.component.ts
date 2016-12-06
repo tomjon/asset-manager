@@ -1,5 +1,4 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { DataService } from './data.service';
 
 @Component({
   selector: 'bams-table',
@@ -48,17 +47,11 @@ import { DataService } from './data.service';
   styles: ['.selected { background: lightblue }']
 })
 export class TableComponent {
-  items: any[];
   selected: any;
 
+  @Input('items') items: any[];
+
   @Output('item') itemEmitter = new EventEmitter<any>();
-
-  constructor(private dataService: DataService) { }
-
-  @Input('filter') set _doSearch(text: string) {
-    this.dataService.solr(text)
-                    .subscribe(items => this.items = items);
-  }
 
   onRowClick(item: any): void {
     this.selected = this.selected != item ? item : undefined;
