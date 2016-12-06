@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ViewChild } from '@angular/core';
 import { DataService } from './data.service';
 
 /**
@@ -89,11 +89,13 @@ import { DataService } from './data.service';
                      <input type="text" class="form-control" required [(ngModel)]="asset.model" name="model" />
                    </div>
                  </div>
-                 <img *ngFor="let src of asset.file" src="/file/{{asset.id}}/{{src}}" />
-                 <button (click)="onReset()">Reset</button>
-                 <button (click)="onSave()">Save</button>
-                 <button (click)="onDelete()">Delete</button>
-                 <button (click)="onAdd()">Add New</button>
+                 <p>
+                 <img *ngFor="let src of asset.file; let i = index" [hidden]="file_index != i" (click)="onImgClick()" src="/file/{{asset.id}}/{{src}}" />
+                 <p>
+                 <button class="btn" (click)="onReset()" [disabled]="form.pristine">Reset</button>
+                 <button class="btn" (click)="onSave()" [disabled]="form.pristine || original == undefined">Save</button>
+                 <button class="btn" (click)="onDelete()" [disabled]="original == undefined">Delete</button>
+                 <button class="btn" (click)="onAdd()">Add New</button>
                </div>
              </form>`,
   styles: ['.my-input-group { padding: 0 5px 5px 0 }',
@@ -103,6 +105,8 @@ import { DataService } from './data.service';
 export class AssetComponent {
   private original: any;
   private asset: any = {};
+  private file_index: number = 0;
+  @ViewChild('form') form;
 
   @Input('asset') set _asset(asset: any) {
     this.original = asset; // could be undefined if we are asked to clear the asset display fields
@@ -114,12 +118,18 @@ export class AssetComponent {
     }
   }
 
+  onImgClick() {
+    if (++this.file_index == this.asset.file.length) this.file_index = 0;
+  }
+
   onReset() {
     this._asset = this.original;
+    this.pristine(this.form);
   }
 
   onSave() {
     Object.assign(this.original, this.asset);
+    this.pristine(this.form);
   }
 
   onDelete() {
@@ -128,5 +138,18 @@ export class AssetComponent {
 
   onAdd() {
 
+  }
+
+  pristine(form: any, value?: boolean): void {
+    if (value == undefined) value = true; // default argument value not working, weirdly
+    if (! form) return;
+    form['_touched'] = ! value;
+    form['_pristine'] = value;
+    form.form['_touched'] = ! value;
+    form.form['_pristine'] = value;
+    for (let k in form.form.controls) {
+      form.form.controls[k]['_touched'] = ! value;
+      form.form.controls[k]['_pristine'] = value;
+    }
   }
 }
