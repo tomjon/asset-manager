@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild } from '@angular/core';
+import { Component, Input, Output, ViewChild, EventEmitter } from '@angular/core';
 import { DataService } from './data.service';
 
 /**
@@ -107,6 +107,7 @@ export class AssetComponent {
   private asset: any = {};
   private file_index: number = 0;
   @ViewChild('form') form;
+  @Output('event') event = new EventEmitter<any>();
 
   @Input('asset') set _asset(asset: any) {
     this.original = asset; // could be undefined if we are asked to clear the asset display fields
@@ -130,14 +131,16 @@ export class AssetComponent {
   onSave() {
     Object.assign(this.original, this.asset);
     this.pristine(this.form);
+    this.event.emit({save: asset});
   }
 
   onDelete() {
     this._asset = undefined;
+    this.event.emit({delete: asset});
   }
 
   onAdd() {
-
+    this.event.emit({add: asset});
   }
 
   pristine(form: any, value?: boolean): void {
