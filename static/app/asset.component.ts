@@ -112,11 +112,6 @@ export class AssetComponent {
   @Input('asset') set _asset(asset: any) {
     this.original = asset; // could be undefined if we are asked to clear the asset display fields
     this.asset = Object.assign({}, this.original);
-    for (let key of ['acquired', 'calibration_date', 'calibration_due']) {
-      if (this.asset[key]) {
-        this.asset[key] = this.asset[key].slice(0, 10);
-      }
-    }
   }
 
   onImgClick() {
@@ -129,18 +124,18 @@ export class AssetComponent {
   }
 
   onSave() {
+    this.event.emit({save: this.asset});
     Object.assign(this.original, this.asset);
     this.pristine(this.form);
-    this.event.emit({save: asset});
   }
 
   onDelete() {
+    this.event.emit({delete: this.asset.id});
     this._asset = undefined;
-    this.event.emit({delete: asset});
   }
 
   onAdd() {
-    this.event.emit({add: asset});
+    this.event.emit({add: this.asset});
   }
 
   pristine(form: any, value?: boolean): void {

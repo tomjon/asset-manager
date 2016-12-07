@@ -1,4 +1,4 @@
-import os
+import uuid
 import sys
 import base64
 import re
@@ -14,6 +14,11 @@ FREQ_RE = re.compile(r'^(.*?)({0})\s*({1})?-({0})\s*({1})(.*)$'.format(FLOAT_EXP
 class FunctionError(Exception):
     def __init__(self, message):
         self.message = message
+
+def map_uuid(nodes, doc):
+    """ Generate a unique id for the document.
+    """
+    return [str(uuid.uuid4())]
 
 def map_date(nodes, doc):
     """ All we need is to add the final Z to get a SOLR date formatted string.
@@ -35,15 +40,7 @@ def map_attachment(nodes, doc):
                 name = subfield.value()
         assert data is not None and name is not None
         doc.append_list('file', name)
-
-        # save attachment file
-        path = os.path.join(doc.files_path, doc['id'][0], name)
-        try:
-            os.makedirs(os.path.dirname(path))
-        except OSError:
-            pass
-        with open(path, 'w') as f:
-            f.write(data[20:]) # first 20 bytes are metadata prepended by Access
+	doc.add_file(name, data[20:]) # skip 20 bytes of metadata added by Access
     return None
 
 # parse a range like 10hz-15ghz into start/stop freqs in Hz

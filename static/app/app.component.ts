@@ -3,6 +3,7 @@ import { HTTP_PROVIDERS } from '@angular/http';
 import { DataService } from './data.service';
 import { TableComponent } from './table.component';
 import { AssetComponent } from './asset.component';
+import { Results, PAGE_SIZE } from './results';
 
 // Add the RxJS Observable operators we need in this app
 import './rxjs-operators';
@@ -16,11 +17,11 @@ import './rxjs-operators';
                  </div>
                </div>
                <div class="row">
-                 <bams-asset [asset]="asset"></bams-asset>
+                 <bams-asset [asset]="asset" (event)="onEvent($event)"></bams-asset>
                </div>
                <div class="row">
                  <div class="col-lg-12">
-                   <bams-table [assets]="assets" (asset)="onasset($event)"></bams-table>
+                   <bams-table [assets]="assets" (asset)="onAsset($event)" (search)="onSearch($event)"></bams-table>
                  </div>
                </div>
              </div>`,
@@ -28,7 +29,7 @@ import './rxjs-operators';
   providers: [HTTP_PROVIDERS, DataService]
 })
 export class AppComponent {
-  assets: any[] = [];
+  assets: Results = new Results();
   asset: any = {};
 
   constructor(private dataService: DataService) { }
@@ -37,11 +38,33 @@ export class AppComponent {
     //this.dataService.getCurrentUser()
     //                .subscribe(user => this.user = user);
 
-    this.dataService.solr("*")
-                    .subscribe(assets => this.assets = assets);
+    this.onSearch({start: 0});
   }
 
-  onasset(asset: any) {
+  onAsset(asset: any) {
     this.asset = asset;
+  }
+
+  onEvent(event: any) {
+    if (event.save) {
+      this.dataService.updateAsset(event.save)
+                      .subscribe();
+    }
+    else if (event.delete) {
+      this.dataService.deleteById(event.delete)
+                      .subscribe();
+    }
+    else if (event.add) {
+      this.dataService.addAsset(event.add)
+                      .subscribe(id => event.add.id = id);
+    }
+    else {
+      console.log("Bad event", event);
+    }
+  }
+
+  onSearch(event: any) {
+    this.dataService.search("*", event.start, PAGE_SIZE)
+                    .subscribe(assets => this.assets = assets);
   }
 }

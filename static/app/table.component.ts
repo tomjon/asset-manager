@@ -1,4 +1,5 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Results } from './results';
 
 @Component({
   selector: 'bams-table',
@@ -21,9 +22,8 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
                  <th>Owner</th>
                  <th>Comments</th>
                  <th>Condition</th>
-                 <th>ID</th>
                </tr>
-               <tr *ngFor="let asset of assets" (click)="onRowClick(asset)" [ngClass]="{selected: selected == asset}">
+               <tr *ngFor="let asset of results.assets" (click)="onRowClick(asset)" [ngClass]="{selected: selected == asset}">
                  <td>{{asset.item}}</td>
                  <td>{{asset.id_number}}</td>
                  <td>{{asset.manufacturer}}</td>
@@ -41,20 +41,27 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
                  <td>{{asset.owner}}</td>
                  <td>{{asset.notes}}</td>
                  <td>{{asset.condition}}</td>
-                 <td>{{asset.id}}</td>
                </tr>
-             </table>`,
+             </table>
+             <button class="btn" [disabled]="! results.hasPrev()" (click)="onNavigate(results.prev())">&lt;&lt; Previous</button>
+             <span *ngFor="let page of results.pages()" (click)="onNavigate(page.start)">{{page.label}}</span>
+             <button class="btn" [disabled]="! results.hasNext()" (click)="onNavigate(results.next())">Next &gt;&gt;</button>`,
   styles: ['.selected { background: lightblue }']
 })
 export class TableComponent {
   selected: any;
 
-  @Input('assets') assets: any[];
+  @Input('assets') results: Results;
 
   @Output('asset') assetEmitter = new EventEmitter<any>();
+  @Output('search') searchEmitter = new EventEmitter<any>();
 
-  onRowClick(asset: any): void {
+  onRowClick(asset: any) {
     this.selected = this.selected != asset ? asset : undefined;
     this.assetEmitter.emit(this.selected);
+  }
+
+  onNavigate(start: number) {
+    this.searchEmitter.emit({start: start});
   }
 }

@@ -4,6 +4,7 @@
 """
 import sys
 import requests
+import os
 from parser import parse_xml
 from field_map import FieldMap
 
@@ -11,9 +12,9 @@ SOLR_URL = 'http://localhost:8983/solr/{0}/update'
 SOLR_HEADERS = {'content-type': 'application/xml'}
 
 class Document(dict):
-    def __init__(self, files_path):
+    def __init__(self):
         super(Document, self).__init__()
-        self.files_path = files_path
+        self.files = []
 
     def append_list(self, name, value):
         self.extend_list(name, [value])
@@ -23,11 +24,14 @@ class Document(dict):
             self[name] = []
         self[name].extend(values)
 
+    def add_file(self, name, data):
+	self.files.append((name, data))
+
 def process_document(node, field_map, files_path, core):
     """ Process a document by extracting any attachments and POSTing to SOLR.
     """
     node_dict = node.as_dict()
-    doc = Document(files_path)
+    doc = Document()
     for field in field_map.iter_fields():
         if field not in node_dict:
             continue
@@ -52,6 +56,16 @@ def process_document(node, field_map, files_path, core):
         print >>sys.stderr, data
         print >>sys.stderr, r.text
         sys.exit(1)
+
+    # save attachment files
+    for name, data in doc.files:
+        path = os.path.join(files_path, doc['id'][0], name)
+        try:
+            os.makedirs(os.path.dirname(path))
+        except OSError:
+            pass
+        with open(path, 'w') as f:
+            f.write(data)
 
 if len(sys.argv) != 5:
     print "Usage: {0} <map file> <xml file> <files path> <SOLR core>".format(sys.argv[0])

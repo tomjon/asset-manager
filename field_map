@@ -1,4 +1,4 @@
-ID				id
+ID				id			uuid
 ID Number			id_number
 Location			location
 Rack				rack
