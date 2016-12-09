@@ -23,10 +23,10 @@ class FieldMap(object):
         if name is None:
             return None, None
         nodes = [node for node in nodes if node.value().strip() != '?']
-	if fn_name is not None:
+        if fn_name is not None:
             try:
                 fn = getattr(function, 'map_{0}'.format(fn_name))
-                values = fn(nodes, doc)
+                values = fn(name, nodes, doc)
             except AttributeError:
                 raise Exception("No mapping function defined: {0}".format(fn_name))
             except function.FunctionError as e:
@@ -39,4 +39,3 @@ class FieldMap(object):
     def iter_fields(self):
         for field in self._fields:
             yield field
-

@@ -5,16 +5,20 @@
 import sys
 import requests
 import os
+import json
 from parser import parse_xml
 from field_map import FieldMap
 
 SOLR_URL = 'http://localhost:8983/solr/{0}/update'
 SOLR_HEADERS = {'content-type': 'application/xml'}
 
+enums = {}
+
 class Document(dict):
     def __init__(self):
         super(Document, self).__init__()
         self.files = []
+        self.enums = enums
 
     def append_list(self, name, value):
         self.extend_list(name, [value])
@@ -42,7 +46,7 @@ def process_document(node, field_map, files_path, core):
     if len(node_dict) > 0:
         print >>sys.stderr, "Document has unprocessed fields: {0}".format(','.join(node_dict))
         sys.exit(1)
-    
+
     xml = ['<doc>']
     for field, values in doc.iteritems():
         for value in values:
@@ -67,8 +71,9 @@ def process_document(node, field_map, files_path, core):
         with open(path, 'w') as f:
             f.write(data)
 
-if len(sys.argv) != 5:
-    print "Usage: {0} <map file> <xml file> <files path> <SOLR core>".format(sys.argv[0])
+
+if len(sys.argv) != 6:
+    print "Usage: {0} <map file> <xml file> <files path> <enums path> <SOLR core>".format(sys.argv[0])
     sys.exit(1)
 
 with open(sys.argv[1]) as f:
@@ -76,10 +81,19 @@ with open(sys.argv[1]) as f:
 
 try:
     with open(sys.argv[2]) as f:
-        print parse_xml(f, process_document, field_map, sys.argv[3], sys.argv[4]), "documents processed"
+        print parse_xml(f, process_document, field_map, sys.argv[3], sys.argv[5]), "documents processed"
 except KeyboardInterrupt:
     print >>sys.stderr, "Processing interrupted"
 
-r = requests.post(SOLR_URL.format(sys.argv[4]), headers=SOLR_HEADERS, data='<commit/>')
-assert r.status_code == 200
+# store enumerations
+for name, values in enums.iteritems():
+    path = os.path.join(sys.argv[4], name)
+    try:
+        os.makedirs(os.path.dirname(path))
+    except OSError:
+        pass
+    with open(path, 'w') as f:
+        f.write(json.dumps([{'label': v, 'value': i, 'order': i} for i, v in zip(xrange(len(values)), values)]))
 
+r = requests.post(SOLR_URL.format(sys.argv[5]), headers=SOLR_HEADERS, data='<commit/>')
+assert r.status_code == 200

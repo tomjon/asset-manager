@@ -3,8 +3,10 @@ solr-6*
 solr/conf/core.properties
 solr/data
 files
+enums
 static/app/*.js*
 static/node_modules
+static/typings*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

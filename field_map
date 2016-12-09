@@ -1,22 +1,22 @@
 ID				id			uuid
 ID Number			id_number
-Location			location
-Rack				rack
-Shelf				shelf
-Manufacturer			manufacturer
+Location			location		enum
+Rack				rack			enum
+Shelf				shelf			enum
+Manufacturer			manufacturer		enum
 Model				model
 Item				item
-Category			category
+Category			category		enum
 Description			description
 Acquired Date			acquired		date
 Notes				notes
 Comments			notes
-Status				status
+Status				status			enum
 Action
-Condition			condition
+Condition			condition		enum
 Last Calibration		calibration_date	date
 Calibration Date		calibration_due		date
-Calibration Type		calibration_type
+Calibration Type		calibration_type	enum
 Start Freq (MHz)		start_freq		non_zero
 Stop Freq (MHz)			stop_freq		non_zero
 Comments History		updated			split_date

@@ -15,22 +15,22 @@ class FunctionError(Exception):
     def __init__(self, message):
         self.message = message
 
-def map_uuid(nodes, doc):
+def map_uuid(name, nodes, doc):
     """ Generate a unique id for the document.
     """
     return [str(uuid.uuid4())]
 
-def map_date(nodes, doc):
+def map_date(name, nodes, doc):
     """ All we need is to add the final Z to get a SOLR date formatted string.
     """
     return ['{0}Z'.format(node.value()) for node in nodes]
 
-def map_set(nodes, doc):
+def map_set(name, nodes, doc):
     """ Ensure the values in the list are unique.
     """
     return list(set([node.value() for node in nodes]))
 
-def map_attachment(nodes, doc):
+def map_attachment(name, nodes, doc):
     for node in nodes:
         data, name = None, None
         for subfield in node.fields:
@@ -42,6 +42,18 @@ def map_attachment(nodes, doc):
         doc.append_list('file', name)
 	doc.add_file(name, data[20:]) # skip 20 bytes of metadata added by Access
     return None
+
+def map_enum(name, nodes, doc):
+    """ We want to store this field as an integer, adding the string value to an
+        enumeration for the field that is stored in JSON format (as a list).
+    """
+    def _get_int_value(v):
+        if name not in doc.enums:
+            doc.enums[name] = [v]
+        elif v not in doc.enums[name]:
+            doc.enums[name].append(v)
+        return doc.enums[name].index(v)
+    return [_get_int_value(node.value()) for node in nodes]
 
 # parse a range like 10hz-15ghz into start/stop freqs in Hz
 def _parse_freq_range(value):
@@ -58,13 +70,13 @@ def _parse_freq_range(value):
     comment = '{0} {1}'.format(g[0].strip(), g[5].strip())
     return fpow(g[1], g[2]), fpow(g[3], g[4]), comment.strip()
 
-def map_non_zero(nodes, doc):
+def map_non_zero(name, nodes, doc):
     values = [float(node.value()) for node in nodes]
     while 0 in values:
         values.remove(0)
     return values
 
-def map_parse_freqs(nodes, doc):
+def map_parse_freqs(name, nodes, doc):
     """ Parse start/stop frequencies and check they agree with any already defined.
     """
     if len(nodes) == 0:
@@ -95,4 +107,3 @@ def map_parse_freqs(nodes, doc):
     except ValueError:
         raise FunctionError("Could not parse start or stop freq")
     return None
-
