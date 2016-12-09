@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { HTTP_PROVIDERS } from '@angular/http';
 import { DataService } from './data.service';
+import { EnumService } from './enum.service';
 import { TableComponent } from './table.component';
 import { AssetComponent } from './asset.component';
 import { Results, PAGE_SIZE } from './results';
@@ -26,7 +27,7 @@ import './rxjs-operators';
                </div>
              </div>`,
   directives: [TableComponent, AssetComponent],
-  providers: [HTTP_PROVIDERS, DataService]
+  providers: [HTTP_PROVIDERS, DataService, EnumService]
 })
 export class AppComponent {
   assets: Results = new Results();

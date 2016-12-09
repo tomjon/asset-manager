@@ -10,10 +10,10 @@ from flask import Flask, redirect, request, Response, send_file, send_from_direc
 
 application = Flask(__name__) # pylint: disable=invalid-name
 
-
 SOLR_COLLECTION = "assets"
 SOLR_QUERY_URL = "http://localhost:8983/solr/{0}/query".format(SOLR_COLLECTION)
 SOLR_UPDATE_URL = "http://localhost:8983/solr/{0}/update".format(SOLR_COLLECTION)
+
 
 class SolrError(Exception):
     """ Exception raised when SOLR returns an error status.
@@ -48,6 +48,17 @@ def favicon_endpoint():
     """
     path = os.path.join(application.root_path, 'static', 'favicon.ico')
     return send_file(path, mimetype='image/vnd.microsoft.icon')
+
+
+@application.route('/enums')
+def enums_endpoint():
+    """ Endpoint for getting enumerations.
+    """
+    enums = {}
+    for field in os.listdir('enums'):
+        with open(os.path.join('enums', field)) as f:
+            enums[field] = json.loads(f.read())
+    return json.dumps(enums)
 
 
 @application.route('/search')
@@ -94,4 +105,3 @@ if __name__ == '__main__':
     if 'debug' in sys.argv:
         application.debug = True
     application.run('0.0.0.0', port=8080)
-

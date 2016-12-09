@@ -73,6 +73,19 @@ export class DataService {
                     .catch(this.handleError);
   }
 
+  getEnums(): Observable<any> {
+    return this.http.get(`/enums`)
+                    .map(res => res.json())
+                    .catch(this.handleError);
+  }
+
+  setEnum(field: string, value: any): Observable<void> {
+    let headers = new Headers({'Content-Type': 'application/json'});
+    let body = JSON.stringify(value);
+    return this.http.put(`/enum/${field}`, body, {headers: headers})
+                    .catch(this.handleError);
+  }
+
   private handleError(error: any, caught: Observable<any>): Observable<any> {
     console.log(`${error._body} - ${error.status} ${error.statusText}`);
     return Observable.create(observer => { observer.error() });

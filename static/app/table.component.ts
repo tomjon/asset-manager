@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { Results } from './results';
+import { EnumPipe } from './enum.pipe';
 
 @Component({
   selector: 'bams-table',
@@ -26,21 +27,21 @@ import { Results } from './results';
                <tr *ngFor="let asset of results.assets" (click)="onRowClick(asset)" [ngClass]="{selected: selected == asset}">
                  <td>{{asset.item}}</td>
                  <td>{{asset.id_number}}</td>
-                 <td>{{asset.manufacturer}}</td>
+                 <td>{{asset.manufacturer | enum:'manufacturer' | async}}</td>
                  <td>{{asset.model}}</td>
                  <td>{{asset.serial}}</td>
-                 <td>{{asset.category}}</td>
+                 <td>{{asset.category | enum:'category' | async}}</td>
                  <td>{{asset.start_freq}}</td>
                  <td>{{asset.stop_freq}}</td>
                  <td>{{asset.calibration_date | date:'dd/MM/yyyy'}}</td>
                  <td>{{asset.calibration_due | date:'dd/MM/yyyy'}}</td>
-                 <td>{{asset.calibration_type}}</td>
-                 <td>{{asset.location}}</td>
-                 <td>{{asset.rack}}</td>
-                 <td>{{asset.shelf}}</td>
-                 <td>{{asset.owner}}</td>
+                 <td>{{asset.calibration_type | enum:'calibration_type' | async}}</td>
+                 <td>{{asset.location | enum:'location' | async}}</td>
+                 <td>{{asset.rack | enum:'rack' | async}}</td>
+                 <td>{{asset.shelf | enum:'shelf' | async}}</td>
+                 <td>{{asset.owner | enum:'owner' | async}}</td>
                  <td>{{asset.notes}}</td>
-                 <td>{{asset.condition}}</td>
+                 <td>{{asset.condition | enum:'condition' | async}}</td>
                </tr>
              </table>
              <button class="btn" [disabled]="results.prev == undefined"
@@ -51,7 +52,8 @@ import { Results } from './results';
                      (click)="onNavigate(page.start)">{{page.label}}</button>
              <button class="btn" [disabled]="results.next == undefined"
                      (click)="onNavigate(results.next)">Next &gt;&gt;</button>`,
-  styles: ['.selected { background: lightblue }']
+  styles: ['.selected { background: lightblue }'],
+  pipes: [EnumPipe]
 })
 export class TableComponent {
   selected: any;
