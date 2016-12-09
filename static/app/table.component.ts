@@ -43,9 +43,14 @@ import { Results } from './results';
                  <td>{{asset.condition}}</td>
                </tr>
              </table>
-             <button class="btn" [disabled]="! results.hasPrev()" (click)="onNavigate(results.prev())">&lt;&lt; Previous</button>
-             <span *ngFor="let page of results.pages()" (click)="onNavigate(page.start)">{{page.label}}</span>
-             <button class="btn" [disabled]="! results.hasNext()" (click)="onNavigate(results.next())">Next &gt;&gt;</button>`,
+             <button class="btn" [disabled]="results.prev == undefined"
+                     (click)="onNavigate(results.prev)">&lt;&lt; Previous</button>
+             <button *ngFor="let page of results.pages()"
+                     [ngClass]="{btn: true, selected: page.start == undefined}"
+                     [disabled]="page.start == undefined"
+                     (click)="onNavigate(page.start)">{{page.label}}</button>
+             <button class="btn" [disabled]="results.next == undefined"
+                     (click)="onNavigate(results.next)">Next &gt;&gt;</button>`,
   styles: ['.selected { background: lightblue }']
 })
 export class TableComponent {
