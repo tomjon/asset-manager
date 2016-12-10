@@ -1,27 +1,33 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 import { DataService } from './data.service';
+import { Enum } from './enum';
 
 @Injectable()
 export class EnumService {
-
-  private getEnums: Observable<any>; // observable for getting enums from server API
-  private enums: any; // enums set by user, these override values from server API
+  private enums: any = {};
 
   constructor (private dataService: DataService) {
-    this.getEnums = this.dataService.getEnums().publishReplay(1).refCount();
-    this.enums = {};
+    this.dataService.getEnums().subscribe(enums => {
+      for (let field in enums) {
+        if (! (field in this.enums)) {
+          this.enums[field] = new Enum();
+        }
+        this.enums[field].update(enums[field]);
+      }
+    });
   }
 
-  set(field: string, value: any): Observable<void> {
+  //FIXME not sure this will be right
+  set(field: string, value: Enum): any {
     this.enums[field] = value;
-    return this.dataService.setEnum(field, value);
+    this.dataService.setEnum(field, value).subscribe();
   }
 
-  get(field: string): Observable<any> {
-    if (this.enums[field] != undefined) {
-      return Observable.of(this.enums[field]);
+  get(field: string): Enum {
+    if (! (field in this.enums)) {
+      this.enums[field] = new Enum();
     }
-    return this.getEnums.map(enums => enums[field] != undefined ? enums[field] : []);
+    return this.enums[field];
   }
 }

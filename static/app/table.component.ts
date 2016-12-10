@@ -27,21 +27,21 @@ import { EnumPipe } from './enum.pipe';
                <tr *ngFor="let asset of results.assets" (click)="onRowClick(asset)" [ngClass]="{selected: selected == asset}">
                  <td>{{asset.item}}</td>
                  <td>{{asset.id_number}}</td>
-                 <td>{{asset.manufacturer | enum:'manufacturer' | async}}</td>
+                 <td>{{asset.manufacturer | enum:'manufacturer'}}</td>
                  <td>{{asset.model}}</td>
                  <td>{{asset.serial}}</td>
-                 <td>{{asset.category | enum:'category' | async}}</td>
+                 <td>{{asset.category | enum:'category'}}</td>
                  <td>{{asset.start_freq}}</td>
                  <td>{{asset.stop_freq}}</td>
                  <td>{{asset.calibration_date | date:'dd/MM/yyyy'}}</td>
                  <td>{{asset.calibration_due | date:'dd/MM/yyyy'}}</td>
-                 <td>{{asset.calibration_type | enum:'calibration_type' | async}}</td>
-                 <td>{{asset.location | enum:'location' | async}}</td>
-                 <td>{{asset.rack | enum:'rack' | async}}</td>
-                 <td>{{asset.shelf | enum:'shelf' | async}}</td>
-                 <td>{{asset.owner | enum:'owner' | async}}</td>
+                 <td>{{asset.calibration_type | enum:'calibration_type'}}</td>
+                 <td>{{asset.location | enum:'location'}}</td>
+                 <td>{{asset.rack | enum:'rack'}}</td>
+                 <td>{{asset.shelf | enum:'shelf'}}</td>
+                 <td>{{asset.owner | enum:'owner'}}</td>
                  <td>{{asset.notes}}</td>
-                 <td>{{asset.condition | enum:'condition' | async}}</td>
+                 <td>{{asset.condition | enum:'condition'}}</td>
                </tr>
              </table>
              <button class="btn" [disabled]="results.prev == undefined"

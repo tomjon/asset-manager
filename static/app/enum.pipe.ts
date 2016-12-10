@@ -9,13 +9,11 @@ export class EnumPipe implements PipeTransform {
   constructor(private enumService: EnumService) {}
 
   // used in templates like: value | enum:field
-  transform(value: string, field: string): Observable<string> {
-    return this.enumService.get(field)
-                           .map(enumValues => {
-                             for (let e of enumValues) {
-                               if (e.value == value) return e.label;
-                             }
-                             return NO_LABEL;
-                           });
+  transform(value: string, field: string): string {
+    let enumValues = this.enumService.get(field);
+    for (let e of enumValues.values) {
+      if (e.value == value) return e.label;
+    }
+    return NO_LABEL;
   }
 }

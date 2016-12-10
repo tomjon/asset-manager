@@ -1,5 +1,5 @@
 import { Component, Input, Output, ViewChild, EventEmitter } from '@angular/core';
-import { DataService } from './data.service';
+import { EnumService } from './enum.service';
 
 /**
  * The component makes a copy of the input asset.
@@ -82,7 +82,9 @@ import { DataService } from './data.service';
                  <div class="form-group">
                    <div class="col-lg-6 my-input-group">
                      <label for="manufacturer">Manufacturer</label>
-                     <input type="text" class="form-control" required [(ngModel)]="asset.manufacturer" name="manufacturer" />
+                     <select class="form-control" [(ngModel)]="asset.manufacturer" name="manufacturer">
+                       <option *ngFor="let o of options('manufacturer')" [value]="o.value">{{o.label}}</option>
+                     </select>
                    </div>
                    <div class="col-lg-6 my-input-group">
                      <label for="model">Model</label>
@@ -112,6 +114,16 @@ export class AssetComponent {
   @Input('asset') set _asset(asset: any) {
     this.original = asset; // could be undefined if we are asked to clear the asset display fields
     this.asset = Object.assign({}, this.original);
+  }
+
+  constructor(private enumService: EnumService) {}
+
+  options(field: string) {
+    let options = [];
+    for (let e of this.enumService.get(field).values) {
+      options[e.order] = {value: e.value, label: e.label};
+    }
+    return options;
   }
 
   onImgClick() {
