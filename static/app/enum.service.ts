@@ -11,7 +11,7 @@ export class EnumService {
     this.dataService.getEnums().subscribe(enums => {
       for (let field in enums) {
         if (! (field in this.enums)) {
-          this.enums[field] = new Enum();
+          this.enums[field] = new Enum(field);
         }
         this.enums[field].update(enums[field]);
       }
@@ -26,7 +26,7 @@ export class EnumService {
 
   get(field: string): Enum {
     if (! (field in this.enums)) {
-      this.enums[field] = new Enum();
+      this.enums[field] = new Enum(field);
     }
     return this.enums[field];
   }

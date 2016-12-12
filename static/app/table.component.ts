@@ -6,23 +6,22 @@ import { EnumPipe } from './enum.pipe';
   selector: 'bams-table',
   template: `<table>
                <tr>
-                 <th>Item</th>
-                 <th>ID Number</th>
-                 <th>Manufacturer</th>
-                 <th>Model</th>
-                 <th>Serial Number</th>
-                 <th>Category</th>
-                 <th>Start Freq (MHz)</th>
-                 <th>Stop Freq (MHz)</th>
-                 <th>Last Calibration</th>
-                 <th>Calibration Date</th>
-                 <th>Calibration Type</th>
-                 <th>Location</th>
-                 <th>Rack</th>
-                 <th>Shelf</th>
-                 <th>Owner</th>
-                 <th>Comments</th>
-                 <th>Condition</th>
+                 <th (click)="onFilter('item')">Item</th>
+                 <th (click)="onFilter('id_number')">ID Number</th>
+                 <th (click)="onFilter('manufacturer')">Manufacturer</th>
+                 <th (click)="onFilter('model')">Model</th>
+                 <th (click)="onFilter('serial')">Serial Number</th>
+                 <th (click)="onFilter('category')">Category</th>
+                 <th (click)="onFilter('start_freq')">Start Freq (MHz)</th>
+                 <th (click)="onFilter('stop_freq')">Stop Freq (MHz)</th>
+                 <th (click)="onFilter('calibration_date')">Last Calibration</th>
+                 <th (click)="onFilter('calibration_due')">Calibration Date</th>
+                 <th (click)="onFilter('calibration_type')">Calibration Type</th>
+                 <th (click)="onFilter('location')">Location</th>
+                 <th (click)="onFilter('rack')">Rack</th>
+                 <th (click)="onFilter('shelf')">Shelf</th>
+                 <th (click)="onFilter('owner')">Owner</th>
+                 <th (click)="onFilter('condition')">Condition</th>
                </tr>
                <tr *ngFor="let asset of results.assets" (click)="onRowClick(asset)" [ngClass]="{selected: selected == asset}">
                  <td>{{asset.item}}</td>
@@ -40,7 +39,6 @@ import { EnumPipe } from './enum.pipe';
                  <td>{{asset.rack | enum:'rack'}}</td>
                  <td>{{asset.shelf | enum:'shelf'}}</td>
                  <td>{{asset.owner | enum:'owner'}}</td>
-                 <td>{{asset.notes}}</td>
                  <td>{{asset.condition | enum:'condition'}}</td>
                </tr>
              </table>
@@ -62,6 +60,7 @@ export class TableComponent {
 
   @Output('asset') assetEmitter = new EventEmitter<any>();
   @Output('search') searchEmitter = new EventEmitter<any>();
+  @Output('filter') filterEmitter = new EventEmitter<any>();
 
   onRowClick(asset: any) {
     this.selected = this.selected != asset ? asset : undefined;
@@ -70,5 +69,9 @@ export class TableComponent {
 
   onNavigate(start: number) {
     this.searchEmitter.emit({start: start});
+  }
+
+  onFilter(field: string) {
+    this.filterEmitter.emit(field);
   }
 }

@@ -1,5 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { EnumService } from './enum.service';
+import { Enum } from './enum';
 import { Observable } from 'rxjs/Observable';
 
 export var NO_LABEL = '';
@@ -10,10 +11,7 @@ export class EnumPipe implements PipeTransform {
 
   // used in templates like: value | enum:field
   transform(value: string, field: string): string {
-    let enumValues = this.enumService.get(field);
-    for (let e of enumValues.values) {
-      if (e.value == value) return e.label;
-    }
-    return NO_LABEL;
+    let label = this.enumService.get(field).label(value);
+    return label != undefined ? label : NO_LABEL;
   }
 }

@@ -21,8 +21,13 @@ import './rxjs-operators';
                  <bams-asset [asset]="asset" (event)="onEvent($event)"></bams-asset>
                </div>
                <div class="row">
+                 <div *ngFor="let filter of filters">
+                   <h3>{{filter.field}}</h3>
+                 </div>
+               </div>
+               <div class="row">
                  <div class="col-lg-12">
-                   <bams-table [assets]="assets" (asset)="onAsset($event)" (search)="onSearch($event)"></bams-table>
+                   <bams-table [assets]="assets" (asset)="onAsset($event)" (search)="onSearch($event)" (filter)="onFilter($event)"></bams-table>
                  </div>
                </div>
              </div>`,
@@ -32,6 +37,7 @@ import './rxjs-operators';
 export class AppComponent {
   assets: Results = new Results();
   asset: any = {};
+  filters: any = [];
 
   constructor(private dataService: DataService) { }
 
@@ -67,5 +73,9 @@ export class AppComponent {
   onSearch(event: any) {
     this.dataService.search("*", event.start, PAGE_SIZE)
                     .subscribe(assets => this.assets = assets);
+  }
+
+  onFilter(field: string) {
+    this.filters.push({field: field});
   }
 }

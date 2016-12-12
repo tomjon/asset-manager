@@ -25,7 +25,9 @@ import { EnumService } from './enum.service';
                  </div>
                  <div class="form-group">
                    <label for="category">Category</label>
-                   <input type="text" class="form-control" required [(ngModel)]="asset.category" name="category" />
+                   <select class="form-control" [(ngModel)]="asset.category" name="category">
+                     <option *ngFor="let o of options('category')" [value]="o.value">{{o.label}}</option>
+                   </select>
                  </div>
                  <div class="form-group">
                    <label for="description">Description</label>
@@ -43,7 +45,9 @@ import { EnumService } from './enum.service';
                  </div>
                  <div class="form-group">
                    <label for="condition">Condition</label>
-                   <input type="text" class="form-control" required [(ngModel)]="asset.condition" name="condition" />
+                   <select class="form-control" [(ngModel)]="asset.condition" name="condition">
+                     <option *ngFor="let o of options('condition')" [value]="o.value">{{o.label}}</option>
+                   </select>
                  </div>
                </div>
                <div class="col-lg-4">
@@ -61,20 +65,28 @@ import { EnumService } from './enum.service';
                  </div>
                  <div class="form-group">
                    <label for="calibration_type">Calibration Type</label>
-                   <input type="text" class="form-control" required [(ngModel)]="asset.calibration_type" name="calibration_type" />
+                   <select class="form-control" [(ngModel)]="asset.calibration_type" name="calibration_type">
+                     <option *ngFor="let o of options('calibration_type')" [value]="o.value">{{o.label}}</option>
+                   </select>
                  </div>
                  <div class="form-group">
                    <label for="location">Location</label>
-                   <input type="text" class="form-control" required [(ngModel)]="asset.location" name="location" />
+                   <select class="form-control" [(ngModel)]="asset.location" name="location">
+                     <option *ngFor="let o of options('location')" [value]="o.value">{{o.label}}</option>
+                   </select>
                  </div>
                  <div class="form-group">
                    <div class="col-lg-6 my-input-group">
                      <label for="rack">Rack</label>
-                     <input type="text" class="form-control" required [(ngModel)]="asset.rack" name="rack" />
+                     <select class="form-control" [(ngModel)]="asset.rack" name="rack">
+                       <option *ngFor="let o of options('rack')" [value]="o.value">{{o.label}}</option>
+                     </select>
                    </div>
                    <div class="col-lg-6 my-input-group">
                      <label for="shelf">Shelf</label>
-                     <input type="text" class="form-control" required [(ngModel)]="asset.shelf" name="shelf" />
+                     <select class="form-control" [(ngModel)]="asset.shelf" name="shelf">
+                       <option *ngFor="let o of options('shelf')" [value]="o.value">{{o.label}}</option>
+                     </select>
                    </div>
                  </div>
                </div>
@@ -119,11 +131,7 @@ export class AssetComponent {
   constructor(private enumService: EnumService) {}
 
   options(field: string) {
-    let options = [];
-    for (let e of this.enumService.get(field).values) {
-      options[e.order] = {value: e.value, label: e.label};
-    }
-    return options;
+    return this.enumService.get(field).options();
   }
 
   onImgClick() {
