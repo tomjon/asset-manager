@@ -1,5 +1,6 @@
 import { Component, Input, Output, ViewChild, EventEmitter } from '@angular/core';
 import { EnumService } from './enum.service';
+import { ASSET_FIELDS } from './field-map';
 
 /**
  * The component makes a copy of the input asset.
@@ -18,92 +19,27 @@ import { EnumService } from './enum.service';
 @Component({
   selector: 'bams-asset',
   template: `<form role="form" #form="ngForm">
-               <div class="col-lg-4">
-                 <div class="form-group">
-                   <label for="item">Item</label>
-                   <input type="text" class="form-control" required [(ngModel)]="asset.item" name="item" />
-                 </div>
-                 <div class="form-group">
-                   <label for="category">Category</label>
-                   <select class="form-control" [(ngModel)]="asset.category" name="category">
-                     <option *ngFor="let o of options('category')" [value]="o.value">{{o.label}}</option>
-                   </select>
-                 </div>
-                 <div class="form-group">
-                   <label for="description">Description</label>
-                   <textarea class="form-control" required [(ngModel)]="asset.description" name="description" rows="5"></textarea>
-                 </div>
-                 <div class="form-group">
-                   <div class="col-lg-6 my-input-group">
-                     <label for="start_freq">Start Freq (MHz)</label>
-                     <input type="text" class="form-control" required [(ngModel)]="asset.start_freq" name="start_freq" />
-                   </div>
-                   <div class="col-lg-6 my-input-group">
-                     <label for="stop_freq">Stop Freq (MHz)</label>
-                     <input type="text" class="form-control" required [(ngModel)]="asset.stop_freq" name="stop_freq" />
-                   </div>
-                 </div>
-                 <div class="form-group">
-                   <label for="condition">Condition</label>
-                   <select class="form-control" [(ngModel)]="asset.condition" name="condition">
-                     <option *ngFor="let o of options('condition')" [value]="o.value">{{o.label}}</option>
-                   </select>
-                 </div>
-               </div>
-               <div class="col-lg-4">
-                 <div class="form-group">
-                   <label for="id_number">ID Number</label>
-                   <input type="text" class="form-control" required [(ngModel)]="asset.id_number" name="id_number" />
-                 </div>
-                 <div class="form-group">
-                   <label for="calibration_date">Last Calibration</label>
-                   <input type="date" class="form-control" required [(ngModel)]="asset.calibration_date" name="calibration_date" />
-                 </div>
-                 <div class="form-group">
-                   <label for="calibration_due">Calibration Date</label>
-                   <input type="date" class="form-control" required [(ngModel)]="asset.calibration_due" name="calibration_due" />
-                 </div>
-                 <div class="form-group">
-                   <label for="calibration_type">Calibration Type</label>
-                   <select class="form-control" [(ngModel)]="asset.calibration_type" name="calibration_type">
-                     <option *ngFor="let o of options('calibration_type')" [value]="o.value">{{o.label}}</option>
-                   </select>
-                 </div>
-                 <div class="form-group">
-                   <label for="location">Location</label>
-                   <select class="form-control" [(ngModel)]="asset.location" name="location">
-                     <option *ngFor="let o of options('location')" [value]="o.value">{{o.label}}</option>
-                   </select>
-                 </div>
-                 <div class="form-group">
-                   <div class="col-lg-6 my-input-group">
-                     <label for="rack">Rack</label>
-                     <select class="form-control" [(ngModel)]="asset.rack" name="rack">
-                       <option *ngFor="let o of options('rack')" [value]="o.value">{{o.label}}</option>
-                     </select>
-                   </div>
-                   <div class="col-lg-6 my-input-group">
-                     <label for="shelf">Shelf</label>
-                     <select class="form-control" [(ngModel)]="asset.shelf" name="shelf">
-                       <option *ngFor="let o of options('shelf')" [value]="o.value">{{o.label}}</option>
-                     </select>
+               <div *ngFor="let col of inputs" class="col-lg-4">
+                 <div *ngFor="let group of col" class="form-group">
+                   <div *ngFor="let input of group" [ngClass]="{'col-lg-6': group.length > 1, 'my-input-group': group.length > 1}">
+                     <div *ngIf="input.type != 'area' && input.type != 'enum'">
+                       <label for="input.field">{{input.label}}</label>
+                       <input [type]="input.type" class="form-control" required [(ngModel)]="asset[input.field]" [name]="input.field" />
+                     </div>
+                     <div *ngIf="input.type == 'area'">
+                       <label for="input.field">{{input.label}}</label>
+                       <textarea class="form-control" required [(ngModel)]="asset[input.field]" [name]="input.field" rows="3"></textarea>
+                     </div>
+                     <div *ngIf="input.type == 'enum'">
+                       <label for="input.field">{{input.label}}</label>
+                       <select class="form-control" [(ngModel)]="asset[input.field]" [name]="input.field">
+                         <option *ngFor="let o of options(input.field)" [value]="o.value">{{o.label}}</option>
+                       </select>
+                     </div>
                    </div>
                  </div>
                </div>
                <div class="col-lg-4">
-                 <div class="form-group">
-                   <div class="col-lg-6 my-input-group">
-                     <label for="manufacturer">Manufacturer</label>
-                     <select class="form-control" [(ngModel)]="asset.manufacturer" name="manufacturer">
-                       <option *ngFor="let o of options('manufacturer')" [value]="o.value">{{o.label}}</option>
-                     </select>
-                   </div>
-                   <div class="col-lg-6 my-input-group">
-                     <label for="model">Model</label>
-                     <input type="text" class="form-control" required [(ngModel)]="asset.model" name="model" />
-                   </div>
-                 </div>
-                 <p>
                  <img *ngFor="let src of asset.file; let i = index" [hidden]="file_index != i" (click)="onImgClick()" src="/file/{{asset.id}}/{{src}}" />
                  <p>
                  <button class="btn" (click)="onReset()" [disabled]="form.pristine">Reset</button>
@@ -112,14 +48,16 @@ import { EnumService } from './enum.service';
                  <button class="btn" (click)="onAdd()">Add New</button>
                </div>
              </form>`,
-  styles: ['.my-input-group { padding: 0 5px 5px 0 }',
+  styles: ['.my-input-group { padding: 0 5px 10px 0 }',
            '.my-input-group:last-child { padding-right: 0 }',
            'textarea { resize: none }']
 })
 export class AssetComponent {
+  private inputs: any[] = ASSET_FIELDS;
   private original: any;
   private asset: any = {};
   private file_index: number = 0;
+
   @ViewChild('form') form;
   @Output('event') event = new EventEmitter<any>();
 

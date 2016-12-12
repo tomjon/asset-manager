@@ -4,7 +4,9 @@ import { DataService } from './data.service';
 import { EnumService } from './enum.service';
 import { TableComponent } from './table.component';
 import { AssetComponent } from './asset.component';
+import { FilterComponent } from './filter.component';
 import { Results, PAGE_SIZE } from './results';
+import { FieldMap } from './field-map';
 
 // Add the RxJS Observable operators we need in this app
 import './rxjs-operators';
@@ -22,7 +24,7 @@ import './rxjs-operators';
                </div>
                <div class="row">
                  <div *ngFor="let filter of filters">
-                   <h3>{{filter.field}}</h3>
+                   <bams-filter [filter]="filter" (click)="onFilterClick(filter)"></bams-filter>
                  </div>
                </div>
                <div class="row">
@@ -31,10 +33,11 @@ import './rxjs-operators';
                  </div>
                </div>
              </div>`,
-  directives: [TableComponent, AssetComponent],
+  directives: [TableComponent, AssetComponent, FilterComponent],
   providers: [HTTP_PROVIDERS, DataService, EnumService]
 })
 export class AppComponent {
+  fieldMap: FieldMap = new FieldMap();
   assets: Results = new Results();
   asset: any = {};
   filters: any = [];
@@ -76,6 +79,10 @@ export class AppComponent {
   }
 
   onFilter(field: string) {
-    this.filters.push({field: field});
+    this.filters.push(Object.assign({}, this.fieldMap.get(field)));
+  }
+
+  onFilterClick(filter: any) {
+    this.filters.splice(this.filters.indexOf(filter), 1);
   }
 }

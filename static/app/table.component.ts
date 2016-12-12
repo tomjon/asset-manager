@@ -1,45 +1,20 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { Results } from './results';
 import { EnumPipe } from './enum.pipe';
+import { TABLE_FIELDS } from './field-map';
 
 @Component({
   selector: 'bams-table',
   template: `<table>
                <tr>
-                 <th (click)="onFilter('item')">Item</th>
-                 <th (click)="onFilter('id_number')">ID Number</th>
-                 <th (click)="onFilter('manufacturer')">Manufacturer</th>
-                 <th (click)="onFilter('model')">Model</th>
-                 <th (click)="onFilter('serial')">Serial Number</th>
-                 <th (click)="onFilter('category')">Category</th>
-                 <th (click)="onFilter('start_freq')">Start Freq (MHz)</th>
-                 <th (click)="onFilter('stop_freq')">Stop Freq (MHz)</th>
-                 <th (click)="onFilter('calibration_date')">Last Calibration</th>
-                 <th (click)="onFilter('calibration_due')">Calibration Date</th>
-                 <th (click)="onFilter('calibration_type')">Calibration Type</th>
-                 <th (click)="onFilter('location')">Location</th>
-                 <th (click)="onFilter('rack')">Rack</th>
-                 <th (click)="onFilter('shelf')">Shelf</th>
-                 <th (click)="onFilter('owner')">Owner</th>
-                 <th (click)="onFilter('condition')">Condition</th>
+                 <th *ngFor="let input of inputs" (click)="onFilter(input.field)">{{input.label}}</th>
                </tr>
                <tr *ngFor="let asset of results.assets" (click)="onRowClick(asset)" [ngClass]="{selected: selected == asset}">
-                 <td>{{asset.item}}</td>
-                 <td>{{asset.id_number}}</td>
-                 <td>{{asset.manufacturer | enum:'manufacturer'}}</td>
-                 <td>{{asset.model}}</td>
-                 <td>{{asset.serial}}</td>
-                 <td>{{asset.category | enum:'category'}}</td>
-                 <td>{{asset.start_freq}}</td>
-                 <td>{{asset.stop_freq}}</td>
-                 <td>{{asset.calibration_date | date:'dd/MM/yyyy'}}</td>
-                 <td>{{asset.calibration_due | date:'dd/MM/yyyy'}}</td>
-                 <td>{{asset.calibration_type | enum:'calibration_type'}}</td>
-                 <td>{{asset.location | enum:'location'}}</td>
-                 <td>{{asset.rack | enum:'rack'}}</td>
-                 <td>{{asset.shelf | enum:'shelf'}}</td>
-                 <td>{{asset.owner | enum:'owner'}}</td>
-                 <td>{{asset.condition | enum:'condition'}}</td>
+                 <td *ngFor="let input of inputs">
+                   <span *ngIf="input.type != 'date' && input.type != 'enum'">{{asset[input.field]}}</span>
+                   <span *ngIf="input.type == 'date'">{{asset[input.field] | date:'dd/MM/yyyy'}}</span>
+                   <span *ngIf="input.type == 'enum'">{{asset[input.field] | enum:input.field}}</span>
+                 </td>
                </tr>
              </table>
              <button class="btn" [disabled]="results.prev == undefined"
@@ -54,6 +29,7 @@ import { EnumPipe } from './enum.pipe';
   pipes: [EnumPipe]
 })
 export class TableComponent {
+  inputs: any[] = TABLE_FIELDS;
   selected: any;
 
   @Input('assets') results: Results;
