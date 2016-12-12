@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { Results } from './results';
 import { EnumPipe } from './enum.pipe';
-import { TABLE_FIELDS } from './field-map';
+import { FieldMap } from './field-map';
 
 @Component({
   selector: 'bams-table',
@@ -9,10 +9,10 @@ import { TABLE_FIELDS } from './field-map';
                <div class="row">
                  <table class="col-lg-12">
                    <tr>
-                     <th *ngFor="let input of inputs" (click)="onFilter(input.field)">{{input.label}}</th>
+                     <th *ngFor="let input of fieldMap.tableInputs" (click)="onFilter(input.field)">{{input.label}}</th>
                    </tr>
                    <tr *ngFor="let asset of results.assets" (click)="onRowClick(asset)" [ngClass]="{selected: selected == asset}">
-                     <td *ngFor="let input of inputs">
+                     <td *ngFor="let input of fieldMap.tableInputs">
                        <span *ngIf="input.type != 'date' && input.type != 'enum'">{{asset[input.field]}}</span>
                        <span *ngIf="input.type == 'date'">{{asset[input.field] | date:'dd/MM/yyyy'}}</span>
                        <span *ngIf="input.type == 'enum'">{{asset[input.field] | enum:input.field}}</span>
@@ -33,7 +33,6 @@ import { TABLE_FIELDS } from './field-map';
   pipes: [EnumPipe]
 })
 export class TableComponent {
-  inputs: any[] = TABLE_FIELDS;
   selected: any;
 
   @Input('assets') results: Results;
@@ -41,6 +40,8 @@ export class TableComponent {
   @Output('asset') assetEmitter = new EventEmitter<any>();
   @Output('search') searchEmitter = new EventEmitter<any>();
   @Output('filter') filterEmitter = new EventEmitter<any>();
+
+  constructor(private fieldMap: FieldMap) {}
 
   onRowClick(asset: any) {
     this.selected = this.selected != asset ? asset : undefined;

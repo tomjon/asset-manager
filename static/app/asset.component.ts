@@ -1,6 +1,6 @@
 import { Component, Input, Output, ViewChild, EventEmitter } from '@angular/core';
 import { EnumService } from './enum.service';
-import { ASSET_FIELDS } from './field-map';
+import { FieldMap } from './field-map';
 
 /**
  * The component makes a copy of the input asset.
@@ -20,7 +20,7 @@ import { ASSET_FIELDS } from './field-map';
   selector: 'bams-asset',
   template: `<form role="form" #form="ngForm" class="container-fluid">
                <div class="row">
-                 <div *ngFor="let col of inputs" class="col-lg-4">
+                 <div *ngFor="let col of fieldMap.assetInputs" class="col-lg-4">
                    <div *ngFor="let group of col" class="form-group">
                      <div *ngFor="let input of group" [ngClass]="{'col-lg-6': group.length > 1, 'my-input-group': group.length > 1}">
                        <div *ngIf="input.type != 'area' && input.type != 'enum'">
@@ -52,11 +52,9 @@ import { ASSET_FIELDS } from './field-map';
              </form>`,
   styles: ['.my-input-group { padding: 0 5px 10px 0 }',
            '.my-input-group:last-child { padding-right: 0 }',
-           'textarea { resize: none }'
-          ]
+           'textarea { resize: none }']
 })
 export class AssetComponent {
-  private inputs: any[] = ASSET_FIELDS;
   private original: any;
   private asset: any = {};
   private file_index: number = 0;
@@ -69,7 +67,7 @@ export class AssetComponent {
     this.asset = Object.assign({}, this.original);
   }
 
-  constructor(private enumService: EnumService) {}
+  constructor(private fieldMap: FieldMap, private enumService: EnumService) {}
 
   options(field: string) {
     return this.enumService.get(field).options();

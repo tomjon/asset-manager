@@ -16,7 +16,7 @@ export class Results {
     let current: number = Math.floor(this.start / PAGE_SIZE);
     let first: number = current - 5;
     let last: number = current + 4;
-    let max: number = Math.floor(this.total / PAGE_SIZE);
+    let max: number = Math.floor((this.total - 1)/ PAGE_SIZE);
     if (first < 0) {
       last = Math.min(last - first, max);
       first = 0;

@@ -37,12 +37,18 @@ export class DataService {
     return doc;
   }
 
-  search(textFilter: string, start: number, rows: number): Observable<Results> {
+  search(textFilter: string, start: number, rows: number, filters: any[]): Observable<Results> {
     let params: URLSearchParams = new URLSearchParams();
     params.set('q', textFilter);
     params.set('start', start.toString());
     params.set('rows', (rows + 1).toString());
-    return this.http.get(`/search`, {search: params})
+    let path = '';
+    for (let filter of filters) {
+      if (filter.field != undefined && filter.value != undefined) {
+        path += `/${filter.field}:${filter.value}`;
+      }
+    }
+    return this.http.get(`/search${path}`, {search: params})
                     .map(res => {
                       let response = res.json().response;
                       let start = response.start;

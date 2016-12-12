@@ -20,7 +20,7 @@ import './rxjs-operators';
                    <bams-asset [asset]="asset" (event)="onEvent($event)"></bams-asset>
                    <div class="row">
                      <div *ngFor="let filter of filters">
-                       <bams-filter [filter]="filter" (click)="onFilterClick(filter)"></bams-filter>
+                       <bams-filter [filter]="filter" (event)="onFilterEvent(filter, $event)"></bams-filter>
                      </div>
                    </div>
                    <bams-table [assets]="assets" (asset)="onAsset($event)" (search)="onSearch($event)" (filter)="onFilter($event)"></bams-table>
@@ -28,15 +28,14 @@ import './rxjs-operators';
                </div>
              </div>`,
   directives: [TableComponent, AssetComponent, FilterComponent],
-  providers: [HTTP_PROVIDERS, DataService, EnumService]
+  providers: [HTTP_PROVIDERS, DataService, EnumService, FieldMap]
 })
 export class AppComponent {
-  fieldMap: FieldMap = new FieldMap();
   assets: Results = new Results();
   asset: any = {};
   filters: any = [];
 
-  constructor(private dataService: DataService) { }
+  constructor(private dataService: DataService, private fieldMap: FieldMap) { }
 
   ngOnInit() {
     //this.dataService.getCurrentUser()
@@ -68,15 +67,18 @@ export class AppComponent {
   }
 
   onSearch(event: any) {
-    this.dataService.search("*", event.start, PAGE_SIZE)
+    this.dataService.search("*", event.start, PAGE_SIZE, this.filters)
                     .subscribe(assets => this.assets = assets);
   }
 
   onFilter(field: string) {
-    this.filters.push(Object.assign({}, this.fieldMap.get(field)));
+    this.filters.push(this.fieldMap.get(field));
   }
 
-  onFilterClick(filter: any) {
-    this.filters.splice(this.filters.indexOf(filter), 1);
+  onFilterEvent(filter: any, event: any) {
+    if (event.close) {
+      this.filters.splice(this.filters.indexOf(filter), 1);
+    }
+    this.onSearch({start: 0});
   }
 }

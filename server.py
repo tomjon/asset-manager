@@ -62,12 +62,19 @@ def enums_endpoint():
 
 
 @application.route('/search')
-def search_endpoint():
+@application.route('/search/<path:path>')
+def search_endpoint(path=None):
     """ Perform a SOLR search.
     """
-    params = {'q': request.args.get('q', '*'),
-              'start': request.args.get('start', 0),
-              'rows': request.args.get('rows', 10)}
+    params = [('q', request.args.get('q', '*')),
+              ('start', request.args.get('start', 0)),
+              ('rows', request.args.get('rows', 10))]
+    if path is not None:
+        for field_value in path.split('/'):
+            if field_value.count(':') != 1:
+                return "Bad filter", 400
+            field, value = field_value.split(':')
+            params.append(('fq', '{0}:"{1}"'.format(field, value)))
     r = requests.get(SOLR_QUERY_URL, params=params)
     assert_status_code(r, httplib.OK)
     return Response(r.text, mimetype=r.headers['content-type'])
