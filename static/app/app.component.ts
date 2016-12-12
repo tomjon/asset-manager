@@ -17,18 +17,12 @@ import './rxjs-operators';
                <div class="row">
                  <div class="col-lg-12">
                    <h1><img src="/static/ofcom.gif"/> Baldock Asset Management System</h1>
-                 </div>
-               </div>
-               <div class="row">
-                 <bams-asset [asset]="asset" (event)="onEvent($event)"></bams-asset>
-               </div>
-               <div class="row">
-                 <div *ngFor="let filter of filters">
-                   <bams-filter [filter]="filter" (click)="onFilterClick(filter)"></bams-filter>
-                 </div>
-               </div>
-               <div class="row">
-                 <div class="col-lg-12">
+                   <bams-asset [asset]="asset" (event)="onEvent($event)"></bams-asset>
+                   <div class="row">
+                     <div *ngFor="let filter of filters">
+                       <bams-filter [filter]="filter" (click)="onFilterClick(filter)"></bams-filter>
+                     </div>
+                   </div>
                    <bams-table [assets]="assets" (asset)="onAsset($event)" (search)="onSearch($event)" (filter)="onFilter($event)"></bams-table>
                  </div>
                </div>

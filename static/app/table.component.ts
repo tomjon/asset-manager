@@ -5,26 +5,30 @@ import { TABLE_FIELDS } from './field-map';
 
 @Component({
   selector: 'bams-table',
-  template: `<table>
-               <tr>
-                 <th *ngFor="let input of inputs" (click)="onFilter(input.field)">{{input.label}}</th>
-               </tr>
-               <tr *ngFor="let asset of results.assets" (click)="onRowClick(asset)" [ngClass]="{selected: selected == asset}">
-                 <td *ngFor="let input of inputs">
-                   <span *ngIf="input.type != 'date' && input.type != 'enum'">{{asset[input.field]}}</span>
-                   <span *ngIf="input.type == 'date'">{{asset[input.field] | date:'dd/MM/yyyy'}}</span>
-                   <span *ngIf="input.type == 'enum'">{{asset[input.field] | enum:input.field}}</span>
-                 </td>
-               </tr>
-             </table>
-             <button class="btn" [disabled]="results.prev == undefined"
-                     (click)="onNavigate(results.prev)">&lt;&lt; Previous</button>
-             <button *ngFor="let page of results.pages()"
-                     [ngClass]="{btn: true, selected: page.start == undefined}"
-                     [disabled]="page.start == undefined"
-                     (click)="onNavigate(page.start)">{{page.label}}</button>
-             <button class="btn" [disabled]="results.next == undefined"
-                     (click)="onNavigate(results.next)">Next &gt;&gt;</button>`,
+  template: `<div class="container-fluid">
+               <div class="row">
+                 <table class="col-lg-12">
+                   <tr>
+                     <th *ngFor="let input of inputs" (click)="onFilter(input.field)">{{input.label}}</th>
+                   </tr>
+                   <tr *ngFor="let asset of results.assets" (click)="onRowClick(asset)" [ngClass]="{selected: selected == asset}">
+                     <td *ngFor="let input of inputs">
+                       <span *ngIf="input.type != 'date' && input.type != 'enum'">{{asset[input.field]}}</span>
+                       <span *ngIf="input.type == 'date'">{{asset[input.field] | date:'dd/MM/yyyy'}}</span>
+                       <span *ngIf="input.type == 'enum'">{{asset[input.field] | enum:input.field}}</span>
+                     </td>
+                   </tr>
+                 </table>
+                 <button class="btn" [disabled]="results.prev == undefined"
+                         (click)="onNavigate(results.prev)">&lt;&lt; Previous</button>
+                 <button *ngFor="let page of results.pages()"
+                         [ngClass]="{btn: true, selected: page.start == undefined}"
+                         [disabled]="page.start == undefined"
+                         (click)="onNavigate(page.start)">{{page.label}}</button>
+                 <button class="btn" [disabled]="results.next == undefined"
+                         (click)="onNavigate(results.next)">Next &gt;&gt;</button>
+               </div>
+             </div>`,
   styles: ['.selected { background: lightblue }'],
   pipes: [EnumPipe]
 })

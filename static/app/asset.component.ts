@@ -18,39 +18,42 @@ import { ASSET_FIELDS } from './field-map';
  */
 @Component({
   selector: 'bams-asset',
-  template: `<form role="form" #form="ngForm">
-               <div *ngFor="let col of inputs" class="col-lg-4">
-                 <div *ngFor="let group of col" class="form-group">
-                   <div *ngFor="let input of group" [ngClass]="{'col-lg-6': group.length > 1, 'my-input-group': group.length > 1}">
-                     <div *ngIf="input.type != 'area' && input.type != 'enum'">
-                       <label for="input.field">{{input.label}}</label>
-                       <input [type]="input.type" class="form-control" required [(ngModel)]="asset[input.field]" [name]="input.field" />
-                     </div>
-                     <div *ngIf="input.type == 'area'">
-                       <label for="input.field">{{input.label}}</label>
-                       <textarea class="form-control" required [(ngModel)]="asset[input.field]" [name]="input.field" rows="3"></textarea>
-                     </div>
-                     <div *ngIf="input.type == 'enum'">
-                       <label for="input.field">{{input.label}}</label>
-                       <select class="form-control" [(ngModel)]="asset[input.field]" [name]="input.field">
-                         <option *ngFor="let o of options(input.field)" [value]="o.value">{{o.label}}</option>
-                       </select>
+  template: `<form role="form" #form="ngForm" class="container-fluid">
+               <div class="row">
+                 <div *ngFor="let col of inputs" class="col-lg-4">
+                   <div *ngFor="let group of col" class="form-group">
+                     <div *ngFor="let input of group" [ngClass]="{'col-lg-6': group.length > 1, 'my-input-group': group.length > 1}">
+                       <div *ngIf="input.type != 'area' && input.type != 'enum'">
+                         <label for="input.field">{{input.label}}</label>
+                         <input [type]="input.type" class="form-control" required [(ngModel)]="asset[input.field]" [name]="input.field" />
+                       </div>
+                       <div *ngIf="input.type == 'area'">
+                         <label for="input.field">{{input.label}}</label>
+                         <textarea class="form-control" required [(ngModel)]="asset[input.field]" [name]="input.field" rows="3"></textarea>
+                       </div>
+                       <div *ngIf="input.type == 'enum'">
+                         <label for="input.field">{{input.label}}</label>
+                         <select class="form-control" [(ngModel)]="asset[input.field]" [name]="input.field">
+                           <option *ngFor="let o of options(input.field)" [value]="o.value">{{o.label}}</option>
+                         </select>
+                       </div>
                      </div>
                    </div>
                  </div>
-               </div>
-               <div class="col-lg-4">
-                 <img *ngFor="let src of asset.file; let i = index" [hidden]="file_index != i" (click)="onImgClick()" src="/file/{{asset.id}}/{{src}}" />
-                 <p>
-                 <button class="btn" (click)="onReset()" [disabled]="form.pristine">Reset</button>
-                 <button class="btn" (click)="onSave()" [disabled]="form.pristine || original == undefined">Save</button>
-                 <button class="btn" (click)="onDelete()" [disabled]="original == undefined">Delete</button>
-                 <button class="btn" (click)="onAdd()">Add New</button>
+                 <div class="col-lg-4">
+                   <img *ngFor="let src of asset.file; let i = index" [hidden]="file_index != i" (click)="onImgClick()" src="/file/{{asset.id}}/{{src}}" />
+                   <p>
+                   <button class="btn" (click)="onReset()" [disabled]="form.pristine">Reset</button>
+                   <button class="btn" (click)="onSave()" [disabled]="form.pristine || original == undefined">Save</button>
+                   <button class="btn" (click)="onDelete()" [disabled]="original == undefined">Delete</button>
+                   <button class="btn" (click)="onAdd()">Add New</button>
+                 </div>
                </div>
              </form>`,
   styles: ['.my-input-group { padding: 0 5px 10px 0 }',
            '.my-input-group:last-child { padding-right: 0 }',
-           'textarea { resize: none }']
+           'textarea { resize: none }'
+          ]
 })
 export class AssetComponent {
   private inputs: any[] = ASSET_FIELDS;
