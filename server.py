@@ -6,7 +6,7 @@ import os
 import uuid
 import requests
 import httplib
-from flask import Flask, redirect, request, Response, send_file, send_from_directory
+from flask import Flask, redirect, request, Response, send_file
 
 application = Flask(__name__) # pylint: disable=invalid-name
 
@@ -105,7 +105,8 @@ def asset_endpoint(asset_id=None):
 def file_endpoint(asset_id, filename):
    """ Emit a file.
    """
-   return send_from_directory(os.path.join('files', asset_id), filename)
+   path = os.path.join('files', asset_id, filename)
+   return send_file(path)
 
 
 if __name__ == '__main__':
