@@ -18,7 +18,7 @@ import { FieldMap } from './field-map';
                        <span *ngIf="input.type == 'enum'">{{asset[input.field] | enum:input.field}}</span>
                      </td>
                    </tr>
-                 </table>
+                 </table><!--
                  <button class="btn" [disabled]="results.prev == undefined"
                          (click)="onNavigate(results.prev)">&lt;&lt; Previous</button>
                  <button *ngFor="let page of results.pages()"
@@ -26,10 +26,17 @@ import { FieldMap } from './field-map';
                          [disabled]="page.start == undefined"
                          (click)="onNavigate(page.start)">{{page.label}}</button>
                  <button class="btn" [disabled]="results.next == undefined"
-                         (click)="onNavigate(results.next)">Next &gt;&gt;</button>
+                         (click)="onNavigate(results.next)">Next &gt;&gt;</button>-->
+                <nav class="col-lg-12">
+                  <ul class="pagination">
+                     <li [ngClass]="{disabled: results.prev == undefined}" (click)="onNavigate(results.prev)"><a>&laquo;</a></li>
+                     <li *ngFor="let page of results.pages()" [ngClass]="{active: page.start == undefined}" (click)="onNavigate(page.start)"><a>{{page.label}}</a></li>
+                     <li [ngClass]="{disabled: results.next == undefined}" (click)="onNavigate(results.next)"><a>&raquo;</a></li>
+                   </ul>
+                 </nav>
                </div>
              </div>`,
-  styles: ['.selected { background: lightblue }'],
+  styles: ['li { cursor: pointer }'],
   pipes: [EnumPipe]
 })
 export class TableComponent {
@@ -49,7 +56,7 @@ export class TableComponent {
   }
 
   onNavigate(start: number) {
-    this.searchEmitter.emit({start: start});
+    if (start != undefined) this.searchEmitter.emit({start: start});
   }
 
   onFilter(field: string) {
