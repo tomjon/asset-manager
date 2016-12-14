@@ -18,6 +18,8 @@ var MODEL = {'field': 'model', 'label': 'Model', 'type': 'text'};
 var SERIAL_NUMBER = {'field': 'serial', 'label': 'Serial Number', 'type': 'text'};
 var OWNER = {'field': 'owner', 'label': 'Owner', 'type': 'text'};
 
+var FREQ_RANGE = {'label': 'Freq (MHz)', 'type': 'range', 'range': [START_FREQ, STOP_FREQ]};
+
 @Injectable()
 export class FieldMap {
   private map: any = {};
@@ -34,8 +36,8 @@ export class FieldMap {
   ];
 
   public tableInputs: any[] = [
-    ITEM, ID_NUMBER, MANUFACTURER, MODEL, SERIAL_NUMBER, CATEGORY, START_FREQ, STOP_FREQ,
-    CALIBRATION_DATE, CALIBRATION_DUE, CALIBRATION_TYPE, LOCATION, RACK, SHELF, OWNER, CONDITION
+    ITEM, ID_NUMBER, MANUFACTURER, MODEL, SERIAL_NUMBER, CATEGORY, FREQ_RANGE,
+    CALIBRATION_DATE, CALIBRATION_DUE, CALIBRATION_TYPE, OWNER, CONDITION
   ];
 
   constructor() {
