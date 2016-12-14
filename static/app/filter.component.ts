@@ -6,23 +6,18 @@ import { FieldMap } from './field-map';
 @Component({
   selector: 'bams-filter',
   template: `<div class="panel panel-default filter">
-               <b *ngIf="! editField" (click)="onField(true)">{{filter.label}}</b>
-               <select *ngIf="editField" [(ngModel)]="filter.field" (ngModelChange)="onField(false)">
-                 <option *ngFor="let input of fieldMap.allInputs" [value]="input.field">{{input.label}}</option>
-               </select>
-               <i *ngIf="! editValue && filter.value != undefined" (click)="onValue(true)">{{valueLabel}}</i>
-               <select *ngIf="filter.type == 'enum' && (editValue || filter.value == undefined)" [(ngModel)]="filter.value" (ngModelChange)="onValue(false)">
+               <b>{{filter.label}}</b>
+               <select *ngIf="filter.type == 'enum'" [(ngModel)]="filter.value" (ngModelChange)="eventEmitter.emit({})">
+                 <option value="">&lt;any&gt;</option>
+                 <option value="-">&lt;none&gt;</option>
                  <option *ngFor="let option of options(filter.field)" [value]="option.value">{{option.label}}</option>
                </select>
-               <input *ngIf="filter.type == 'text' && (editValue || filter.value == undefined)" type="text" [(ngModel)]="filter.value" (change)="onValue(false)"/>
+               <input *ngIf="filter.type == 'text'" type="text" [(ngModel)]="filter.value" (ngModelChange)="eventEmitter.emit({})"/>
                <span (click)="eventEmitter.emit({close:true})" class="glyphicon glyphicon-remove-circle"></span>
              </div>`,
   styles: ['.filter { background: lightgreen; display: inline; padding: 5px; margin: 5px }']
 })
 export class FilterComponent {
-  editField: boolean = false;
-  editValue: boolean = false;
-
   @Input('filter') filter: any;
   @Output('event') eventEmitter: EventEmitter<any> = new EventEmitter();
 
@@ -30,26 +25,5 @@ export class FilterComponent {
 
   options(field: string) {
     return this.enumService.get(field).options(false);
-  }
-
-  onField(edit: boolean) {
-    this.editField = edit;
-    if (! edit) {
-      Object.assign(this.filter, this.fieldMap.get(this.filter.field));
-      delete this.filter.value;
-      this.eventEmitter.emit({});
-    }
-  }
-
-  onValue(edit: boolean) {
-    this.editValue = edit;
-    if (! edit) this.eventEmitter.emit({});
-  }
-
-  get valueLabel(): string {
-    if (this.filter.type == 'enum') {
-      return this.enumService.get(this.filter.field).label(this.filter.value);
-    }
-    return this.filter.value;
   }
 }

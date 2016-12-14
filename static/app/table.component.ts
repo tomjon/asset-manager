@@ -8,19 +8,33 @@ import { FieldMap } from './field-map';
   template: `<div class="container-fluid">
                <div class="row">
                  <table class="col-lg-12 table table-responsive">
-                   <tr>
-                     <th *ngFor="let input of fieldMap.tableInputs" (click)="onFilter(input.field)">{{input.label}}</th>
-                   </tr>
-                   <tr *ngFor="let asset of results.assets; let even = even" [ngClass]="{'bg-primary': selected == asset, 'bg-success': even && selected != asset}" (click)="onRowClick(asset)">
-                     <td *ngFor="let input of fieldMap.tableInputs">
-                       <span *ngIf="input.type != 'date' && input.type != 'enum'">{{asset[input.field]}}</span>
-                       <span *ngIf="input.type == 'date'">{{asset[input.field] | date:'dd/MM/yyyy'}}</span>
-                       <span *ngIf="input.type == 'enum'">{{asset[input.field] | enum:input.field}}</span>
-                       <span *ngIf="input.type == 'range'">{{rangeValue(input, asset)}}</span>
-                     </td>
-                   </tr>
+                   <thead>
+                     <tr>
+                       <th *ngFor="let input of fieldMap.tableInputs">
+                         {{input.label}}
+                         <div>
+                           <span class="glyphicon glyphicon-chevron-up" [ngClass]="{selected: order.asc == input.field, disabled: input.field == ''}" (click)="onOrder(input.field, true)"></span>
+                           <span class="glyphicon glyphicon-chevron-down" [ngClass]="{selected: order.desc == input.field, disabled: input.field == ''}" (click)="onOrder(input.field, false)"></span>
+                           <span class="glyphicon glyphicon-plus-sign" (click)="onFilter(input)"></span>
+                         </div>
+                       </th>
+                     </tr>
+                   </thead>
+                   <tbody>
+                     <tr *ngFor="let asset of results.assets; let even = even" [ngClass]="{'bg-primary': selected == asset, 'bg-success': even && selected != asset, 'normal': selected != asset}" (click)="onRowClick(asset)">
+                       <td *ngFor="let input of fieldMap.tableInputs">
+                         <span *ngIf="input.type != 'date' && input.type != 'enum'">{{asset[input.field]}}</span>
+                         <span *ngIf="input.type == 'date'">{{asset[input.field] | date:'dd/MM/yyyy'}}</span>
+                         <span *ngIf="input.type == 'enum'">{{asset[input.field] | enum:input.field}}</span>
+                         <span *ngIf="input.type == 'range'">{{rangeValue(input, asset)}}</span>
+                       </td>
+                     </tr>
+                     <tr *ngIf="results.assets.length == 0">
+                       <td colspan="100">No assets matching filters</td>
+                     </tr>
+                   </tbody>
                  </table>
-                 <nav class="col-lg-12">
+                 <nav *ngIf="results.assets.length > 0" class="col-lg-12">
                    <ul class="pagination">
                       <li class="disabled"><a>{{results.start + 1}} - {{results.start + results.assets.length}} of {{results.total}} assets</a></li>
                       <li [ngClass]="{disabled: results.prev == undefined}" (click)="onNavigate(results.prev)"><a>&laquo;</a></li>
@@ -30,17 +44,26 @@ import { FieldMap } from './field-map';
                   </nav>
                 </div>
               </div>`,
-  styles: ['li { cursor: pointer }', 'tr:hover { background: lightgrey }'],
+  styles: ['th { white-space: nowrap }',
+           'li { cursor: pointer }',
+           'ul li:first-child a { cursor: default }',
+           'tr.normal:hover { background: lightgrey }',
+           'thead .glyphicon:not(.disabled) { color: grey; cursor: pointer }',
+           'thead .glyphicon:hover:not(.disabled) { color: blue }',
+           'thead .glyphicon.selected { color: black }',
+           'thead .glyphicon.disabled { color: lightgrey }'],
   pipes: [EnumPipe]
 })
 export class TableComponent {
   selected: any;
+  order: any = {};
 
   @Input('assets') results: Results;
 
   @Output('asset') assetEmitter = new EventEmitter<any>();
   @Output('search') searchEmitter = new EventEmitter<any>();
   @Output('filter') filterEmitter = new EventEmitter<any>();
+  @Output('order') orderEmitter = new EventEmitter<any>();
 
   constructor(private fieldMap: FieldMap) {}
 
@@ -53,8 +76,16 @@ export class TableComponent {
     if (start != undefined) this.searchEmitter.emit({start: start});
   }
 
-  onFilter(field: string) {
-    this.filterEmitter.emit(field);
+  onFilter(input: any) {
+    this.filterEmitter.emit(input);
+  }
+
+  onOrder(field: string, asc: boolean) {
+    if (field == '') return;
+    let reset = this.order[asc ? 'asc' : 'desc'] == field;
+    this.order = {};
+    if (! reset) this.order[asc ? 'asc' : 'desc'] = field;
+    this.orderEmitter.emit(this.order);
   }
 
   rangeValue(input: any, asset: any): string {

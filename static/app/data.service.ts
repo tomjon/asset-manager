@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { Http, URLSearchParams, Headers } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
 import { Results } from './results';
-import { FIRST_OPTION } from './enum';
 
 export var DATETIME_RE = /^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\dZ$/;
 export var DATE_RE = /^\d\d\d\d-\d\d-\d\d$/;
@@ -38,18 +37,24 @@ export class DataService {
     return doc;
   }
 
-  search(textFilter: string, start: number, rows: number, filters: any[]): Observable<Results> {
+  search(textFilter: string, start: number, rows: number, filters: any[], order: any): Observable<Results> {
     let params: URLSearchParams = new URLSearchParams();
     params.set('q', textFilter);
     params.set('start', start.toString());
     params.set('rows', (rows + 1).toString());
+    if (order.asc) params.set('order', `>${order.asc}`);
+    if (order.desc) params.set('order', `<${order.desc}`);
     let path = '';
     for (let filter of filters) {
-      if (filter.field == undefined) continue;
-      if (filter.value != FIRST_OPTION.value) {
-        path += `/${filter.field}:${filter.value}`;
+      if (filter.field == undefined || filter.value == '') continue;
+      let field = filter.field;
+      if (filter.type == 'text') {
+        field = `__${field}`;
+      }
+      if (filter.value != '-') {
+        path += `/${field}:${filter.value}`;
       } else {
-        path += `/-${filter.field}:*`;
+        path += `/-${field}:*`;
       }
     }
     return this.http.get(`/search${path}`, {search: params})

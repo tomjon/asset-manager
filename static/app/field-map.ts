@@ -18,7 +18,7 @@ var MODEL = {'field': 'model', 'label': 'Model', 'type': 'text'};
 var SERIAL_NUMBER = {'field': 'serial', 'label': 'Serial Number', 'type': 'text'};
 var OWNER = {'field': 'owner', 'label': 'Owner', 'type': 'text'};
 
-var FREQ_RANGE = {'label': 'Freq (MHz)', 'type': 'range', 'range': [START_FREQ, STOP_FREQ]};
+var FREQ_RANGE = {'field': '', 'label': 'Freq (MHz)', 'type': 'range', 'range': [START_FREQ, STOP_FREQ]};
 
 @Injectable()
 export class FieldMap {

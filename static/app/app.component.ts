@@ -18,8 +18,8 @@ import './rxjs-operators';
                  <div class="col-lg-12">
                    <h1><img src="/static/ofcom.gif"/> Baldock Asset Management System</h1>
                    <bams-asset [asset]="asset" (event)="onEvent($event)"></bams-asset>
-                   <bams-filter *ngFor="let filter of filters" [filter]="filter" (event)="onFilterEvent(filter, $event)"></bams-filter>
-                   <bams-table [assets]="assets" (asset)="onAsset($event)" (search)="onSearch($event)" (filter)="onFilter($event)"></bams-table>
+                   Filters: <bams-filter *ngFor="let filter of filters" [filter]="filter" (event)="onFilterEvent(filter, $event)"></bams-filter>
+                   <bams-table [assets]="assets" (asset)="onAsset($event)" (search)="onSearch($event)" (filter)="onFilter($event)" (order)="onOrder($event)"></bams-table>
                  </div>
                </div>
              </div>`,
@@ -31,6 +31,7 @@ export class AppComponent {
   assets: Results = new Results();
   asset: any;
   filters: any = [];
+  order: any = {};
 
   constructor(private dataService: DataService, private fieldMap: FieldMap) { }
 
@@ -64,20 +65,24 @@ export class AppComponent {
   }
 
   onSearch(event: any) {
-    this.dataService.search("*", event.start, PAGE_SIZE, this.filters)
+    this.dataService.search("*", event.start, PAGE_SIZE, this.filters, this.order)
                     .subscribe(assets => this.assets = assets);
   }
 
-  onFilter(field: string) {
-    let filter = this.fieldMap.get(field);
-    if (filter.type == 'enum') filter.value = 0; // enums start with first option selected
-    this.filters.push(filter);
+  onFilter(input: any) {
+    if (input.type == 'enum') input.value = ''; // enums start with <any> selected
+    this.filters.push(input);
   }
 
   onFilterEvent(filter: any, event: any) {
     if (event.close) {
       this.filters.splice(this.filters.indexOf(filter), 1);
     }
+    this.onSearch({start: 0});
+  }
+
+  onOrder(order: any) {
+    this.order = order;
     this.onSearch({start: 0});
   }
 }

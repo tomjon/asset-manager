@@ -69,12 +69,21 @@ def search_endpoint(path=None):
     params = [('q', request.args.get('q', '*')),
               ('start', request.args.get('start', 0)),
               ('rows', request.args.get('rows', 10))]
+
+    order = request.args.get('order', None)
+    if order is not None:
+        if len(order) < 2 or order[0] not in '><':
+            return "Bad order", 400
+        params.append(('sort', '{0} {1}'.format(order[1:], 'asc' if order[0] == '>' else 'desc')))
+
     if path is not None:
         for field_value in path.split('/'):
             if field_value.count(':') != 1:
                 return "Bad filter", 400
             field, value = field_value.split(':')
-            params.append(('fq', '{0}:"{1}"'.format(field, value)))
+            if value != '*':
+                value = '"{0}"'.format(value)
+            params.append(('fq', '{0}:{1}'.format(field, value)))
     r = requests.get(SOLR_QUERY_URL, params=params)
     assert_status_code(r, httplib.OK)
     return Response(r.text, mimetype=r.headers['content-type'])
