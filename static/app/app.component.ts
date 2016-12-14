@@ -18,21 +18,18 @@ import './rxjs-operators';
                  <div class="col-lg-12">
                    <h1><img src="/static/ofcom.gif"/> Baldock Asset Management System</h1>
                    <bams-asset [asset]="asset" (event)="onEvent($event)"></bams-asset>
-                   <div class="row">
-                     <div *ngFor="let filter of filters">
-                       <bams-filter [filter]="filter" (event)="onFilterEvent(filter, $event)"></bams-filter>
-                     </div>
-                   </div>
+                   <bams-filter *ngFor="let filter of filters" [filter]="filter" (event)="onFilterEvent(filter, $event)"></bams-filter>
                    <bams-table [assets]="assets" (asset)="onAsset($event)" (search)="onSearch($event)" (filter)="onFilter($event)"></bams-table>
                  </div>
                </div>
              </div>`,
   directives: [TableComponent, AssetComponent, FilterComponent],
-  providers: [HTTP_PROVIDERS, DataService, EnumService, FieldMap]
+  providers: [HTTP_PROVIDERS, DataService, EnumService, FieldMap],
+  styles: ['bams-filter { display: inline-block }']
 })
 export class AppComponent {
   assets: Results = new Results();
-  asset: any = {};
+  asset: any;
   filters: any = [];
 
   constructor(private dataService: DataService, private fieldMap: FieldMap) { }
@@ -72,7 +69,9 @@ export class AppComponent {
   }
 
   onFilter(field: string) {
-    this.filters.push(this.fieldMap.get(field));
+    let filter = this.fieldMap.get(field);
+    if (filter.type == 'enum') filter.value = 0; // enums start with first option selected
+    this.filters.push(filter);
   }
 
   onFilterEvent(filter: any, event: any) {

@@ -1,10 +1,11 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { EnumService } from './enum.service';
+import { FIRST_OPTION } from './enum';
 import { FieldMap } from './field-map';
 
 @Component({
   selector: 'bams-filter',
-  template: `<div class="filter">
+  template: `<div class="panel panel-default filter">
                <b *ngIf="! editField" (click)="onField(true)">{{filter.label}}</b>
                <select *ngIf="editField" [(ngModel)]="filter.field" (ngModelChange)="onField(false)">
                  <option *ngFor="let input of fieldMap.allInputs" [value]="input.field">{{input.label}}</option>
@@ -14,9 +15,9 @@ import { FieldMap } from './field-map';
                  <option *ngFor="let option of options(filter.field)" [value]="option.value">{{option.label}}</option>
                </select>
                <input *ngIf="filter.type == 'text' && (editValue || filter.value == undefined)" type="text" [(ngModel)]="filter.value" (change)="onValue(false)"/>
-               <span (click)="eventEmitter.emit({close:true})">X</span>
+               <span (click)="eventEmitter.emit({close:true})" class="glyphicon glyphicon-remove-circle"></span>
              </div>`,
-  styles: ['.filter { background: green }']
+  styles: ['.filter { background: lightgreen; display: inline; padding: 5px; margin: 5px }']
 })
 export class FilterComponent {
   editField: boolean = false;
@@ -28,7 +29,7 @@ export class FilterComponent {
   constructor(private fieldMap: FieldMap, private enumService: EnumService) {}
 
   options(field: string) {
-    return this.enumService.get(field).options();
+    return this.enumService.get(field).options(false);
   }
 
   onField(edit: boolean) {

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Http, URLSearchParams, Headers } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
 import { Results } from './results';
+import { FIRST_OPTION } from './enum';
 
 export var DATETIME_RE = /^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\dZ$/;
 export var DATE_RE = /^\d\d\d\d-\d\d-\d\d$/;
@@ -44,8 +45,11 @@ export class DataService {
     params.set('rows', (rows + 1).toString());
     let path = '';
     for (let filter of filters) {
-      if (filter.field != undefined && filter.value != undefined) {
+      if (filter.field == undefined) continue;
+      if (filter.value != FIRST_OPTION.value) {
         path += `/${filter.field}:${filter.value}`;
+      } else {
+        path += `/-${filter.field}:*`;
       }
     }
     return this.http.get(`/search${path}`, {search: params})
@@ -92,8 +96,9 @@ export class DataService {
                     .catch(this.handleError);
   }
 
-  private handleError(error: any, caught: Observable<any>): Observable<any> {
+  private handleError(error: any/*, caught: Observable<any>*/): Observable<any> {
     console.log(`${error._body} - ${error.status} ${error.statusText}`);
-    return Observable.create(observer => { observer.error() });
+    //return Observable.create(observer => { observer.error() });
+    return Observable.throw(error);
   }
 }

@@ -63,7 +63,7 @@ export class AssetComponent {
   @Output('event') event = new EventEmitter<any>();
 
   @Input('asset') set _asset(asset: any) {
-    this.original = asset; // could be undefined if we are asked to clear the asset display fields
+    this.original = asset;
     this.asset = Object.assign({}, this.original);
   }
 

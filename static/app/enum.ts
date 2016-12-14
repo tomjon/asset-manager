@@ -1,5 +1,5 @@
-export var FIRST_OPTION = 'n/a';
-export var LAST_OPTION = 'Add new...';
+export var FIRST_OPTION = {value: undefined, label: 'n/a'};
+export var LAST_OPTION = {value: '#', label: 'Add new...'};
 
 export class EnumValue {
   public value: string;
@@ -17,18 +17,27 @@ export class Enum {
   }
 
   public label(value: string): string {
+    if (value == FIRST_OPTION.value) {
+      return FIRST_OPTION.label;
+    }
+    if (value == LAST_OPTION.value) {
+      return LAST_OPTION.label;
+    }
     for (let e of this.values) {
       if (e.value == value) return e.label;
     }
     return undefined;
   }
 
-  public options() {
-    let options = [{value: undefined, label: FIRST_OPTION}];
+  public options(add_extra: boolean=true) {
+    let options = [];
     for (let e of this.values) {
-      options[1 + e.order] = {value: e.value, label: e.label};
+      options[e.order] = {value: e.value, label: e.label};
     }
-    options.push({value: null, label: LAST_OPTION}); //FIXME can we use a constant object here instead of null?
+    if (add_extra) {
+      options.splice(0, 0, FIRST_OPTION);
+      options.push(LAST_OPTION);
+    }
     return options;
   }
 }
