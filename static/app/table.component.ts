@@ -15,7 +15,7 @@ import { FieldMap } from './field-map';
                          <div>
                            <span class="glyphicon glyphicon-chevron-up" [ngClass]="{selected: order.asc == input.field, disabled: input.field == ''}" (click)="onOrder(input.field, true)"></span>
                            <span class="glyphicon glyphicon-chevron-down" [ngClass]="{selected: order.desc == input.field, disabled: input.field == ''}" (click)="onOrder(input.field, false)"></span>
-                           <span class="glyphicon glyphicon-plus-sign" (click)="onFilter(input)"></span>
+                           <span class="glyphicon glyphicon-filter" (click)="onFilter(input)"></span>
                          </div>
                        </th>
                      </tr>

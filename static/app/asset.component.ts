@@ -18,46 +18,66 @@ import { FieldMap } from './field-map';
  */
 @Component({
   selector: 'bams-asset',
-  template: `<form role="form" #form="ngForm" class="container-fluid">
+  template: `<div class="container-fluid">
                <div class="row">
-                 <div *ngFor="let col of fieldMap.assetInputs" class="col-lg-4">
-                   <div *ngFor="let group of col" class="form-group">
-                     <div *ngFor="let input of group" [ngClass]="{'col-lg-6': group.length > 1, 'my-input-group': group.length > 1}">
-                       <div *ngIf="input.type != 'area' && input.type != 'enum'">
-                         <label for="input.field">{{input.label}}</label>
-                         <input [type]="input.type" class="form-control" required [(ngModel)]="asset[input.field]" [name]="input.field" />
-                       </div>
-                       <div *ngIf="input.type == 'area'">
-                         <label for="input.field">{{input.label}}</label>
-                         <textarea class="form-control" required [(ngModel)]="asset[input.field]" [name]="input.field" rows="3"></textarea>
-                       </div>
-                       <div *ngIf="input.type == 'enum'">
-                         <label for="input.field">{{input.label}}</label>
-                         <select class="form-control" [(ngModel)]="asset[input.field]" [name]="input.field">
-                           <option *ngFor="let o of options(input.field)" [value]="o.value">{{o.label}}</option>
-                         </select>
+                 <div class="col-lg-8">
+                   <div class="row">
+                     <h2 class="col-lg-12">
+                       Asset View
+                       <span class="glyphicon glyphicon-arrow-left" (click)="onReset()" [ngClass]="{disabled: form.pristine}"></span>
+                       <span class="glyphicon glyphicon-floppy-disk" (click)="onSave()" [ngClass]="{disabled: form.pristine || original == undefined}"></span>
+                       <span class="glyphicon glyphicon-trash" (click)="onDelete()" [ngClass]="{disabled: original == undefined}"></span>
+                       <span class="glyphicon glyphicon-plus-sign" (click)="onAdd()"></span>
+                     </h2>
+                   </div>
+                   <form role="form" #form="ngForm" class="row">
+                     <div *ngFor="let col of fieldMap.assetInputs" class="col-lg-6">
+                       <div *ngFor="let group of col" class="form-group">
+                         <div *ngFor="let input of group" [ngClass]="{'col-lg-6': group.length > 1, 'my-input-group': group.length > 1}">
+                           <div *ngIf="input.type != 'area' && input.type != 'enum'">
+                             <label for="input.field">{{input.label}}</label>
+                             <input [type]="input.type" class="form-control" required [(ngModel)]="asset[input.field]" [name]="input.field" />
+                           </div>
+                           <div *ngIf="input.type == 'area'">
+                             <label for="input.field">{{input.label}}</label>
+                             <textarea class="form-control" required [(ngModel)]="asset[input.field]" [name]="input.field" rows="3"></textarea>
+                           </div>
+                           <div *ngIf="input.type == 'enum'">
+                             <label for="input.field">{{input.label}}</label>
+                             <select class="form-control" [(ngModel)]="asset[input.field]" [name]="input.field">
+                               <option *ngFor="let o of options(input.field)" [value]="o.value">{{o.label}}</option>
+                             </select>
+                           </div>
+                         </div>
                        </div>
                      </div>
-                   </div>
+                   </form>
                  </div>
                  <div class="col-lg-4">
-                   <img *ngFor="let src of asset.file; let i = index" [hidden]="file_index != i" (click)="onImgClick()" src="/file/{{asset.id}}/{{src}}" />
-                   <p>
-                   <button class="btn" (click)="onReset()" [disabled]="form.pristine">Reset</button>
-                   <button class="btn" (click)="onSave()" [disabled]="form.pristine || original == undefined">Save</button>
-                   <button class="btn" (click)="onDelete()" [disabled]="original == undefined">Delete</button>
-                   <button class="btn" (click)="onAdd()">Add New</button>
+                   <h3>
+                     Attachments
+                     <span class="glyphicon glyphicon-chevron-left" [ngClass]="{disabled: file_index <= 0}" (click)="onImgClick(-1)"></span>
+                     <span class="glyphicon glyphicon-chevron-right" [ngClass]="{disabled: file_index >= maxIndex}" (click)="onImgClick(+1)"></span>
+                     <span class="glyphicon glyphicon-trash" [ngClass]="{disabled: file_index == -1}" (click)="onImgDelete()"></span>
+                     <span class="glyphicon glyphicon-plus-sign" [ngClass]="{disabled: asset.file == undefined}" (click)="onImgNew()"></span>
+                   </h3>
+                   <div class="carousel">
+                     <img *ngFor="let src of asset.file; let i = index" [hidden]="file_index != i" (click)="onImgClick()" src="/file/{{asset.id}}/{{src}}" />
+                   </div>
                  </div>
                </div>
-             </form>`,
-  styles: ['.my-input-group { padding: 0 5px 10px 0 }',
+             </div>`,
+  styles: ['.container-fluid { border: 1px solid lightgreen; background: #f0fff0 }',
+           '.my-input-group { padding: 0 5px 10px 0 }',
            '.my-input-group:last-child { padding-right: 0 }',
-           'textarea { resize: none }']
+           'textarea { resize: none }',
+           '.glyphicon:not(.disabled) { cursor: pointer }',
+           '.disabled { color: lightgrey }']
 })
 export class AssetComponent {
   private original: any;
   private asset: any = {};
-  private file_index: number = 0;
+  private file_index: number = -1;
 
   @ViewChild('form') form;
   @Output('event') event = new EventEmitter<any>();
@@ -65,6 +85,7 @@ export class AssetComponent {
   @Input('asset') set _asset(asset: any) {
     this.original = asset;
     this.asset = Object.assign({}, this.original);
+    this.file_index = this.asset.file && this.asset.file.length > 0 ? 0 : -1;
   }
 
   constructor(private fieldMap: FieldMap, private enumService: EnumService) {}
@@ -73,8 +94,16 @@ export class AssetComponent {
     return this.enumService.get(field).options();
   }
 
-  onImgClick() {
-    if (++this.file_index == this.asset.file.length) this.file_index = 0;
+  onImgClick(delta: number) {
+    if (this.maxIndex == -1) return;
+    this.file_index += delta;
+    this.file_index = Math.max(0, this.file_index);
+    this.file_index = Math.min(this.maxIndex, this.file_index);
+  }
+
+  get maxIndex(): number {
+    if (this.file_index == -1 || ! this.asset.file) return -1;
+    return this.asset.file.length - 1;
   }
 
   onReset() {
