@@ -67,7 +67,7 @@ import { FieldMap } from './field-map';
                  </div>
                </div>
              </div>`,
-  styles: ['.container-fluid { border: 1px solid lightgreen; background: #f0fff0 }',
+  styles: ['.container-fluid { background: #f0fff0 }',
            '.my-input-group { padding: 0 5px 10px 0 }',
            '.my-input-group:last-child { padding-right: 0 }',
            'textarea { resize: none }',
