@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 
-var ITEM = {'field': 'item', 'label': 'Item', 'type': 'text'};
 var CATEGORY = {'field': 'category', 'label': 'Category', 'type': 'enum'};
 var DESCRIPTION = {'field': 'description', 'label': 'Description', 'type': 'area'};
 var START_FREQ = {'field': 'start_freq', 'label': 'Start Freq (MHz)', 'type': 'number'};
@@ -25,18 +24,18 @@ export class FieldMap {
   private map: any = {};
 
   public allInputs: any[] = [
-    ITEM, CATEGORY, DESCRIPTION, START_FREQ, STOP_FREQ, CONDITION, ID_NUMBER,
+    CATEGORY, DESCRIPTION, START_FREQ, STOP_FREQ, CONDITION, ID_NUMBER,
     CALIBRATION_DATE, CALIBRATION_DUE, CALIBRATION_TYPE, LOCATION, RACK, SHELF,
     MANUFACTURER, MODEL, SERIAL_NUMBER, OWNER
   ];
 
   public assetInputs: any[] = [
-    [[ITEM], [CATEGORY], [MANUFACTURER, MODEL], [DESCRIPTION], [START_FREQ, STOP_FREQ], [CONDITION]],
+    [[MANUFACTURER, MODEL], [CATEGORY], [DESCRIPTION], [START_FREQ, STOP_FREQ], [CONDITION]],
     [[ID_NUMBER], [CALIBRATION_DATE], [CALIBRATION_DUE], [CALIBRATION_TYPE], [LOCATION], [RACK, SHELF]]
   ];
 
   public tableInputs: any[] = [
-    ITEM, ID_NUMBER, MANUFACTURER, MODEL, SERIAL_NUMBER, CATEGORY, FREQ_RANGE,
+    ID_NUMBER, MANUFACTURER, MODEL, SERIAL_NUMBER, CATEGORY, FREQ_RANGE,
     CALIBRATION_DATE, CALIBRATION_DUE, CALIBRATION_TYPE, OWNER, CONDITION
   ];
 

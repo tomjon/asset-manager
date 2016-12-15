@@ -5,13 +5,13 @@ Rack				rack			enum
 Shelf				shelf			enum
 Manufacturer			manufacturer		enum
 Model				model
-Item				item
+Item
 Category			category		enum
 Description			description
 Acquired Date			acquired		date
 Notes				notes
 Comments			notes
-Status				status			enum
+Status
 Action
 Condition			condition		enum
 Last Calibration		calibration_date	date

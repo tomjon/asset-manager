@@ -61,8 +61,9 @@ import { FieldMap } from './field-map';
                      <span class="glyphicon glyphicon-trash" [ngClass]="{disabled: file_index == -1}" (click)="onImgDelete()"></span>
                      <span class="glyphicon glyphicon-plus-sign" [ngClass]="{disabled: asset.file == undefined}" (click)="onImgNew()"></span>
                    </h3>
-                   <div class="carousel">
-                     <img *ngFor="let src of asset.file; let i = index" [hidden]="file_index != i" (click)="onImgClick()" src="/file/{{asset.id}}/{{src}}" />
+                   <div class="attachment" *ngFor="let src of asset.file; let i = index" [hidden]="file_index != i">
+                     <img style="max-width: 100%; max-height: 100%" *ngIf="! src.endsWith('.pdf')" src="/file/{{asset.id}}/{{src}}"/>
+                     <a *ngIf="src.endsWith('.pdf')" target="pdf" href="/file/{{asset.id}}/{{src}}">{{src}}</a>
                    </div>
                  </div>
                </div>
