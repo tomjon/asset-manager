@@ -44,7 +44,7 @@ import { FieldMap } from './field-map';
                   </nav>
                 </div>
               </div>`,
-  styles: ['th { white-space: nowrap }',
+  styles: ['table { white-space: nowrap }',
            'li { cursor: pointer }',
            'ul li:first-child a { cursor: default }',
            'tr.normal:hover { background: lightgrey }',
