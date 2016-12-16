@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Http, URLSearchParams, Headers } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
+import { Search } from './search';
 import { Results } from './results';
 
 export var DATETIME_RE = /^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\dZ$/;
@@ -37,33 +38,46 @@ export class DataService {
     return doc;
   }
 
-  search(textFilter: string, start: number, rows: number, filters: any[], order: any): Observable<Results> {
+  search(search: Search): Observable<Results> {
     let params: URLSearchParams = new URLSearchParams();
-    params.set('q', textFilter);
-    params.set('start', start.toString());
-    params.set('rows', (rows + 1).toString());
-    if (order.asc) params.set('order', `>${order.asc}`);
-    if (order.desc) params.set('order', `<${order.desc}`);
+    params.set('q', search.text);
+    params.set('start', search.start.toString());
+    params.set('rows', (search.rows + 1).toString());
+    if (search.facets.length > 0) {
+      params.set('facets', search.facets.join(','));
+    }
+    if (search.order.asc) params.set('order', `>${search.order.asc}`);
+    if (search.order.desc) params.set('order', `<${search.order.desc}`);
     let path = '';
-    for (let filter of filters) {
-      if (filter.field == undefined || filter.value == '') continue;
-      let field = filter.field;
-      if (filter.type == 'text') {
+    for (let input of search.filters) {
+      if (input.field == undefined || input.value == '') continue;
+      let field = input.field;
+      if (input.type == 'text') {
         field = `__${field}`;
       }
-      if (filter.value != '-') {
-        path += `/${field}:${filter.value}`;
+      if (input.value != '-') {
+        path += `/${field}:${input.value}`;
       } else {
         path += `/-${field}:*`;
       }
     }
     return this.http.get(`/search${path}`, {search: params})
                     .map(res => {
-                      let response = res.json().response;
-                      let start = response.start;
-                      let total = response.numFound;
-                      let assets = this._datetime2dateArray(response.docs);
-                      return new Results(start, total, assets);
+                      let json = res.json();
+                      let start = json.response.start;
+                      let total = json.response.numFound;
+                      let assets = this._datetime2dateArray(json.response.docs);
+                      let facets = {};
+                      if (json.facet_counts) {
+                        for (let field in json.facet_counts.facet_fields) {
+                          let values = json.facet_counts.facet_fields[field];
+                          facets[field] = {};
+                          for (let i: number = 0; i < values.length; i += 2) {
+                            facets[field][values[i]] = values[i + 1];
+                          }
+                        }
+                      }
+                      return new Results(start, total, assets, facets);
                     })
                     .catch(this.handleError);
   }

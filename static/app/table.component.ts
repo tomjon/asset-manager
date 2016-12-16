@@ -1,6 +1,8 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Search } from './search';
 import { Results } from './results';
 import { EnumPipe } from './enum.pipe';
+import { EnumService } from './enum.service';
 import { FieldMap } from './field-map';
 
 @Component({
@@ -10,22 +12,33 @@ import { FieldMap } from './field-map';
                  <table class="col-lg-12 table table-responsive">
                    <thead>
                      <tr>
-                       <th *ngFor="let input of fieldMap.tableInputs">
-                         {{input.label}}
-                         <div>
-                           <span class="glyphicon glyphicon-chevron-up" [ngClass]="{selected: order.asc == input.field, disabled: input.field == ''}" (click)="onOrder(input.field, true)"></span>
-                           <span class="glyphicon glyphicon-chevron-down" [ngClass]="{selected: order.desc == input.field, disabled: input.field == ''}" (click)="onOrder(input.field, false)"></span>
-                           <span class="glyphicon glyphicon-filter" (click)="onFilter(input)"></span>
+                       <td colspan="6" class="title header">Assets Table</td>
+                       <td colspan="3" class="calibration header">Calibration</td>
+                       <td colspan="2"></td>
+                     <tr>
+                       <td *ngFor="let input of fieldMap.tableInputs">
+                         <span class="header">{{input.short ? input.short : input.label}}</span>
+                         <div *ngIf="showInput == input">
+                           <input *ngIf="input.type == 'text'" [(ngModel)]="input.value" (ngModelChange)="doSearch()" (change)="showInput = undefined"/>
+                           <select *ngIf="input.type == 'enum'" [(ngModel)]="input.value" (ngModelChange)="onFilter(input)">
+                             <option *ngFor="let option of options(input)" [value]="option.value">{{option.label}}</option>
+                           </select>
                          </div>
-                       </th>
+                         <div *ngIf="showInput != input">
+                           <span class="glyphicon glyphicon-chevron-up" [ngClass]="{selected: search.order.asc == input.field, disabled: input.field == ''}" (click)="onOrderClick(input, true)"></span>
+                           <span class="glyphicon glyphicon-chevron-down" [ngClass]="{selected: search.order.desc == input.field, disabled: input.field == ''}" (click)="onOrderClick(input, false)"></span>
+                           <span class="glyphicon glyphicon-list" [ngClass]="{selected: filterSelected(input), disabled: input.field == ''}" (click)="onFilterClick(input)"></span>
+                           <span class="glyphicon glyphicon-ban-circle" [ngClass]="{selected: emptySelected(input), disabled: input.field == ''}" (click)="onEmptyClick(input)"></span>
+                         </div>
+                       </td>
                      </tr>
                    </thead>
                    <tbody>
                      <tr *ngFor="let asset of results.assets; let even = even" [ngClass]="{'bg-primary': selected == asset, 'bg-success': even && selected != asset, 'normal': selected != asset}" (click)="onRowClick(asset)">
                        <td *ngFor="let input of fieldMap.tableInputs">
-                         <span *ngIf="input.type != 'date' && input.type != 'enum'">{{asset[input.field]}}</span>
+                         <span *ngIf="input.type == 'text'"><span class="hl">{{textValue(input, asset, true)}}</span>{{textValue(input, asset)}}</span>
                          <span *ngIf="input.type == 'date'">{{asset[input.field] | date:'dd/MM/yyyy'}}</span>
-                         <span *ngIf="input.type == 'enum'">{{asset[input.field] | enum:input.field}}</span>
+                         <span *ngIf="input.type == 'enum'" [ngClass]="{hl: search.filters.includes(input) && showInput != input}">{{asset[input.field] | enum:input.field}}</span>
                          <span *ngIf="input.type == 'range'">{{rangeValue(input, asset)}}</span>
                        </td>
                      </tr>
@@ -45,27 +58,35 @@ import { FieldMap } from './field-map';
                 </div>
               </div>`,
   styles: ['table { white-space: nowrap }',
+           '.calibration { background: lightgrey; text-align: center }',
            'li { cursor: pointer }',
            'ul li:first-child a { cursor: default }',
            'tr.normal:hover { background: lightgrey }',
-           'thead .glyphicon:not(.disabled) { color: grey; cursor: pointer }',
-           'thead .glyphicon:hover:not(.disabled) { color: blue }',
-           'thead .glyphicon.selected { color: black }',
-           'thead .glyphicon.disabled { color: lightgrey }'],
+           '.glyphicon:not(.disabled) { color: grey; cursor: pointer }',
+           '.glyphicon:hover:not(.disabled) { color: blue }',
+           '.glyphicon.selected { color: black }',
+           '.glyphicon.disabled { color: lightgrey }',
+           'input { width: 100; position: absolute }',
+           '.header, .hl { font-weight: bold }'],
   pipes: [EnumPipe]
 })
 export class TableComponent {
   selected: any;
-  order: any = {};
+  showInput: string;
+  search: Search = new Search();
 
   @Input('assets') results: Results;
 
-  @Output('asset') assetEmitter = new EventEmitter<any>();
-  @Output('search') searchEmitter = new EventEmitter<any>();
-  @Output('filter') filterEmitter = new EventEmitter<any>();
-  @Output('order') orderEmitter = new EventEmitter<any>();
+  @Output('select') assetEmitter = new EventEmitter<any>();
+  @Output('search') searchEmitter = new EventEmitter<Search>();
 
-  constructor(private fieldMap: FieldMap) {}
+  constructor(private fieldMap: FieldMap, private enumService: EnumService) {
+    this.search.facets = fieldMap.enumFields;
+  }
+
+  ngOnInit() {
+    this.doSearch();
+  }
 
   onRowClick(asset: any) {
     this.selected = this.selected != asset ? asset : undefined;
@@ -73,21 +94,79 @@ export class TableComponent {
   }
 
   onNavigate(start: number) {
-    if (start != undefined) this.searchEmitter.emit({start: start});
+    if (start == undefined) return;
+    this.doSearch(start);
   }
 
+  doSearch(start:number=0) {
+    this.search.start = start;
+    this.searchEmitter.emit(this.search);
+  }
+
+  filterSelected(input: any): boolean {
+    return this.search.filters.includes(input) && input.value != '-';
+  }
+
+  emptySelected(input: any): boolean {
+    return this.search.filters.includes(input) && input.value == '-';
+  }
+
+  // click on input's filter icon - either remove filter or show select
+  onFilterClick(input: any) {
+    let index = this.search.filters.indexOf(input);
+    if (index != -1 && input.value != '-') {
+      this.search.filters.splice(index, 1);
+      this.doSearch();
+    } else {
+      delete input.value;
+      if (index == -1) this.search.filters.push(input);
+      this.showInput = input;
+    }
+  }
+
+  // click on input's empty icon - either remove filter or add filter
+  onEmptyClick(input: any) {
+    let index = this.search.filters.indexOf(input);
+    if (index != -1 && input.value == '-') {
+      this.search.filters.splice(index, 1);
+      this.doSearch();
+    } else {
+      input.value = '-';
+      if (index == -1) this.search.filters.push(input);
+      this.doSearch();
+    }
+  }
+
+  // select an enum value for an input
   onFilter(input: any) {
-    this.filterEmitter.emit(input);
+    this.showInput = undefined;
+    this.doSearch();
   }
 
-  onOrder(field: string, asc: boolean) {
-    if (field == '') return;
-    let reset = this.order[asc ? 'asc' : 'desc'] == field;
-    this.order = {};
-    if (! reset) this.order[asc ? 'asc' : 'desc'] = field;
-    this.orderEmitter.emit(this.order);
+  // click on input's up or down chevron icons
+  onOrderClick(input: any, asc: boolean) {
+    if (input.field == '') return;
+    let index = this.search.filters.indexOf(input);
+    if (index != -1) {
+      this.search.filters.splice(index, 1);
+    }
+    let reset = this.search.order[asc ? 'asc' : 'desc'] == input.field;
+    this.search.order = {};
+    if (! reset) this.search.order[asc ? 'asc' : 'desc'] = input.field;
+    this.doSearch();
   }
 
+  // return the display value for a text input
+  // if filtered, use the hightlight parameter to decide whether to return the
+  // highlighted prefix or the remaining portion
+  textValue(input: any, asset: any, highlight: boolean=false): string {
+    let value: string = asset[input.field] || '';
+    let length = input.value != undefined ? input.value.length : 0;
+    let index = this.filterSelected(input) ? length : 0;
+    return highlight ? value.substring(0, index) : value.substring(index);
+  }
+
+  // return the display value for a range input
   rangeValue(input: any, asset: any): string {
     let start = asset[input.range[0].field];
     let end = asset[input.range[1].field];
@@ -96,5 +175,27 @@ export class TableComponent {
     } else {
       return '';
     }
+  }
+
+  options(input: any): any[] {
+    let options = [];
+    for (let option of this.enumService.get(input.field).options(false)) {
+      let counts = this.results.facets[input.field];
+      if (counts) {
+        if (counts[option.value] == 0) continue;
+        option.label += ` (${counts[option.value]})`;
+      }
+      options.push(option);
+    }
+    return options;
+  }
+
+  optionLabel(input: any, option: any): string {
+    let label: string = option.label;
+    let counts = this.results.facets[input.field];
+    if (counts) {
+      label += ` (${counts[option.value]})`;
+    }
+    return label;
   }
 }

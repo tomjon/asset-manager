@@ -62,7 +62,7 @@ import { FieldMap } from './field-map';
                      <span class="glyphicon glyphicon-plus-sign" [ngClass]="{disabled: asset.file == undefined}" (click)="onImgNew()"></span>
                    </h3>
                    <div class="attachment" *ngFor="let src of asset.file; let i = index" [hidden]="file_index != i">
-                     <img style="max-width: 100%; max-height: 100%" *ngIf="! src.endsWith('.pdf')" src="/file/{{asset.id}}/{{src}}"/>
+                     <img *ngIf="! src.endsWith('.pdf')" src="/file/{{asset.id}}/{{src}}"/>
                      <a *ngIf="src.endsWith('.pdf')" target="pdf" href="/file/{{asset.id}}/{{src}}">{{src}}</a>
                    </div>
                  </div>
@@ -73,7 +73,8 @@ import { FieldMap } from './field-map';
            '.my-input-group:last-child { padding-right: 0 }',
            'textarea { resize: none }',
            '.glyphicon:not(.disabled) { cursor: pointer }',
-           '.disabled { color: lightgrey }']
+           '.disabled { color: lightgrey }',
+           '.attachment img { max-width: 100%; max-height: 100% }']
 })
 export class AssetComponent {
   private original: any;

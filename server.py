@@ -84,6 +84,13 @@ def search_endpoint(path=None):
             if value != '*':
                 value = '"{0}"'.format(value)
             params.append(('fq', '{0}:{1}'.format(field, value)))
+
+    if 'facets' in request.args:
+        params.append(('facet', 'true'))
+        params.append(('facet.limit', '-1'))
+        for field in request.args.get('facets', '').split(','):
+            params.append(('facet.field', field))
+
     r = requests.get(SOLR_QUERY_URL, params=params)
     assert_status_code(r, httplib.OK)
     return Response(r.text, mimetype=r.headers['content-type'])
@@ -103,7 +110,8 @@ def asset_endpoint(asset_id=None):
         # add a new asset or update an existing asset
         data = {'add': {'doc': request.get_json()}}
         data['add']['doc']['id'] = asset_id
-        del data['add']['doc']['_version_']
+        if '_version_' in data['add']['doc']:
+            del data['add']['doc']['_version_']
     headers = {'Content-Type': 'application/json'}
     r = requests.post(SOLR_UPDATE_URL, headers=headers, params={'commit': 'true'}, data=json.dumps(data))
     assert_status_code(r, httplib.OK)

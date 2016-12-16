@@ -6,9 +6,9 @@ var START_FREQ = {'field': 'start_freq', 'label': 'Start Freq (MHz)', 'type': 'n
 var STOP_FREQ = {'field': 'stop_freq', 'label': 'Stop Freq (MHz)', 'type': 'number'};
 var CONDITION = {'field': 'condition', 'label': 'Condition', 'type': 'enum'};
 var ID_NUMBER = {'field': 'id_number', 'label': 'ID Number', 'type': 'text'};
-var CALIBRATION_DATE = {'field': 'calibration_date', 'label': 'Last Calibration', 'type': 'date'};
-var CALIBRATION_DUE = {'field': 'calibration_due', 'label': 'Calibration Date', 'type': 'date'};
-var CALIBRATION_TYPE = {'field': 'calibration_type', 'label': 'Calibration Type', 'type': 'enum'};
+var CALIBRATION_DATE = {'field': 'calibration_date', 'label': 'Last Calibration', 'short': 'Last', 'type': 'date'};
+var CALIBRATION_DUE = {'field': 'calibration_due', 'label': 'Calibration Date', 'short': 'Date', 'type': 'date'};
+var CALIBRATION_TYPE = {'field': 'calibration_type', 'label': 'Calibration Type', 'short': 'Type', 'type': 'enum'};
 var LOCATION = {'field': 'location', 'label': 'Location', 'type': 'enum'};
 var RACK = {'field': 'rack', 'label': 'Rack', 'type': 'enum'};
 var SHELF = {'field': 'shelf', 'label': 'Shelf', 'type': 'enum'};
@@ -39,9 +39,12 @@ export class FieldMap {
     CALIBRATION_DATE, CALIBRATION_DUE, CALIBRATION_TYPE, OWNER, CONDITION
   ];
 
+  public enumFields: string[] = [];
+
   constructor() {
     for (let input of this.allInputs) {
       this.map[input.field] = input;
+      if (input.type == 'enum') this.enumFields.push(input.field);
     }
   }
 
