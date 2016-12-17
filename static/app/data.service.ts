@@ -97,8 +97,29 @@ export class DataService {
                     .catch(this.handleError);
   }
 
+  getAsset(id: string): Observable<any> {
+    return this.http.get(`/asset/${id}`)
+                    .map(res => {
+                      let docs = res.json().response.docs;
+                      let assets = this._datetime2dateArray(docs);
+                      return assets.length > 0 ? assets[0] : {};
+                    })
+                    .catch(this.handleError);
+  }
+
   deleteById(id: string): Observable<void> {
     return this.http.delete(`/asset/${id}`)
+                    .catch(this.handleError);
+  }
+
+  deleteAttachment(asset: any, file_index: number): Observable<void> {
+    return this.http.delete(`/file/${asset.id}/${asset.file[file_index]}`)
+                    .catch(this.handleError);
+  }
+
+  uploadAttachment(asset: any, name: string, file: FileList): Observable<void> {
+    return this.http.put(`/file/${asset.id}/${name}`, file)
+                    .map(res => {})
                     .catch(this.handleError);
   }
 

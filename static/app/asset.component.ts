@@ -1,5 +1,6 @@
-import { Component, Input, Output, ViewChild, EventEmitter } from '@angular/core';
+import { Component, Input, Output, ViewChild, EventEmitter, ElementRef } from '@angular/core';
 import { EnumService } from './enum.service';
+import { DataService } from './data.service';
 import { FieldMap } from './field-map';
 
 /**
@@ -59,11 +60,14 @@ import { FieldMap } from './field-map';
                      <span class="glyphicon glyphicon-chevron-left" [ngClass]="{disabled: file_index <= 0}" (click)="onImgClick(-1)"></span>
                      <span class="glyphicon glyphicon-chevron-right" [ngClass]="{disabled: file_index >= maxIndex}" (click)="onImgClick(+1)"></span>
                      <span class="glyphicon glyphicon-trash" [ngClass]="{disabled: file_index == -1}" (click)="onImgDelete()"></span>
-                     <span class="glyphicon glyphicon-plus-sign" [ngClass]="{disabled: asset.file == undefined}" (click)="onImgNew()"></span>
+                     <span class="glyphicon glyphicon-plus-sign" [ngClass]="{disabled: asset.id == undefined}" (click)="onImgNew()"></span>
                    </h3>
-                   <div class="attachment" *ngFor="let src of asset.file; let i = index" [hidden]="file_index != i">
-                     <img *ngIf="! src.endsWith('.pdf')" src="/file/{{asset.id}}/{{src}}"/>
-                     <a *ngIf="src.endsWith('.pdf')" target="pdf" href="/file/{{asset.id}}/{{src}}">{{src}}</a>
+                   <input #upload *ngIf="showUpload" type="file" (change)="onUpload()"/>
+                   <div *ngIf="! showUpload">
+                     <div class="attachment" *ngFor="let src of asset.file; let i = index" [hidden]="file_index != i">
+                       <img *ngIf="! src.endsWith('.pdf')" src="/file/{{asset.id}}/{{src}}"/>
+                       <a *ngIf="src.endsWith('.pdf')" target="pdf" href="/file/{{asset.id}}/{{src}}">{{src}}</a>
+                     </div>
                    </div>
                  </div>
                </div>
@@ -80,8 +84,11 @@ export class AssetComponent {
   private original: any;
   private asset: any = {};
   private file_index: number = -1;
+  private showUpload: boolean = false;
 
-  @ViewChild('form') form;
+  @ViewChild('form') form: HTMLFormElement;
+  @ViewChild('upload') upload: ElementRef;
+
   @Output('event') event = new EventEmitter<any>();
 
   @Input('asset') set _asset(asset: any) {
@@ -90,7 +97,7 @@ export class AssetComponent {
     this.file_index = this.asset.file && this.asset.file.length > 0 ? 0 : -1;
   }
 
-  constructor(private fieldMap: FieldMap, private enumService: EnumService) {}
+  constructor(private fieldMap: FieldMap, private enumService: EnumService, private dataService: DataService) {}
 
   options(field: string) {
     return this.enumService.get(field).options();
@@ -101,6 +108,34 @@ export class AssetComponent {
     this.file_index += delta;
     this.file_index = Math.max(0, this.file_index);
     this.file_index = Math.min(this.maxIndex, this.file_index);
+  }
+
+  onImgDelete() {
+    this.dataService.deleteAttachment(this.asset, this.file_index)
+                    .subscribe(() => {
+                      this.dataService.getAsset(this.asset.id)
+                                      .subscribe(asset => this.asset = asset);
+                    });
+  }
+
+  onImgNew() {
+    this.showUpload = true;
+  }
+
+  onUpload() {
+    this.showUpload = false;
+    let inputEl = this.upload.nativeElement;
+    if (inputEl.files.length > 0) {
+      let name = inputEl.value;
+      let i = Math.max(name.lastIndexOf('/'), name.lastIndexOf('\\')) + 1;
+      if (i >= name.length) return;
+      name = name.substring(i);
+      this.dataService.uploadAttachment(this.asset, name, inputEl.files[0])
+                      .subscribe(() => {
+                        this.dataService.getAsset(this.asset.id)
+                                        .subscribe(asset => this.asset = asset);
+                      });
+    }
   }
 
   get maxIndex(): number {

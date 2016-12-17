@@ -14,6 +14,8 @@ SOLR_COLLECTION = "assets"
 SOLR_QUERY_URL = "http://localhost:8983/solr/{0}/query".format(SOLR_COLLECTION)
 SOLR_UPDATE_URL = "http://localhost:8983/solr/{0}/update".format(SOLR_COLLECTION)
 
+UPLOAD_FOLDER = "files"
+ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 
 class SolrError(Exception):
     """ Exception raised when SOLR returns an error status.
@@ -97,7 +99,7 @@ def search_endpoint(path=None):
 
 
 @application.route('/asset', methods=['POST'])
-@application.route('/asset/<asset_id>', methods=['PUT', 'DELETE'])
+@application.route('/asset/<asset_id>', methods=['GET', 'PUT', 'DELETE'])
 def asset_endpoint(asset_id=None):
     """ Asset add, delete, update endpoint.
     """
@@ -106,6 +108,11 @@ def asset_endpoint(asset_id=None):
     if request.method == 'DELETE':
         # delete an existing asset
         data = {'delete': asset_id}
+    elif request.method == 'GET':
+        # get an existing asset
+        r = requests.get(SOLR_QUERY_URL, params={'q': 'id:{0}'.format(asset_id)})
+        assert_status_code(r, httplib.OK)
+        return Response(r.text, mimetype=r.headers['content-type'])
     else:
         # add a new asset or update an existing asset
         data = {'add': {'doc': request.get_json()}}
@@ -118,12 +125,22 @@ def asset_endpoint(asset_id=None):
     return Response(json.dumps({'id': asset_id}), mimetype='application/json')
 
 
-@application.route('/file/<asset_id>/<filename>')
-def file_endpoint(asset_id, filename):
-   """ Emit a file.
-   """
-   path = os.path.join('files', asset_id, filename)
-   return send_file(path)
+@application.route('/file/<asset_id>/<filename>', methods=['GET', 'PUT', 'DELETE'])
+def file_endpoint(asset_id, filename=None):
+    """ Retrieve, upload or delete a file.
+    """
+    path = os.path.join(UPLOAD_FOLDER, asset_id, filename)
+    if request.method == 'PUT':
+        with open(path, 'w') as f:
+            f.write(request.get_data())
+    else:
+        if not os.path.exists(path):
+            return "No such file", 404
+        if request.method == 'GET':
+            return send_file(path)
+        else:
+            os.remove(path)
+    return "OK"
 
 
 if __name__ == '__main__':
