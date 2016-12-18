@@ -58,13 +58,13 @@ import { FieldMap } from './field-map';
                    <h3>
                      Attachments
                      <span class="glyphicon glyphicon-chevron-left" [ngClass]="{disabled: file_index <= 0}" (click)="onImgClick(-1)"></span>
-                     <span class="glyphicon glyphicon-chevron-right" [ngClass]="{disabled: file_index >= maxIndex}" (click)="onImgClick(+1)"></span>
+                     <span class="glyphicon glyphicon-chevron-right" [ngClass]="{disabled: file_index >= files.length - 1}" (click)="onImgClick(+1)"></span>
                      <span class="glyphicon glyphicon-trash" [ngClass]="{disabled: file_index == -1}" (click)="onImgDelete()"></span>
                      <span class="glyphicon glyphicon-plus-sign" [ngClass]="{disabled: asset.id == undefined}" (click)="onImgNew()"></span>
                    </h3>
                    <input #upload *ngIf="showUpload" type="file" (change)="onUpload()"/>
                    <div *ngIf="! showUpload">
-                     <div class="attachment" *ngFor="let src of asset.file; let i = index" [hidden]="file_index != i">
+                     <div class="attachment" *ngFor="let src of files; let i = index" [hidden]="file_index != i">
                        <img *ngIf="! src.endsWith('.pdf')" src="/file/{{asset.id}}/{{src}}"/>
                        <a *ngIf="src.endsWith('.pdf')" target="pdf" href="/file/{{asset.id}}/{{src}}">{{src}}</a>
                      </div>
@@ -83,6 +83,7 @@ import { FieldMap } from './field-map';
 export class AssetComponent {
   private original: any;
   private asset: any = {};
+  private files: string[] = [];
   private file_index: number = -1;
   private showUpload: boolean = false;
 
@@ -94,7 +95,15 @@ export class AssetComponent {
   @Input('asset') set _asset(asset: any) {
     this.original = asset;
     this.asset = Object.assign({}, this.original);
-    this.file_index = this.asset.file && this.asset.file.length > 0 ? 0 : -1;
+    this.file_index = -1;
+    this.files = [];
+    if (this.asset.id) {
+      this.dataService.getAttachments(this.asset)
+                      .subscribe(files => {
+                        this.files = files;
+                        this.file_index = this.files.length > 0 ? 0 : -1;
+                      });
+    }
   }
 
   constructor(private fieldMap: FieldMap, private enumService: EnumService, private dataService: DataService) {}
@@ -104,17 +113,18 @@ export class AssetComponent {
   }
 
   onImgClick(delta: number) {
-    if (this.maxIndex == -1) return;
+    if (this.files.length == 0) return;
     this.file_index += delta;
     this.file_index = Math.max(0, this.file_index);
-    this.file_index = Math.min(this.maxIndex, this.file_index);
+    this.file_index = Math.min(this.files.length - 1, this.file_index);
   }
 
   onImgDelete() {
-    this.dataService.deleteAttachment(this.asset, this.file_index)
-                    .subscribe(() => {
-                      this.dataService.getAsset(this.asset.id)
-                                      .subscribe(asset => this.asset = asset);
+    this.dataService.deleteAttachment(this.asset, this.files[this.file_index])
+                    .subscribe(files => {
+                      this.files = files;
+                      if (this.file_index == this.files.length) --this.file_index;
+                      if (this.files.length == 0) this.file_index = -1;
                     });
   }
 
@@ -131,16 +141,11 @@ export class AssetComponent {
       if (i >= name.length) return;
       name = name.substring(i);
       this.dataService.uploadAttachment(this.asset, name, inputEl.files[0])
-                      .subscribe(() => {
-                        this.dataService.getAsset(this.asset.id)
-                                        .subscribe(asset => this.asset = asset);
+                      .subscribe(files => {
+                        this.files = files;
+                        this.file_index = this.files.indexOf(name);
                       });
     }
-  }
-
-  get maxIndex(): number {
-    if (this.file_index == -1 || ! this.asset.file) return -1;
-    return this.asset.file.length - 1;
   }
 
   onReset() {

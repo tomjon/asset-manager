@@ -39,8 +39,7 @@ def map_attachment(name, nodes, doc):
             elif subfield.name == FILE_NAME:
                 name = subfield.value()
         assert data is not None and name is not None
-        doc.append_list('file', name)
-	doc.add_file(name, data[20:]) # skip 20 bytes of metadata added by Access
+        doc.add_file(name, data[20:]) # skip 20 bytes of metadata added by Access
     return None
 
 def map_enum(name, nodes, doc):

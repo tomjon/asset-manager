@@ -125,22 +125,31 @@ def asset_endpoint(asset_id=None):
     return Response(json.dumps({'id': asset_id}), mimetype='application/json')
 
 
+@application.route('/file/<asset_id>')
 @application.route('/file/<asset_id>/<filename>', methods=['GET', 'PUT', 'DELETE'])
 def file_endpoint(asset_id, filename=None):
     """ Retrieve, upload or delete a file.
     """
-    path = os.path.join(UPLOAD_FOLDER, asset_id, filename)
-    if request.method == 'PUT':
-        with open(path, 'w') as f:
-            f.write(request.get_data())
-    else:
-        if not os.path.exists(path):
-            return "No such file", 404
-        if request.method == 'GET':
-            return send_file(path)
+    asset_path = path = os.path.join(UPLOAD_FOLDER, asset_id)
+    if filename is not None:
+        path = os.path.join(asset_path, filename)
+        if request.method == 'PUT':
+            try:
+                os.makedirs(asset_path)
+            except OSError:
+                pass
+            with open(path, 'w') as f:
+                f.write(request.get_data())
         else:
-            os.remove(path)
-    return "OK"
+            if not os.path.exists(path):
+                return "No such file", 404
+            if request.method == 'GET':
+                return send_file(path)
+            else:
+                os.remove(path)
+    if not os.path.exists(asset_path):
+        return json.dumps([])
+    return json.dumps(os.listdir(asset_path))
 
 
 if __name__ == '__main__':

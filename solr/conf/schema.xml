@@ -127,8 +127,6 @@
     <field name="__id_number" type="ngram" indexed="true" stored="false" required="false" multiValued="true" />
     <copyField source="id_number" dest="__id_number" />
 
-    <field name="file" type="string" indexed="false" stored="true" required="false" multiValued="true" />
-
     <field name="serial" type="string" indexed="true" stored="true" required="false" multiValued="false" />
     <field name="__serial" type="ngram" indexed="true" stored="false" required="false" multiValued="true" />
     <copyField source="serial" dest="__serial" />
