@@ -17,8 +17,8 @@ import './rxjs-operators';
                <div class="row">
                  <div class="col-lg-12">
                    <h1><img src="/static/ofcom.gif"/> Baldock Asset Management System</h1>
-                   <bams-asset [asset]="asset" (event)="onEvent($event)"></bams-asset>
-                   <bams-table [assets]="results" (select)="onSelect($event)" (search)="onSearch($event)"></bams-table>
+                   <bams-asset [asset]="asset" (event)="onAssetEvent($event)"></bams-asset>
+                   <bams-table [assets]="results" [search]="search" (event)="onTableEvent($event)"></bams-table>
                  </div>
                </div>
              </div>`,
@@ -28,6 +28,7 @@ import './rxjs-operators';
 })
 export class AppComponent {
   results: Results = new Results();
+  search: Search = new Search();
   asset: any;
 
   constructor(private dataService: DataService, private fieldMap: FieldMap) { }
@@ -37,30 +38,34 @@ export class AppComponent {
     //                .subscribe(user => this.user = user);
   }
 
-  onSelect(asset: any) {
-    this.asset = asset;
+  doSearch() {
+    this.dataService.search(this.search)
+                    .subscribe(results => this.results = results);
   }
 
-  onEvent(event: any) {
+  onAssetEvent(event: any) {
     if (event.save) {
       this.dataService.updateAsset(event.save)
-                      .subscribe();
+                      .subscribe(() => this.doSearch());
     }
     else if (event.delete) {
       this.dataService.deleteById(event.delete)
-                      .subscribe();
+                      .subscribe(() => this.doSearch());
     }
     else if (event.add) {
       this.dataService.addAsset(event.add)
-                      .subscribe(id => event.add.id = id);
+                      .subscribe(id => {
+                        event.add.id = id;
+                        this.doSearch();
+                      });
     }
     else {
       console.log("Bad event", event);
     }
   }
 
-  onSearch(search: Search) {
-    this.dataService.search(search)
-                    .subscribe(results => this.results = results);
+  onTableEvent(event: any) {
+    if (event.asset) this.asset = event.asset;
+    if (event.search) this.doSearch();
   }
 }

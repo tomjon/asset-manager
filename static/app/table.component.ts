@@ -73,24 +73,22 @@ import { FieldMap } from './field-map';
 export class TableComponent {
   selected: any;
   showInput: string;
-  search: Search = new Search();
 
   @Input('assets') results: Results;
+  @Input('search') search: Search;
 
-  @Output('select') assetEmitter = new EventEmitter<any>();
-  @Output('search') searchEmitter = new EventEmitter<Search>();
+  @Output('event') eventEmitter = new EventEmitter<any>();
 
-  constructor(private fieldMap: FieldMap, private enumService: EnumService) {
-    this.search.facets = fieldMap.enumFields;
-  }
+  constructor(private fieldMap: FieldMap, private enumService: EnumService) {}
 
   ngOnInit() {
     this.doSearch();
+    this.search.facets = this.fieldMap.enumFields;
   }
 
   onRowClick(asset: any) {
     this.selected = this.selected != asset ? asset : undefined;
-    this.assetEmitter.emit(this.selected);
+    this.eventEmitter.emit({asset: this.selected});
   }
 
   onNavigate(start: number) {
@@ -100,7 +98,7 @@ export class TableComponent {
 
   doSearch(start:number=0) {
     this.search.start = start;
-    this.searchEmitter.emit(this.search);
+    this.eventEmitter.emit({search: true});
   }
 
   filterSelected(input: any): boolean {
