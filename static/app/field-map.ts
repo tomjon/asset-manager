@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 
 var CATEGORY = {'field': 'category', 'label': 'Category', 'type': 'enum'};
-var DESCRIPTION = {'field': 'description', 'label': 'Description', 'type': 'area'};
+var DESCRIPTION = {'field': 'description', 'label': 'Description', 'type': 'text'};
 var START_FREQ = {'field': 'start_freq', 'label': 'Start Freq (MHz)', 'type': 'number'};
 var STOP_FREQ = {'field': 'stop_freq', 'label': 'Stop Freq (MHz)', 'type': 'number'};
 var CONDITION = {'field': 'condition', 'label': 'Condition', 'type': 'enum'};
@@ -15,7 +15,8 @@ var SHELF = {'field': 'shelf', 'label': 'Shelf', 'type': 'enum'};
 var MANUFACTURER = {'field': 'manufacturer', 'label': 'Manufacturer', 'type': 'enum'};
 var MODEL = {'field': 'model', 'label': 'Model', 'type': 'text'};
 var SERIAL_NUMBER = {'field': 'serial', 'label': 'Serial Number', 'type': 'text'};
-var OWNER = {'field': 'owner', 'label': 'Owner', 'type': 'text'};
+var OWNER = {'field': 'owner', 'label': 'Owner', 'type': 'enum'};
+var NOTES = {'field': 'notes', 'label': 'Notes', 'type': 'area'};
 
 var FREQ_RANGE = {'field': '', 'label': 'Freq (MHz)', 'type': 'range', 'range': [START_FREQ, STOP_FREQ]};
 
@@ -30,8 +31,8 @@ export class FieldMap {
   ];
 
   public assetInputs: any[] = [
-    [[MANUFACTURER, MODEL], [CATEGORY], [DESCRIPTION], [START_FREQ, STOP_FREQ], [CONDITION]],
-    [[ID_NUMBER], [CALIBRATION_DATE], [CALIBRATION_DUE], [CALIBRATION_TYPE], [LOCATION], [RACK, SHELF]]
+    [[MANUFACTURER, MODEL], [CATEGORY], [DESCRIPTION], [START_FREQ, STOP_FREQ], [OWNER], [NOTES]],
+    [[ID_NUMBER], [CONDITION], [CALIBRATION_DATE], [CALIBRATION_DUE], [CALIBRATION_TYPE], [LOCATION], [RACK, SHELF]]
   ];
 
   public tableInputs: any[] = [

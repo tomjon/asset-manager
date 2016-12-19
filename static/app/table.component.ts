@@ -12,7 +12,7 @@ import { FieldMap } from './field-map';
                  <table class="col-lg-12 table table-responsive">
                    <thead>
                      <tr>
-                       <td colspan="6" class="title header">Assets Table</td>
+                       <td colspan="6"></td>
                        <td colspan="3" class="calibration header">Calibration</td>
                        <td colspan="2"></td>
                      <tr>
@@ -102,11 +102,11 @@ export class TableComponent {
   }
 
   filterSelected(input: any): boolean {
-    return this.search.filters.includes(input) && input.value != '-';
+    return this.search.filters.indexOf(input) != -1 && input.value != '-';
   }
 
   emptySelected(input: any): boolean {
-    return this.search.filters.includes(input) && input.value == '-';
+    return this.search.filters.indexOf(input) != -1 && input.value == '-';
   }
 
   // click on input's filter icon - either remove filter or show select

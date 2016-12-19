@@ -1,4 +1,4 @@
-export var PAGE_SIZE = 10;
+export var PAGE_SIZE = 25;
 
 export class Results {
   public assets: any[];

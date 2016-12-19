@@ -24,7 +24,7 @@ import './rxjs-operators';
              </div>`,
   directives: [TableComponent, AssetComponent],
   providers: [HTTP_PROVIDERS, DataService, EnumService, FieldMap],
-  styles: ['bams-filter { display: inline-block }']
+  styles: ['bams-asset { display: block; margin: 20px 0 20px 0 }']
 })
 export class AppComponent {
   results: Results = new Results();

@@ -23,13 +23,13 @@ import { FieldMap } from './field-map';
                <div class="row">
                  <div class="col-lg-8">
                    <div class="row">
-                     <h2 class="col-lg-12">
-                       Asset View
+                     <h3 class="col-lg-12">
+                       Asset
                        <span class="glyphicon glyphicon-arrow-left" (click)="onReset()" [ngClass]="{disabled: form.pristine}"></span>
                        <span class="glyphicon glyphicon-floppy-disk" (click)="onSave()" [ngClass]="{disabled: form.pristine || original == undefined}"></span>
                        <span class="glyphicon glyphicon-trash" (click)="onDelete()" [ngClass]="{disabled: original == undefined}"></span>
                        <span class="glyphicon glyphicon-plus-sign" (click)="onAdd()"></span>
-                     </h2>
+                     </h3>
                    </div>
                    <form role="form" #form="ngForm" class="row">
                      <div *ngFor="let col of fieldMap.assetInputs" class="col-lg-6">
@@ -41,7 +41,7 @@ import { FieldMap } from './field-map';
                            </div>
                            <div *ngIf="input.type == 'area'">
                              <label for="input.field">{{input.label}}</label>
-                             <textarea class="form-control" required [(ngModel)]="asset[input.field]" [name]="input.field" rows="3"></textarea>
+                             <textarea class="form-control" required [(ngModel)]="asset[input.field]" [name]="input.field" rows="5"></textarea>
                            </div>
                            <div *ngIf="input.type == 'enum'">
                              <label for="input.field">{{input.label}}</label>
