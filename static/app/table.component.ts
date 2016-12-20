@@ -88,7 +88,7 @@ export class TableComponent {
 
   onRowClick(asset: any) {
     this.selected = this.selected != asset ? asset : undefined;
-    this.eventEmitter.emit({asset: this.selected});
+    this.eventEmitter.emit({asset: this.selected || {}});
   }
 
   onNavigate(start: number) {
