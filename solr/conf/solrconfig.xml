@@ -93,6 +93,8 @@
   <!--
      <lib path="../a-jar-that-does-not-exist.jar" /> 
   -->
+  <lib path="/home/ses/asset-manager/solr/java/lib/json-simple-1.1.1.jar" />
+  <lib path="/home/ses/asset-manager/solr/java/bams-enum.jar" />
 
   <!-- Data Directory
 
@@ -1397,10 +1399,14 @@
        used as function names when using the "func" QParser.
     -->
   <!-- example of registering a custom function parser  -->
-  <!--
-     <valueSourceParser name="myfunc" 
-                        class="com.mycompany.MyValueSourceParser" />
-    -->
+  
+  <valueSourceParser name="enum" 
+                     class="uk.org.ofcom.ses.bams.solr.EnumValueSourceParser">
+    <str name="directory">/home/ses/asset-manager/enums</str>
+    <str name="default_no_value">-2</str>
+    <str name="default_no_order">-1</str>
+  </valueSourceParser>
+  
 
 
   <!-- Document Transformers

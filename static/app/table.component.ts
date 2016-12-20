@@ -25,8 +25,8 @@ import { FieldMap } from './field-map';
                            </select>
                          </div>
                          <div *ngIf="showInput != input">
-                           <span class="glyphicon glyphicon-chevron-up" [ngClass]="{selected: search.order.asc == input.field, disabled: input.field == ''}" (click)="onOrderClick(input, true)"></span>
-                           <span class="glyphicon glyphicon-chevron-down" [ngClass]="{selected: search.order.desc == input.field, disabled: input.field == ''}" (click)="onOrderClick(input, false)"></span>
+                           <span class="glyphicon glyphicon-chevron-up" [ngClass]="{selected: search.order.asc == input, disabled: input.field == ''}" (click)="onOrderClick(input, true)"></span>
+                           <span class="glyphicon glyphicon-chevron-down" [ngClass]="{selected: search.order.desc == input, disabled: input.field == ''}" (click)="onOrderClick(input, false)"></span>
                            <span class="glyphicon glyphicon-list" [ngClass]="{selected: filterSelected(input), disabled: input.field == ''}" (click)="onFilterClick(input)"></span>
                            <span class="glyphicon glyphicon-ban-circle" [ngClass]="{selected: emptySelected(input), disabled: input.field == ''}" (click)="onEmptyClick(input)"></span>
                          </div>
@@ -148,9 +148,9 @@ export class TableComponent {
     if (index != -1) {
       this.search.filters.splice(index, 1);
     }
-    let reset = this.search.order[asc ? 'asc' : 'desc'] == input.field;
+    let reset = this.search.order[asc ? 'asc' : 'desc'] == input;
     this.search.order = {};
-    if (! reset) this.search.order[asc ? 'asc' : 'desc'] = input.field;
+    if (! reset) this.search.order[asc ? 'asc' : 'desc'] = input;
     this.doSearch();
   }
 

@@ -46,8 +46,14 @@ export class DataService {
     if (search.facets.length > 0) {
       params.set('facets', search.facets.join(','));
     }
-    if (search.order.asc) params.set('order', `>${search.order.asc}`);
-    if (search.order.desc) params.set('order', `<${search.order.desc}`);
+
+    let input = search.order.asc || search.order.desc;
+    if (input) {
+      let order = search.order.asc ? '>' : '<';
+      let enumChar = input.type == 'enum' ? 'E' : '';
+      params.set('order', `${enumChar}${order}${input.field}`);
+    }
+
     let path = '';
     for (let input of search.filters) {
       if (input.field == undefined || input.value == '') continue;

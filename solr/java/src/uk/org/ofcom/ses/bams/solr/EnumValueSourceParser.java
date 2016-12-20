@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.lucene.index.BinaryDocValues;
@@ -25,43 +26,57 @@ import org.json.simple.parser.ParseException;
 public class EnumValueSourceParser extends ValueSourceParser {
 
 	public static final String INIT_DIRECTORY = "directory";
-	public static final String INIT_ENUMERATION_NAME = "name";
+	public static final String INIT_DEFAULT_NO_VALUE = "default_no_value";
+	public static final String INIT_DEFAULT_NO_ORDER = "default_no_order";
 	
-	// FS file from which enumeration definitions are loaded
-	private File file;
+	// map from enum name (==field name) => map from value => order
+	private Map<String, Map<String, Long>> enumValues = new HashMap<>();
 	
-	private Map<String, Integer> values;
+	// default order if the doc field value is missing
+	private long defaultNoValue;
+	
+	// default order if the enumeration is missing the doc field value
+	private long defaultNoOrder;
 	
 	/**
 	 * Initialise the enumeration from the file indicated.
 	 */
 	public void init(NamedList args) {
-		String directory = (String)args.get(INIT_DIRECTORY);
-		String name = (String)args.get(INIT_ENUMERATION_NAME);
-		file = new File(directory, name);
+		defaultNoValue = Long.valueOf((String)args.get(INIT_DEFAULT_NO_VALUE));
+		defaultNoOrder = Long.valueOf((String)args.get(INIT_DEFAULT_NO_ORDER));
 		
+		File directory = new File((String)args.get(INIT_DIRECTORY));
 		JSONParser parser = new JSONParser();
-		try (FileReader in = new FileReader(file)) {
-			JSONArray values = (JSONArray)parser.parse(in);
-			for (int i = 0; i < values.size(); ++i) {
-				JSONObject value = (JSONObject)values.get(i);
-				String v = (String)value.get("value");
-				Integer order = (Integer)value.get("order");
-				this.values.put(v, order);
+		for (File enumDefinition : directory.listFiles()) {
+			Map<String, Long> values = new HashMap<String, Long>();
+			enumValues.put(enumDefinition.getName(), values);
+			try (FileReader in = new FileReader(enumDefinition)) {
+				JSONArray mappings = (JSONArray)parser.parse(in);
+				for (int i = 0; i < mappings.size(); ++i) {
+					JSONObject mapping = (JSONObject)mappings.get(i);
+					String value = mapping.get("value").toString();
+					Long order = (Long)mapping.get("order");
+					values.put(value, order);
+				}
+			} catch (IOException | ParseException e) {
+				throw new RuntimeException(e);
 			}
-		} catch (IOException | ParseException e) {
-			throw new RuntimeException(e);
 		}
 	}
 	
 	public ValueSource parse(FunctionQParser fqp) throws SyntaxError {
-		// SOLR document field from which to look up values
+		// SOLR document field (==enumeration name) from which to look up values
 		final String field = fqp.parseArg();
+		final Map<String, Long> values = enumValues.get(field);
+		
+		if (values == null) {
+			throw new RuntimeException("No such enumeration: " + field);
+		}
 		
 		return new ValueSource() {
 
 			public String description() {
-				return "Enumeration " + file + " evaluated on " + field;
+				return "Enumerations evaluated on " + field;
 			}
 
 			public FunctionValues getValues(Map context, LeafReaderContext readerContext) throws IOException {
@@ -70,18 +85,10 @@ public class EnumValueSourceParser extends ValueSourceParser {
 				return new DoubleDocValues(this) {
 
 					public double doubleVal(int doc) {
-						return order(doc);
-					}
-					
-					public boolean exists(int doc) {
-						return order(doc) != null;
-					}
-					
-					private Integer order(int doc) {
 						BytesRef docValue = docValues.get(doc);
-						if (docValue == null) return null; //FIXME or a configurable default value?
-						String key = docValue.toString();
-						if (! values.containsKey(key)) return null; //FIXME or a configurable default value?
+						if (docValue == null) return defaultNoValue;
+						String key = docValue.utf8ToString();
+						if (! values.containsKey(key)) return defaultNoOrder;
 						return values.get(key);
 					}
 					
