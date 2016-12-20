@@ -2,9 +2,7 @@ export var FIRST_OPTION = {value: undefined, label: 'n/a'};
 export var LAST_OPTION = {value: '#', label: 'Add new...'};
 
 export class EnumValue {
-  public value: string;
-  public label: string;
-  public order: number;
+  constructor(public value: string, public label: string, public order: number) {}
 }
 
 export class Enum {
@@ -14,6 +12,11 @@ export class Enum {
 
   public update(values: any[]) {
     this.values = values;
+  }
+
+  public addEnumValue(enumValue: EnumValue): EnumValue {
+    this.values.push(enumValue);
+    return enumValue;
   }
 
   public label(value: string): string {

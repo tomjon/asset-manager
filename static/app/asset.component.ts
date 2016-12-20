@@ -2,6 +2,7 @@ import { Component, Input, Output, ViewChild, EventEmitter, ElementRef } from '@
 import { EnumService } from './enum.service';
 import { DataService } from './data.service';
 import { FieldMap } from './field-map';
+import { LAST_OPTION } from './enum';
 
 /**
  * The component makes a copy of the input asset.
@@ -45,9 +46,10 @@ import { FieldMap } from './field-map';
                            </div>
                            <div *ngIf="input.type == 'enum'">
                              <label for="input.field">{{input.label}}</label>
-                             <select class="form-control" [(ngModel)]="asset[input.field]" [name]="input.field">
+                             <select *ngIf="addNew.field != input.field" class="form-control" [(ngModel)]="asset[input.field]" [name]="input.field" (ngModelChange)="onEnumChange(input)">
                                <option *ngFor="let o of options(input.field)" [value]="o.value">{{o.label}}</option>
                              </select>
+                             <input type="text" *ngIf="addNew.field == input.field" class="form-control" [(ngModel)]="addNew.label" [name]="input.field" (change)="onAddNew(input)"/>
                            </div>
                          </div>
                        </div>
@@ -86,6 +88,7 @@ export class AssetComponent {
   private files: string[] = [];
   private file_index: number = -1;
   private showUpload: boolean = false;
+  private addNew: any = {};
 
   @ViewChild('form') form: HTMLFormElement;
   @ViewChild('upload') upload: ElementRef;
@@ -166,6 +169,20 @@ export class AssetComponent {
 
   onAdd() {
     this.event.emit({add: this.asset});
+  }
+
+  onEnumChange(input) {
+    if (this.asset[input.field] == LAST_OPTION.value) {
+      this.addNew.field = input.field;
+    }
+  }
+
+  onAddNew(input) {
+    delete this.addNew.field;
+    if (this.addNew.label) {
+      this.enumService.addNewLabel(input.field, this.addNew.label)
+                      .subscribe(enumValue => this.asset[input.field] = enumValue.value);
+    }
   }
 
   pristine(form: any, value?: boolean): void {

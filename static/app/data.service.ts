@@ -137,15 +137,18 @@ export class DataService {
   }
 
   getEnums(): Observable<any> {
-    return this.http.get(`/enums`)
+    return this.http.get(`/enum`)
                     .map(res => res.json())
                     .catch(this.handleError);
   }
 
-  setEnum(field: string, value: any): Observable<void> {
-    let headers = new Headers({'Content-Type': 'application/json'});
-    let body = JSON.stringify(value);
-    return this.http.put(`/enum/${field}`, body, {headers: headers})
+  addNewEnumLabel(field: string, label: any): Observable<any> {
+    let headers: Headers = new Headers({'Content-Type': 'application/json'});
+    let body = JSON.stringify(label);
+    let params: URLSearchParams = new URLSearchParams();
+    params.set('label', label);
+    return this.http.post(`/enum/${field}`, body, {search: params, headers: headers})
+                    .map(res => res.json())
                     .catch(this.handleError);
   }
 

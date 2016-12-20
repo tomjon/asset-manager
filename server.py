@@ -52,15 +52,28 @@ def favicon_endpoint():
     return send_file(path, mimetype='image/vnd.microsoft.icon')
 
 
-@application.route('/enums')
-def enums_endpoint():
-    """ Endpoint for getting enumerations.
+@application.route('/enum')
+@application.route('/enum/<field>', methods=['POST'])
+def enums_endpoint(field=None):
+    """ Endpoint for getting and updating enumerations.
     """
-    enums = {}
-    for field in os.listdir('enums'):
-        with open(os.path.join('enums', field)) as f:
-            enums[field] = json.loads(f.read())
-    return json.dumps(enums)
+    if request.method == 'GET':
+        enums = {}
+        for field in os.listdir('enums'):
+            with open(os.path.join('enums', field)) as f:
+                enums[field] = json.loads(f.read())
+        return json.dumps(enums)
+    else:
+        path = os.path.join('enums', field)
+        with open(path) as f:
+            enum = json.loads(f.read())
+        enumValue = {'label': request.args.get('label', 'No label')}
+        enumValue['value'] = len(enum)
+        enumValue['order'] = len(enum)
+        enum.append(enumValue)
+        with open(path, 'w') as f:
+            f.write(json.dumps(enum))
+        return json.dumps(enumValue)
 
 
 @application.route('/search')

@@ -18,10 +18,9 @@ export class EnumService {
     });
   }
 
-  //FIXME not sure this will be right
-  set(field: string, value: Enum): any {
-    this.enums[field] = value;
-    this.dataService.setEnum(field, value).subscribe();
+  addNewLabel(field: string, label: string): Observable<any> {
+    return this.dataService.addNewEnumLabel(field, label)
+                           .map(enumValue => this.enums[field].addEnumValue(enumValue));
   }
 
   get(field: string): Enum {
