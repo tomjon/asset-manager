@@ -128,7 +128,7 @@ export class DataService {
     return this.http.put(`/file/${asset.id}/${name}`, file)
                     .map(res => res.json())
                     .catch(this.handleError);
-  }
+  }e
 
   getAttachments(asset: any): Observable<string[]> {
     return this.http.get(`/file/${asset.id}`)

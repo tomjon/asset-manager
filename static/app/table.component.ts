@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ViewChildren, QueryList, ElementRef } from '@angular/core';
 import { Search } from './search';
 import { Results } from './results';
 import { EnumPipe } from './enum.pipe';
@@ -15,12 +15,13 @@ import { FieldMap } from './field-map';
                        <td colspan="6"></td>
                        <td colspan="3" class="calibration header">Calibration</td>
                        <td colspan="2"></td>
+                     </tr>
                      <tr>
                        <td *ngFor="let input of fieldMap.tableInputs">
                          <span class="header">{{input.short ? input.short : input.label}}</span>
                          <div *ngIf="showInput == input">
-                           <input *ngIf="input.type == 'text'" [(ngModel)]="input.value" (ngModelChange)="doSearch()" (change)="showInput = undefined"/>
-                           <select *ngIf="input.type == 'enum'" [(ngModel)]="input.value" (ngModelChange)="onFilter(input)">
+                           <input #filter *ngIf="input.type == 'text'" [(ngModel)]="input.value" (ngModelChange)="doSearch()" (change)="showInput = undefined"/>
+                           <select #filter *ngIf="input.type == 'enum'" [(ngModel)]="input.value" (ngModelChange)="onFilter(input)">
                              <option *ngFor="let option of options(input)" [value]="option.value">{{option.label}}</option>
                            </select>
                          </div>
@@ -67,12 +68,15 @@ import { FieldMap } from './field-map';
            '.glyphicon.selected { color: black }',
            '.glyphicon.disabled { color: lightgrey }',
            'input { width: 100; position: absolute }',
+           'select { position: absolute }',
            '.header, .hl { font-weight: bold }'],
   pipes: [EnumPipe]
 })
 export class TableComponent {
   selected: any;
   showInput: string;
+
+  @ViewChildren('filter') filters: QueryList<ElementRef>;
 
   @Input('assets') results: Results;
   @Input('search') search: Search;
@@ -119,6 +123,11 @@ export class TableComponent {
       delete input.value;
       if (index == -1) this.search.filters.push(input);
       this.showInput = input;
+      setTimeout(() => {
+        let el = this.filters.first.nativeElement;
+        el.focus();
+        el.size = Math.min(this.enumService.get(input.field).options(false).length, 10); //FIXME nasty - fails if not an enum
+      });
     }
   }
 
