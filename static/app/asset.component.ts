@@ -1,4 +1,4 @@
-import { Component, Input, Output, ViewChild, EventEmitter, ElementRef } from '@angular/core';
+import { Component, Input, Output, ViewChild, ViewChildren, EventEmitter, ElementRef, QueryList } from '@angular/core';
 import { EnumService } from './enum.service';
 import { DataService } from './data.service';
 import { FieldMap } from './field-map';
@@ -49,7 +49,7 @@ import { LAST_OPTION } from './enum';
                              <select *ngIf="addNew.field != input.field" class="form-control" [(ngModel)]="asset[input.field]" [name]="input.field" (ngModelChange)="onEnumChange(input)">
                                <option *ngFor="let o of options(input.field)" [value]="o.value">{{o.label}}</option>
                              </select>
-                             <input type="text" *ngIf="addNew.field == input.field" class="form-control" [(ngModel)]="addNew.label" [name]="input.field" (change)="onAddNew(input)"/>
+                             <input #addNew type="text" *ngIf="addNew.field == input.field" class="form-control" [(ngModel)]="addNew.label" [name]="input.field" (blur)="onAddNew(input, addNew.label)" (change)="onAddNew(input, addNew.label)"/>
                            </div>
                          </div>
                        </div>
@@ -92,6 +92,7 @@ export class AssetComponent {
 
   @ViewChild('form') form: HTMLFormElement;
   @ViewChild('upload') upload: ElementRef;
+  @ViewChildren('addNew') addNewInput: QueryList<ElementRef>;
 
   @Output('event') event = new EventEmitter<any>();
 
@@ -174,14 +175,21 @@ export class AssetComponent {
   onEnumChange(input) {
     if (this.asset[input.field] == LAST_OPTION.value) {
       this.addNew.field = input.field;
+      this.addNew.label = undefined;
+      setTimeout(() => this.addNewInput.first.nativeElement.focus());
     }
   }
 
-  onAddNew(input) {
-    delete this.addNew.field;
-    if (this.addNew.label) {
-      this.enumService.addNewLabel(input.field, this.addNew.label)
-                      .subscribe(enumValue => this.asset[input.field] = enumValue.value);
+  onAddNew(input, label) {
+    if (label) {
+      this.enumService.addNewLabel(input.field, label)
+                      .subscribe(enumValue => {
+                        this.asset[input.field] = enumValue.value;
+                        delete this.addNew.field;
+                      });
+    } else {
+      this.asset[input.field] = undefined;
+      delete this.addNew.field;
     }
   }
 

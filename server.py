@@ -70,6 +70,12 @@ def enums_endpoint(field=None):
         enumValue = {'label': request.args.get('label', 'No label')}
         enumValue['value'] = len(enum)
         enumValue['order'] = len(enum)
+
+        # check the label doesn't already exist, if it does, return that
+        for value in enum:
+            if value['label'] == enumValue['label']:
+                return json.dumps(value)
+
         enum.append(enumValue)
         with open(path, 'w') as f:
             f.write(json.dumps(enum))

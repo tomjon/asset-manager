@@ -18,6 +18,10 @@ export class EnumService {
     });
   }
 
+  /**
+   * Add a new label to the enum for the specified field. Return the new value
+   * if the label doesn't already exist, otherwise return the existing value.
+   */
   addNewLabel(field: string, label: string): Observable<any> {
     return this.dataService.addNewEnumLabel(field, label)
                            .map(enumValue => this.enums[field].addEnumValue(enumValue));

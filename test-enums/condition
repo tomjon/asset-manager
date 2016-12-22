@@ -1,1 +1,1 @@
-[{"label": "As new", "value": 0, "order": 0}, {"label": "Slightly damaged", "value": 1, "order": 1}, {"label": "Broken beyond repair", "value": 2, "order": 2}]
+[{"order": 0, "value": 0, "label": "As new"}, {"order": 1, "value": 1, "label": "Slightly damaged"}, {"order": 2, "value": 2, "label": "Broken beyond repair"}, {"order": 3, "value": 3, "label": "foo"}]

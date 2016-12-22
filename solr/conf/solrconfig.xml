@@ -93,8 +93,8 @@
   <!--
      <lib path="../a-jar-that-does-not-exist.jar" /> 
   -->
-  <lib path="/home/ses/asset-manager/solr/java/lib/json-simple-1.1.1.jar" />
-  <lib path="/home/ses/asset-manager/solr/java/bams-enum.jar" />
+  <lib path="${solr.install.dir}/../solr/java/lib/json-simple-1.1.1.jar" />
+  <lib path="${solr.install.dir}/../solr/java/bams-enum.jar" />
 
   <!-- Data Directory
 
@@ -1402,7 +1402,7 @@
   
   <valueSourceParser name="enum" 
                      class="uk.org.ofcom.ses.bams.solr.EnumValueSourceParser">
-    <str name="directory">/home/ses/asset-manager/enums</str>
+    <str name="directory">${solr.install.dir}/../enums</str>
     <str name="default_no_value">-2</str>
     <str name="default_no_order">-1</str>
   </valueSourceParser>
