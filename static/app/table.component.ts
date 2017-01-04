@@ -20,7 +20,7 @@ import { FieldMap } from './field-map';
                        <td *ngFor="let input of fieldMap.tableInputs">
                          <span class="header">{{input.short ? input.short : input.label}}</span>
                          <div *ngIf="showInput == input">
-                           <input #filter *ngIf="input.type == 'text'" [(ngModel)]="input.value" (ngModelChange)="doSearch()" (change)="showInput = undefined"/>
+                           <input #filter *ngIf="input.type == 'text'" [(ngModel)]="input.value" (ngModelChange)="doSearch()" (blur)="checkFilter(input)"/>
                            <select #filter *ngIf="input.type == 'enum'" [(ngModel)]="input.value" (ngModelChange)="onFilter(input)">
                              <option *ngFor="let option of options(input)" [value]="option.value">{{option.label}}</option>
                            </select>
@@ -113,7 +113,7 @@ export class TableComponent {
     return this.search.filters.indexOf(input) != -1 && input.value == '-';
   }
 
-  // click on input's filter icon - either remove filter or show select
+  // click on input's filter icon - either remove filter or show select/text input
   onFilterClick(input: any) {
     let index = this.search.filters.indexOf(input);
     if (index != -1 && input.value != '-') {
@@ -126,7 +126,9 @@ export class TableComponent {
       setTimeout(() => {
         let el = this.filters.first.nativeElement;
         el.focus();
-        el.size = Math.min(this.enumService.get(input.field).options(false).length, 10); //FIXME nasty - fails if not an enum
+        if (input.type == 'enum') {
+          el.size = Math.min(this.enumService.get(input.field).options(false).length, 10); //FIXME nasty - fails if not an enum
+        }
       });
     }
   }
@@ -150,6 +152,15 @@ export class TableComponent {
     this.doSearch();
   }
 
+  // once finished with a text input filter, stop showing input, and check for empty value
+  checkFilter(input: any) {
+    this.showInput = undefined;
+    if (input.value == undefined || input.value == '') {
+      let index = this.search.filters.indexOf(input);
+      this.search.filters.splice(index, 1);
+    }
+  }
+
   // click on input's up or down chevron icons
   onOrderClick(input: any, asc: boolean) {
     if (input.field == '') return;
@@ -164,7 +175,7 @@ export class TableComponent {
   }
 
   // return the display value for a text input
-  // if filtered, use the hightlight parameter to decide whether to return the
+  // if filtered, use the highlight parameter to decide whether to return the
   // highlighted prefix or the remaining portion
   textValue(input: any, asset: any, highlight: boolean=false): string {
     let value: string = asset[input.field] || '';
