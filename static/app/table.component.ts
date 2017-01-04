@@ -79,7 +79,19 @@ export class TableComponent {
 
   @ViewChildren('filter') filters: QueryList<ElementRef>;
 
-  @Input('assets') results: Results;
+  private results: Results;
+  @Input('assets') set _results(results: Results) {
+    this.results = results;
+    if (this.selected) {
+      for (let asset of results.assets) {
+        if (this.selected.id == asset.id) {
+          this.selected = asset;
+          break;
+        }
+      }
+    }
+  }
+
   @Input('search') search: Search;
 
   @Output('event') eventEmitter = new EventEmitter<any>();

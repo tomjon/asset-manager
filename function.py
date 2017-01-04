@@ -15,11 +15,6 @@ class FunctionError(Exception):
     def __init__(self, message):
         self.message = message
 
-def map_uuid(name, nodes, doc):
-    """ Generate a unique id for the document.
-    """
-    return [str(uuid.uuid4())]
-
 def map_date(name, nodes, doc):
     """ All we need is to add the final Z to get a SOLR date formatted string.
     """

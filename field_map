@@ -1,4 +1,4 @@
-ID				id			uuid
+ID				id
 ID Number			id_number
 Location			location		enum
 Rack				rack			enum

@@ -3,7 +3,6 @@
 import json
 import sys
 import os
-import uuid
 import requests
 import httplib
 from flask import Flask, redirect, request, Response, send_file
@@ -91,6 +90,7 @@ def search_endpoint(path=None):
               ('start', request.args.get('start', 0)),
               ('rows', request.args.get('rows', 10))]
 
+    sort = ['id asc']
     order = request.args.get('order', None)
     if order is not None:
         enum = False
@@ -100,7 +100,8 @@ def search_endpoint(path=None):
         if len(order) < 2 or order[0] not in '><':
             return "Bad order", 400
         field = 'enum({0})'.format(order[1:]) if enum else order[1:]
-        params.append(('sort', '{0} {1}'.format(field, 'asc' if order[0] == '>' else 'desc')))
+        sort.append('{0} {1}'.format(field, 'asc' if order[0] == '>' else 'desc'))
+    params.append(('sort', ','.join(sort)))
 
     if path is not None:
         for field_value in path.split('/'):
@@ -128,7 +129,12 @@ def asset_endpoint(asset_id=None):
     """ Asset add, delete, update endpoint.
     """
     if asset_id is None:
-        asset_id = str(uuid.uuid4())
+        # do a SOLR search so we can generate a new asset id
+        r = requests.get(SOLR_QUERY_URL, params={'q': '*', 'rows': 1, 'fl': 'id', 'sort': 'id desc'})
+        assert_status_code(r, httplib.OK)
+        rsp = json.loads(r.text)
+        docs = rsp['response']['docs']
+        asset_id = str(int(docs[0]['id']) + 1) if len(docs) > 0 else 1
     if request.method == 'DELETE':
         # delete an existing asset
         data = {'delete': asset_id}
