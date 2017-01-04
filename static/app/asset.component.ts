@@ -2,6 +2,7 @@ import { Component, Input, Output, ViewChild, ViewChildren, EventEmitter, Elemen
 import { EnumService } from './enum.service';
 import { DataService } from './data.service';
 import { FieldMap } from './field-map';
+import { Frequency, FREQ_UNITS } from './frequency';
 import { LAST_OPTION } from './enum';
 
 /**
@@ -36,9 +37,20 @@ import { LAST_OPTION } from './enum';
                      <div *ngFor="let col of fieldMap.assetInputs" class="col-lg-6">
                        <div *ngFor="let group of col" class="form-group">
                          <div *ngFor="let input of group" [ngClass]="{'col-lg-6': group.length > 1, 'my-input-group': group.length > 1}">
-                           <div *ngIf="input.type != 'area' && input.type != 'enum'">
+                           <div *ngIf="input.type != 'area' && input.type != 'enum' && input.type != 'freq'">
                              <label for="input.field">{{input.label}}</label>
                              <input [type]="input.type" class="form-control" required [(ngModel)]="asset[input.field]" [name]="input.field" />
+                           </div>
+                           <div *ngIf="input.type == 'freq'">
+                             <label for="input.field">{{input.label}}</label>
+                             <div class="col-lg-7 my-input-group">
+                               <input class="form-control" [type]="input.type" required [(ngModel)]="freqs[input.field].value" [name]="input.field" />
+                             </div>
+                             <div class="col-lg-5 my-input-group">
+                               <select class="form-control" required [name]="input.field + '-units'" [(ngModel)]="freqs[input.field].units">
+                                 <option *ngFor="let o of unitOptions()" [value]="o.value">{{o.label}}</option>
+                               </select>
+                             </div>
                            </div>
                            <div *ngIf="input.type == 'area'">
                              <label for="input.field">{{input.label}}</label>
@@ -85,6 +97,7 @@ import { LAST_OPTION } from './enum';
 export class AssetComponent {
   private original: any;
   private asset: any = {};
+  private freqs: any = {};
   private files: string[] = [];
   private file_index: number = -1;
   private showUpload: boolean = false;
@@ -108,12 +121,26 @@ export class AssetComponent {
                         this.file_index = this.files.length > 0 ? 0 : -1;
                       });
     }
+    // pull out frequencies
+    for (let input of this.fieldMap.allInputs) {
+      if (input.type == 'freq') {
+        this.freqs[input.field] = new Frequency(this.asset, input.field);
+      }
+    }
   }
 
   constructor(private fieldMap: FieldMap, private enumService: EnumService, private dataService: DataService) {}
 
   options(field: string) {
     return this.enumService.get(field).options();
+  }
+
+  unitOptions(): any[] {
+    let options = [{value: undefined, label: 'n/a'}];
+    for (let i: number = 0; i < FREQ_UNITS.length; ++i) {
+      options.push({value: i, label: FREQ_UNITS[i]});
+    }
+    return options;
   }
 
   onImgClick(delta: number) {

@@ -4,6 +4,7 @@ import { Results } from './results';
 import { EnumPipe } from './enum.pipe';
 import { EnumService } from './enum.service';
 import { FieldMap } from './field-map';
+import { Frequency, FREQ_UNITS } from './frequency';
 
 @Component({
   selector: 'bams-table',
@@ -189,6 +190,10 @@ export class TableComponent {
     let start = asset[input.range[0].field];
     let end = asset[input.range[1].field];
     if (start != undefined && end != undefined) {
+      if (input.range[0].type == 'freq') {
+        start = new Frequency(asset, input.range[0].field).label();
+        end = new Frequency(asset, input.range[1].field).label();
+      }
       return `${start} - ${end}`;
     } else {
       return '';
