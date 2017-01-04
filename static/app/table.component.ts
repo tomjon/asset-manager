@@ -21,7 +21,7 @@ import { FieldMap } from './field-map';
                          <span class="header">{{input.short ? input.short : input.label}}</span>
                          <div *ngIf="showInput == input">
                            <input #filter *ngIf="input.type == 'text'" [(ngModel)]="input.value" (ngModelChange)="doSearch()" (blur)="checkFilter(input)"/>
-                           <select #filter *ngIf="input.type == 'enum'" [(ngModel)]="input.value" (ngModelChange)="onFilter(input)">
+                           <select #filter *ngIf="input.type == 'enum'" [(ngModel)]="input.value" (ngModelChange)="onFilter(input)" (blur)="checkFilter(input)">
                              <option *ngFor="let option of options(input)" [value]="option.value">{{option.label}}</option>
                            </select>
                          </div>
@@ -68,7 +68,7 @@ import { FieldMap } from './field-map';
            '.glyphicon.selected { color: black }',
            '.glyphicon.disabled { color: lightgrey }',
            'input { width: 100; position: absolute }',
-           'select { position: absolute }',
+           'select { position: absolute; z-index: 1 }',
            '.header, .hl { font-weight: bold }'],
   pipes: [EnumPipe]
 })
@@ -127,7 +127,7 @@ export class TableComponent {
         let el = this.filters.first.nativeElement;
         el.focus();
         if (input.type == 'enum') {
-          el.size = Math.min(this.enumService.get(input.field).options(false).length, 10); //FIXME nasty - fails if not an enum
+          el.size = Math.min(el.options.length, 10);
         }
       });
     }
@@ -152,7 +152,7 @@ export class TableComponent {
     this.doSearch();
   }
 
-  // once finished with a text input filter, stop showing input, and check for empty value
+  // once finished with a filter input, stop showing input, and check for empty value
   checkFilter(input: any) {
     this.showInput = undefined;
     if (input.value == undefined || input.value == '') {
