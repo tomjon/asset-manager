@@ -74,7 +74,6 @@ import { Frequency, FREQ_UNITS } from './frequency';
   pipes: [EnumPipe]
 })
 export class TableComponent {
-  selected: any;
   showInput: string;
 
   @ViewChildren('filter') filters: QueryList<ElementRef>;
@@ -92,6 +91,7 @@ export class TableComponent {
     }
   }
 
+  @Input('selected') selected: any;
   @Input('search') search: Search;
 
   @Output('event') eventEmitter = new EventEmitter<any>();
@@ -104,8 +104,8 @@ export class TableComponent {
   }
 
   onRowClick(asset: any) {
-    this.selected = this.selected != asset ? asset : undefined;
-    this.eventEmitter.emit({asset: this.selected || {}});
+    if (asset == this.selected) asset = {};
+    this.eventEmitter.emit({asset: asset});
   }
 
   onNavigate(start: number) {

@@ -74,7 +74,7 @@ import { LAST_OPTION } from './enum';
                      <span class="glyphicon glyphicon-chevron-left" [ngClass]="{disabled: file_index <= 0}" (click)="onImgClick(-1)"></span>
                      <span class="glyphicon glyphicon-chevron-right" [ngClass]="{disabled: file_index >= files.length - 1}" (click)="onImgClick(+1)"></span>
                      <span class="glyphicon glyphicon-trash" [ngClass]="{disabled: file_index == -1}" (click)="onImgDelete()"></span>
-                     <span class="glyphicon glyphicon-plus-sign" [ngClass]="{disabled: asset.id == undefined}" (click)="onImgNew()"></span>
+                     <span class="glyphicon glyphicon-plus-sign" [ngClass]="{disabled: ! original || original.id == undefined}" (click)="onImgNew()"></span>
                    </h3>
                    <input #upload *ngIf="showUpload" type="file" (change)="onUpload()"/>
                    <div *ngIf="! showUpload">
@@ -114,6 +114,7 @@ export class AssetComponent {
     this.asset = Object.assign({}, this.original);
     this.file_index = -1;
     this.files = [];
+    this.pristine(this.form);
     if (this.asset.id) {
       this.dataService.getAttachments(this.asset)
                       .subscribe(files => {
@@ -191,7 +192,7 @@ export class AssetComponent {
   }
 
   onDelete() {
-    this.event.emit({delete: this.asset.id});
+    this.event.emit({delete: this.original.id});
     this._asset = undefined;
   }
 

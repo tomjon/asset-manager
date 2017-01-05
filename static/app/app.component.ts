@@ -18,7 +18,7 @@ import './rxjs-operators';
                  <div class="col-lg-12">
                    <h1><img src="/static/ofcom.gif"/> Baldock Asset Management System</h1>
                    <bams-asset [asset]="asset" (event)="onAssetEvent($event)"></bams-asset>
-                   <bams-table [assets]="results" [search]="search" (event)="onTableEvent($event)"></bams-table>
+                   <bams-table [assets]="results" [search]="search" [selected]="asset" (event)="onTableEvent($event)"></bams-table>
                  </div>
                </div>
              </div>`,
@@ -53,9 +53,11 @@ export class AppComponent {
                       .subscribe(() => this.doSearch());
     }
     else if (event.add) {
-      this.dataService.addAsset(event.add)
+      this.asset = Object.assign({}, event.add);
+      delete this.asset.id;
+      this.dataService.addAsset(this.asset)
                       .subscribe(id => {
-                        event.add.id = id;
+                        this.asset.id = id;
                         this.doSearch();
                       });
     }
