@@ -21,7 +21,7 @@ import { Frequency, FREQ_UNITS } from './frequency';
                        <td *ngFor="let input of fieldMap.tableInputs">
                          <span class="header">{{input.short ? input.short : input.label}}</span>
                          <div *ngIf="showInput == input">
-                           <input #filter *ngIf="input.type == 'text'" [(ngModel)]="input.value" (ngModelChange)="doSearch()" (blur)="checkFilter(input)"/>
+                           <input #filter *ngIf="input.type == 'text'" [(ngModel)]="input.value" (ngModelChange)="doSearch()" (change)="checkFilter(input)" (blur)="checkFilter(input)"/>
                            <select #filter *ngIf="input.type == 'enum'" [(ngModel)]="input.value" (ngModelChange)="onFilter(input)" (blur)="checkFilter(input)">
                              <option *ngFor="let option of options(input)" [value]="option.value">{{option.label}}</option>
                            </select>
