@@ -106,8 +106,8 @@ export class TableComponent {
   constructor(private fieldMap: FieldMap, private enumService: EnumService) {}
 
   ngOnInit() {
-    this.doSearch();
     this.search.facets = this.fieldMap.enumFields;
+    this.doSearch();
   }
 
   unitOptions() {
