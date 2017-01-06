@@ -3,6 +3,7 @@ import { Http, URLSearchParams, Headers } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
 import { Search } from './search';
 import { Results } from './results';
+import { Frequency } from './frequency';
 
 export var DATETIME_RE = /^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\dZ$/;
 export var DATE_RE = /^\d\d\d\d-\d\d-\d\d$/;
@@ -56,6 +57,17 @@ export class DataService {
 
     let path = '';
     for (let input of search.filters) {
+      if (input.type == 'freq') {
+        if (input.value != '-') {
+          if (input.value && input.units) {
+            let f = Frequency.freq(input.value, input.units);
+            path += `/${input.range[0].field},${input.range[1].field}:${f}`;
+          }
+        } else {
+          path += `/-${input.range[0].field}:*/-${input.range[1].field}:*`;
+        }
+        continue;
+      }
       if (input.field == undefined || input.value == '') continue;
       let field = input.field;
       if (input.type == 'text') {

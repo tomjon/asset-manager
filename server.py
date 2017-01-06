@@ -109,9 +109,20 @@ def search_endpoint(path=None):
             if field_value.count(':') != 1:
                 return "Bad filter", 400
             field, value = field_value.split(':')
-            if value != '*':
-                value = '"{0}"'.format(value)
-            params.append(('fq', '{0}:{1}'.format(field, value)))
+            if ',' in field:
+                field = field.split(',')
+                if len(field) != 2:
+                    return "Bad filter", 400
+                try:
+                    float(value)
+                except ValueError:
+                    return "Bad filter", 400
+                params.append(('fq', '{0}:[0 TO {1}]'.format(field[0], value)))
+                params.append(('fq', '{0}:[{1} TO *]'.format(field[1], value)))
+            else:
+                if value != '*':
+                    value = '"{0}"'.format(value)
+                params.append(('fq', '{0}:{1}'.format(field, value)))
 
     if 'facets' in request.args:
         params.append(('facet', 'true'))

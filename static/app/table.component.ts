@@ -4,7 +4,7 @@ import { Results } from './results';
 import { EnumPipe } from './enum.pipe';
 import { EnumService } from './enum.service';
 import { FieldMap } from './field-map';
-import { Frequency, FREQ_UNITS } from './frequency';
+import { Frequency } from './frequency';
 
 @Component({
   selector: 'bams-table',
@@ -20,17 +20,22 @@ import { Frequency, FREQ_UNITS } from './frequency';
                      <tr>
                        <td *ngFor="let input of fieldMap.tableInputs">
                          <span class="header">{{input.short ? input.short : input.label}}</span>
-                         <div *ngIf="showInput == input">
-                           <input #filter *ngIf="input.type == 'text'" [(ngModel)]="input.value" (ngModelChange)="doSearch()" (change)="checkFilter(input)" (blur)="checkFilter(input)"/>
+                         <div *ngIf="showInput == input" class="filter">
+                           <input #filter class="filter" *ngIf="input.type == 'text'" [(ngModel)]="input.value" (ngModelChange)="doSearch()" (change)="checkFilter(input)" (blur)="checkFilter(input)"/>
+                           <input #filter class="freq" *ngIf="input.type == 'freq'" type="number" [(ngModel)]="input.value" (change)="checkRange(input)"/>
+                           <select class="freq" *ngIf="input.type == 'freq'" [(ngModel)]="input.units" (ngModelChange)="checkRange(input)">
+                             <option *ngFor="let o of unitOptions()" [value]="o.value">{{o.label}}</option>
+                           </select>
                            <select #filter *ngIf="input.type == 'enum'" [(ngModel)]="input.value" (ngModelChange)="onFilter(input)" (blur)="checkFilter(input)">
-                             <option *ngFor="let option of options(input)" [value]="option.value">{{option.label}}</option>
+                             <option *ngFor="let o of options(input)" [value]="o.value">{{o.label}}</option>
                            </select>
                          </div>
                          <div *ngIf="showInput != input">
-                           <span class="glyphicon glyphicon-chevron-up" [ngClass]="{selected: search.order.asc == input, disabled: input.field == ''}" (click)="onOrderClick(input, true)"></span>
-                           <span class="glyphicon glyphicon-chevron-down" [ngClass]="{selected: search.order.desc == input, disabled: input.field == ''}" (click)="onOrderClick(input, false)"></span>
-                           <span class="glyphicon glyphicon-list" [ngClass]="{selected: filterSelected(input), disabled: input.field == ''}" (click)="onFilterClick(input)"></span>
-                           <span class="glyphicon glyphicon-ban-circle" [ngClass]="{selected: emptySelected(input), disabled: input.field == ''}" (click)="onEmptyClick(input)"></span>
+                           <span class="glyphicon glyphicon-chevron-up" [ngClass]="{selected: orderSelected(input, true)}" (click)="onOrderClick(input, true)"></span>
+                           <span class="glyphicon glyphicon-chevron-down" [ngClass]="{selected: orderSelected(input, false)}" (click)="onOrderClick(input, false)"></span>
+                           <span class="glyphicon glyphicon-list" [ngClass]="{selected: filterSelected(input)}" (click)="onFilterClick(input)"></span>
+                           <span class="glyphicon glyphicon-ban-circle" [ngClass]="{selected: emptySelected(input)}" (click)="onEmptyClick(input)"></span>
+                           <span *ngIf="input.type == 'freq' && filterSelected(input)">({{freqLabel(input)}})</span>
                          </div>
                        </td>
                      </tr>
@@ -41,7 +46,7 @@ import { Frequency, FREQ_UNITS } from './frequency';
                          <span *ngIf="input.type == 'text'"><span class="hl">{{textValue(input, asset, true)}}</span>{{textValue(input, asset)}}</span>
                          <span *ngIf="input.type == 'date'">{{asset[input.field] | date:'dd/MM/yyyy'}}</span>
                          <span *ngIf="input.type == 'enum'" [ngClass]="{hl: search.filters.includes(input) && showInput != input}">{{asset[input.field] | enum:input.field}}</span>
-                         <span *ngIf="input.type == 'range'">{{rangeValue(input, asset)}}</span>
+                         <span *ngIf="input.type == 'freq'">{{rangeValue(input, asset)}}</span>
                        </td>
                      </tr>
                      <tr *ngIf="results.assets.length == 0">
@@ -68,8 +73,10 @@ import { Frequency, FREQ_UNITS } from './frequency';
            '.glyphicon:hover:not(.disabled) { color: blue }',
            '.glyphicon.selected { color: black }',
            '.glyphicon.disabled { color: lightgrey }',
-           'input { width: 100; position: absolute }',
-           'select { position: absolute; z-index: 1 }',
+           'input.filter { width: 100 }',
+           'div.filter { position: absolute; z-index: 1 }',
+           'input.freq { width: 80 }',
+           'select.freq { width: 60 }',
            '.header, .hl { font-weight: bold }'],
   pipes: [EnumPipe]
 })
@@ -103,6 +110,14 @@ export class TableComponent {
     this.search.facets = this.fieldMap.enumFields;
   }
 
+  unitOptions() {
+    return Frequency.unitOptions(false);
+  }
+
+  freqLabel(input: any) {
+    return Frequency.label(input.value, input.units);
+  }
+
   onRowClick(asset: any) {
     if (asset == this.selected) asset = {};
     this.eventEmitter.emit({asset: asset});
@@ -134,6 +149,7 @@ export class TableComponent {
       this.doSearch();
     } else {
       delete input.value;
+      delete input.units;
       if (index == -1) this.search.filters.push(input);
       this.showInput = input;
       setTimeout(() => {
@@ -151,12 +167,11 @@ export class TableComponent {
     let index = this.search.filters.indexOf(input);
     if (index != -1 && input.value == '-') {
       this.search.filters.splice(index, 1);
-      this.doSearch();
     } else {
       input.value = '-';
       if (index == -1) this.search.filters.push(input);
-      this.doSearch();
     }
+    this.doSearch();
   }
 
   // select an enum value for an input
@@ -174,13 +189,38 @@ export class TableComponent {
     }
   }
 
+  // decide whether to stop showing the range input, if so, is it valid (non empty)
+  checkRange(input: any) {
+    if (input.units != undefined) {
+      this.checkFilter(input);
+      this.doSearch();
+    }
+  }
+
+  showRange(input: any) {
+    this.showInput = input;
+  }
+
+  orderSelected(input: any, asc: boolean): boolean {
+    if (input.type == 'freq') {
+      input = input.range[asc ? 0 : 1];
+    }
+    return this.search.order[asc ? 'asc' : 'desc'] == input;
+  }
+
   // click on input's up or down chevron icons
   onOrderClick(input: any, asc: boolean) {
-    if (input.field == '') return;
+    // remove any filter already added
     let index = this.search.filters.indexOf(input);
     if (index != -1) {
       this.search.filters.splice(index, 1);
     }
+    // check for range and use lower or upper according to asc
+    if (input.type == 'freq') {
+      input = input.range[asc ? 0 : 1];
+    }
+    // now treat the input
+    if (input.field == '') return;
     let reset = this.search.order[asc ? 'asc' : 'desc'] == input;
     this.search.order = {};
     if (! reset) this.search.order[asc ? 'asc' : 'desc'] = input;

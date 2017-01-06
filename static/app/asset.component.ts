@@ -2,7 +2,7 @@ import { Component, Input, Output, ViewChild, ViewChildren, EventEmitter, Elemen
 import { EnumService } from './enum.service';
 import { DataService } from './data.service';
 import { FieldMap } from './field-map';
-import { Frequency, FREQ_UNITS } from './frequency';
+import { Frequency } from './frequency';
 import { LAST_OPTION } from './enum';
 
 /**
@@ -132,16 +132,12 @@ export class AssetComponent {
 
   constructor(private fieldMap: FieldMap, private enumService: EnumService, private dataService: DataService) {}
 
-  options(field: string) {
-    return this.enumService.get(field).options();
+  unitOptions() {
+    return Frequency.unitOptions();
   }
 
-  unitOptions(): any[] {
-    let options = [{value: undefined, label: 'n/a'}];
-    for (let i: number = 0; i < FREQ_UNITS.length; ++i) {
-      options.push({value: i, label: FREQ_UNITS[i]});
-    }
-    return options;
+  options(field: string) {
+    return this.enumService.get(field).options();
   }
 
   onImgClick(delta: number) {

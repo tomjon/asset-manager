@@ -1,4 +1,4 @@
-export var FREQ_UNITS = ['Hz', 'kHz', 'MHz', 'GHz'];
+var FREQ_UNITS = ['Hz', 'kHz', 'MHz', 'GHz'];
 
 export class Frequency {
   private _value: number;
@@ -11,8 +11,8 @@ export class Frequency {
     this._value = f * Math.pow(10, 6 - 3 * m);
   }
 
-  private f(): number {
-    return this._value * Math.pow(10, 3 * this._units - 6);
+  private setFreq(): void {
+    this.asset[this.field] =  Frequency.freq(this._value, this._units);
   }
 
   public get value(): number {
@@ -21,7 +21,7 @@ export class Frequency {
 
   public set value(value: number) {
     this._value = value;
-    this.asset[this.field] = this.f();
+    this.setFreq();
   }
 
   public get units(): number {
@@ -30,10 +30,26 @@ export class Frequency {
 
   public set units(units: number) {
     this._units = units;
-    this.asset[this.field] = this.f();
+    this.setFreq();
   }
 
   public label(): string {
-    return `${this._value}${FREQ_UNITS[this._units]}`;
+    return Frequency.label(this._value, this._units);
+  }
+
+  public static label(value: number, units: number): string {
+    return `${value}${FREQ_UNITS[units]}`;
+  }
+
+  public static unitOptions(na: boolean=true): any[] {
+    let options = na ? [{value: undefined, label: 'n/a'}] : [];
+    for (let i: number = 0; i < FREQ_UNITS.length; ++i) {
+      options.push({value: i, label: FREQ_UNITS[i]});
+    }
+    return options;
+  }
+
+  public static freq(value: number, units: number) {
+    return value * Math.pow(10, 3 * units - 6);
   }
 }

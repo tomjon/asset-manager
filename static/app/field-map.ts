@@ -18,7 +18,7 @@ var SERIAL_NUMBER = {'field': 'serial', 'label': 'Serial Number', 'type': 'text'
 var OWNER = {'field': 'owner', 'label': 'Owner', 'type': 'enum'};
 var NOTES = {'field': 'notes', 'label': 'Notes', 'type': 'area'};
 
-var FREQ_RANGE = {'field': '', 'label': 'Frequency', 'type': 'range', 'range': [START_FREQ, STOP_FREQ]};
+var FREQ_RANGE = {'field': '', 'label': 'Frequency', 'type': 'freq', 'range': [START_FREQ, STOP_FREQ]};
 
 @Injectable()
 export class FieldMap {
