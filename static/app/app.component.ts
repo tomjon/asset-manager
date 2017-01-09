@@ -16,7 +16,7 @@ import './rxjs-operators';
   template: `<div class="container-fluid">
                <div class="row">
                  <div class="col-lg-12">
-                   <h1><img src="/static/ofcom.gif"/> Baldock Asset Management System</h1>
+                   <h1><img src="/static/ofcom.gif"/> Baldock Asset Database and Scheduling System</h1>
                    <bams-asset [asset]="asset" (event)="onAssetEvent($event)"></bams-asset>
                    <bams-table [assets]="results" [search]="search" [selected]="asset" (event)="onTableEvent($event)"></bams-table>
                  </div>
