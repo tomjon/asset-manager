@@ -79,8 +79,8 @@ import { LAST_OPTION } from './enum';
                    <input #upload *ngIf="showUpload" type="file" (change)="onUpload()"/>
                    <div *ngIf="! showUpload">
                      <div class="attachment" *ngFor="let src of files; let i = index" [hidden]="file_index != i">
-                       <img *ngIf="! src.endsWith('.pdf')" src="/file/{{asset.id}}/{{src}}"/>
-                       <a *ngIf="src.endsWith('.pdf')" target="pdf" href="/file/{{asset.id}}/{{src}}">{{src}}</a>
+                       <img *ngIf="isImage(src)" src="/file/{{asset.id}}/{{src}}"/>
+                       <a *ngIf="! isImage(src)" target="attachment" href="/file/{{asset.id}}/{{src}}">{{src}}</a>
                      </div>
                    </div>
                  </div>
@@ -215,6 +215,14 @@ export class AssetComponent {
       this.asset[input.field] = undefined;
       delete this.addNew.field;
     }
+  }
+
+  isImage(src): boolean {
+    src = src.toLowerCase();
+    for (let ext of ['.jpg', '.jpeg', '.gif', '.png', '.bmp']) {
+      if (src.endsWith(ext)) return true;
+    }
+    return false;
   }
 
   pristine(form: any, value?: boolean): void {
