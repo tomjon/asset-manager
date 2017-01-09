@@ -20,12 +20,6 @@ export class Enum {
   }
 
   public label(value: string): string {
-    /*if (value == FIRST_OPTION.value) {
-      return FIRST_OPTION.label;
-    }
-    if (value == LAST_OPTION.value) {
-      return LAST_OPTION.label;
-    }*/
     for (let e of this.values) {
       if (e.value == value) return e.label;
     }

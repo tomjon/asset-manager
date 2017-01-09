@@ -27,7 +27,7 @@ import { Frequency } from './frequency';
                              <option *ngFor="let o of unitOptions()" [value]="o.value">{{o.label}}</option>
                            </select>
                            <select #filter *ngIf="input.type == 'enum'" [(ngModel)]="input.value" (ngModelChange)="onFilter(input)" (blur)="checkFilter(input)">
-                             <option *ngFor="let o of options(input)" [value]="o.value">{{o.label}}</option>
+                             <option *ngFor="let o of options(input)" [value]="o.value">{{o.label}} ({{o.count}})</option>
                            </select>
                          </div>
                          <div *ngIf="showInput != input">
@@ -256,11 +256,8 @@ export class TableComponent {
     let options = [];
     for (let option of this.enumService.get(input.field).options(false)) {
       let counts = this.results.facets[input.field];
-      if (counts) {
-        if (counts[option.value] == 0) continue;
-        option.label += ` (${counts[option.value]})`;
-      }
-      options.push(option);
+      option.count = counts && counts[option.value] ? counts[option.value] : 0;
+      if (option.count > 0) options.push(option);
     }
     return options;
   }
