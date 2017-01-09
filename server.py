@@ -101,7 +101,7 @@ def search_endpoint(path=None):
             return "Bad order", 400
         field = 'enum({0})'.format(order[1:]) if enum else order[1:]
         sort.append('{0} {1}'.format(field, 'asc' if order[0] == '>' else 'desc'))
-        params.append(('fq', '{0}:*'.format(field)))
+        params.append(('fq', '{0}:*'.format(order[1:])))
     sort.reverse()
     params.append(('sort', ','.join(sort)))
 
