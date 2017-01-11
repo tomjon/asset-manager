@@ -5,16 +5,17 @@ import sys
 import os
 import requests
 import httplib
-from flask import Flask, redirect, request, Response, send_file
+import sqlite3
+import mimetypes
+from werkzeug.local import LocalProxy
+from flask import Flask, redirect, request, Response, send_file, g
 
 application = Flask(__name__) # pylint: disable=invalid-name
 
 SOLR_COLLECTION = "assets"
 SOLR_QUERY_URL = "http://localhost:8983/solr/{0}/query".format(SOLR_COLLECTION)
 SOLR_UPDATE_URL = "http://localhost:8983/solr/{0}/update".format(SOLR_COLLECTION)
-
-UPLOAD_FOLDER = "files"
-ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
+DATABASE = "sql/assets.db"
 
 class SolrError(Exception):
     """ Exception raised when SOLR returns an error status.
@@ -35,6 +36,45 @@ def assert_status_code(r, status_code):
     if r.status_code != status_code:
         raise SolrError(r.status_code)
 
+def get_db():
+    db = getattr(g, '_database', None)
+    if db is None:
+        db = g._database = sqlite3.connect(DATABASE)
+    return db
+
+db = LocalProxy(get_db)
+
+NO_RESULT = object()
+
+def select(sql, stmt, values=None, **kwargs):
+    if values is None: values = {}
+    values.update(kwargs)
+    sql.execute(stmt, values)
+    row = sql.fetchone()
+    return row if row is not None else NO_RESULT
+
+def selectOne(sql, stmt, values=None, **kwargs):
+    row = select(sql, stmt, values, **kwargs)
+    return row[0] if row is not NO_RESULT else NO_RESULT
+
+def selectDict(sql, stmt, values=None, **kwargs):
+    row = select(sql, stmt, values, **kwargs)
+    return dict(zip([col[0] for col in sql.description], row)) if row is not NO_RESULT else NO_RESULT
+
+def selectAll(sql, stmt, values=None, **kwargs):
+    if values is None: values = {}
+    values.update(kwargs)
+    sql.execute(stmt, values)
+    return sql.fetchall()
+
+def selectAllDict(sql, stmt, values=None, **kwargs):
+    return [dict(zip([col[0] for col in sql.description], row)) for row in selectAll(sql, stmt, values, **kwargs)]
+
+@application.teardown_appcontext
+def teardown_db(exception):
+    db = getattr(g, '_database', None)
+    if db is not None:
+        db.close()
 
 @application.route('/', methods=['GET', 'POST'])
 def main_endpoint():
@@ -50,36 +90,31 @@ def favicon_endpoint():
     path = os.path.join(application.root_path, 'static', 'favicon.ico')
     return send_file(path, mimetype='image/vnd.microsoft.icon')
 
-
 @application.route('/enum')
 @application.route('/enum/<field>', methods=['POST'])
 def enums_endpoint(field=None):
     """ Endpoint for getting and updating enumerations.
     """
+    sql = db.cursor()
     if request.method == 'GET':
         enums = {}
-        for field in os.listdir('enums'):
-            with open(os.path.join('enums', field)) as f:
-                enums[field] = json.loads(f.read())
+        for enum_id, field in selectAll(sql, "SELECT enum_id, field FROM enum"):
+            stmt = "SELECT value, label, `order` FROM enum_entry WHERE enum_id=:enum_id"
+            enums[field] = selectAllDict(sql, stmt, enum_id=enum_id)
         return json.dumps(enums)
     else:
-        path = os.path.join('enums', field)
-        with open(path) as f:
-            enum = json.loads(f.read())
-        enumValue = {'label': request.args.get('label', 'No label')}
-        enumValue['value'] = len(enum)
-        enumValue['order'] = len(enum)
-
-        # check the label doesn't already exist, if it does, return that
-        for value in enum:
-            if value['label'] == enumValue['label']:
-                return json.dumps(value)
-
-        enum.append(enumValue)
-        with open(path, 'w') as f:
-            f.write(json.dumps(enum))
-        return json.dumps(enumValue)
-
+        enum_id = selectOne(sql, "SELECT enum_id FROM enum WHERE field=:field", field=field)
+        if enum_id is NO_RESULT:
+            return "No such enum", 400
+        label = request.args.get('label', 'No label')
+        entry = selectDict(sql, "SELECT value, label, `order` FROM enum_entry WHERE enum_id=:enum_id AND label=:label", enum_id=enum_id, label=label)
+        if entry is not NO_RESULT:
+            return json.dumps(entry)
+        next = max(select(sql, "SELECT MAX(value), MAX(`order`) FROM enum_entry WHERE enum_id=:enum_id", enum_id=enum_id)) + 1
+        entry = {'enum_id': enum_id, 'order': next, 'value': next, 'label': label}
+        sql.execute("INSERT INTO enum_entry VALUES (NULL, :enum_id, :order, :value, :label)", entry)
+        db.commit()
+        return json.dumps(entry)
 
 @application.route('/search')
 @application.route('/search/<path:path>')
@@ -168,31 +203,35 @@ def asset_endpoint(asset_id=None):
     return Response(json.dumps({'id': asset_id}), mimetype='application/json')
 
 
-@application.route('/file/<asset_id>')
-@application.route('/file/<asset_id>/<filename>', methods=['GET', 'PUT', 'DELETE'])
-def file_endpoint(asset_id, filename=None):
+@application.route('/file/<asset_id>', methods=['GET', 'POST'])
+@application.route('/file/<asset_id>/<attachment_id>', methods=['GET', 'DELETE'])
+@application.route('/file/<asset_id>/<attachment_id>/<filename>', methods=['GET'])
+def file_endpoint(asset_id=None, attachment_id=None, filename=None):
     """ Retrieve, upload or delete a file.
     """
-    asset_path = path = os.path.join(UPLOAD_FOLDER, asset_id)
-    if filename is not None:
-        path = os.path.join(asset_path, filename)
-        if request.method == 'PUT':
-            try:
-                os.makedirs(asset_path)
-            except OSError:
-                pass
-            with open(path, 'w') as f:
-                f.write(request.get_data())
-        else:
-            if not os.path.exists(path):
-                return "No such file", 404
-            if request.method == 'GET':
-                return send_file(path)
-            else:
-                os.remove(path)
-    if not os.path.exists(asset_path):
-        return json.dumps([])
-    return json.dumps(os.listdir(asset_path))
+    sql = db.cursor()
+    if request.method == 'GET' and attachment_id is not None:
+        # get the attachment with given id, checking the asset_id
+        stmt = "SELECT name, data FROM attachment WHERE asset_id=:asset_id AND attachment_id=:attachment_id"
+        values = select(sql, stmt, asset_id=asset_id, attachment_id=attachment_id)
+        if values is NO_RESULT:
+            return "No such attachment", 404
+        name, data = values
+        mimetype = mimetypes.guess_type(name)[0] or 'application/octet-stream'
+        return Response(str(data), mimetype=mimetype)
+    if request.method == 'DELETE':
+        # delete attachment with given id, checking the asset_id
+        values = {'asset_id': asset_id, 'attachment_id': attachment_id}
+        sql.execute("DELETE FROM attachment WHERE asset_id=:asset_id AND attachment_id=:attachment_id", values)
+        db.commit()
+    if request.method == 'POST':
+        # save a new attachment
+        name = request.args.get('name')
+        values = {'asset_id': asset_id, 'name': name, 'data': buffer(request.get_data())}
+        sql.execute("INSERT INTO attachment VALUES (NULL, :asset_id, :name, :data)", values)
+        db.commit()
+    # for these we return a list of attachment ids for this asset
+    return json.dumps(selectAllDict(sql, "SELECT attachment_id, name FROM attachment WHERE asset_id=:asset_id", asset_id=asset_id))
 
 
 if __name__ == '__main__':

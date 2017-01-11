@@ -4,55 +4,36 @@
 """
 import sys
 import requests
-import os
+import codecs
 import json
-from parser import parse_xml
+import csv
+import sqlite3
+import function
 from field_map import FieldMap
 
 SOLR_URL = 'http://localhost:8983/solr/{0}/update'
 SOLR_HEADERS = {'content-type': 'application/xml'}
 
-enums = {}
+def utf8_encoder(unicode_csv_data):
+    for line in unicode_csv_data:
+        yield line.encode('utf-8')
 
-class Document(dict):
-    def __init__(self):
-        super(Document, self).__init__()
-        self.files = []
-        self.enums = enums
-
-    def append_list(self, name, value):
-        self.extend_list(name, [value])
-
-    def extend_list(self, name, values):
-        if name not in self:
-            self[name] = []
-        self[name].extend(values)
-
-    def add_file(self, name, data):
-	self.files.append((name, data))
-
-def process_document(node, field_map, files_path, core):
-    """ Process a document by extracting any attachments and POSTing to SOLR.
+def process_row(row, field_map, enums, core):
+    """ Process a row and POST to SOLR.
     """
-    node_dict = node.as_dict()
-    doc = Document()
+    doc = {}
     for field in field_map.iter_fields():
-        if field not in node_dict:
-            continue
-        name, values = field_map.map(field, node_dict[field], doc)
-        if name is not None and values is not None and len(values) > 0:
-            doc.extend_list(name, values)
-        node_dict.pop(field)
-    if len(node_dict) > 0:
-        print >>sys.stderr, "Document has unprocessed fields: {0}".format(','.join(node_dict))
-        sys.exit(1)
+        if field in row:
+            # there are no multiple values
+            name, values = field_map.map(field, unicode(row[field], 'utf-8'), doc, enums)
+            if name is not None and values is not None:
+                doc[name] = values
 
+    # formulate SOLR update XML
     xml = ['<doc>']
     for field, values in doc.iteritems():
         for value in values:
-            value = unicode(value)
-            if len(value) > 0:
-                xml.append(u'<field name="{0}"><![CDATA[{1}]]></field>'.format(field, value))
+            xml.append(u'<field name="{0}"><![CDATA[{1}]]></field>'.format(unicode(field), unicode(value)))
     xml.append('</doc>')
 
     # POST to SOLR
@@ -63,39 +44,42 @@ def process_document(node, field_map, files_path, core):
         print >>sys.stderr, r.text
         sys.exit(1)
 
-    # save attachment files
-    for name, data in doc.files:
-        path = os.path.join(files_path, doc['id'][0], name)
-        try:
-            os.makedirs(os.path.dirname(path))
-        except OSError:
-            pass
-        with open(path, 'w') as f:
-            f.write(data)
 
+if __name__ == '__main__':
+    if len(sys.argv) != 5:
+        print "Usage: {0} <map file> <CSV file> <SQL db> <SOLR core>".format(sys.argv[0])
+        sys.exit(1)
 
-if len(sys.argv) != 6:
-    print "Usage: {0} <map file> <xml file> <files path> <enums path> <SOLR core>".format(sys.argv[0])
-    sys.exit(1)
+    with open(sys.argv[1]) as f:
+        field_map = FieldMap(f)
 
-with open(sys.argv[1]) as f:
-    field_map = FieldMap(f)
+    sql_conn = sqlite3.connect(sys.argv[3])
+    sql = sql_conn.cursor()
 
-try:
-    with open(sys.argv[2]) as f:
-        print parse_xml(f, process_document, field_map, sys.argv[3], sys.argv[5]), "documents processed"
-except KeyboardInterrupt:
-    print >>sys.stderr, "Processing interrupted"
-
-# store enumerations
-for name, values in enums.iteritems():
-    path = os.path.join(sys.argv[4], name)
+    enums = {}
+    count = 0
     try:
-        os.makedirs(os.path.dirname(path))
-    except OSError:
-        pass
-    with open(path, 'w') as f:
-        f.write(json.dumps([{'label': v, 'value': i, 'order': i} for i, v in zip(xrange(len(values)), values)]))
+        with codecs.open(sys.argv[2], encoding='utf-8') as f:
+            f.seek(2)
+            reader = csv.DictReader(utf8_encoder(f))
+            for row in reader:
+                process_row(row, field_map, enums, sys.argv[4])
+                count += 1
+    except function.FunctionError as e:
+        print >>sys.stderr, e.message, row
+        sys.exit(1)
+    except KeyboardInterrupt:
+        print >>sys.stderr, "Processing interrupted after", count, "documents"
 
-r = requests.post(SOLR_URL.format(sys.argv[5]), headers=SOLR_HEADERS, data='<commit/>')
-assert r.status_code == 200
+    # store enumerations in SQL db
+    for name, values in enums.iteritems():
+        sql.execute("INSERT INTO enum VALUES (NULL, :name)", {"name": name})
+        enum = [{'enum_id': sql.lastrowid, 'label': v, 'value': i, 'order': i} for i, v in zip(xrange(len(values)), values)]
+        sql.executemany("INSERT INTO enum_entry VALUES (NULL, :enum_id, :order, :value, :label)", enum)
+
+    r = requests.post(SOLR_URL.format(sys.argv[4]), headers=SOLR_HEADERS, data='<commit/>')
+    assert r.status_code == 200
+
+    sql_conn.commit()
+    sql_conn.close()
+

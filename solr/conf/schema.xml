@@ -160,7 +160,7 @@
     <field name="barcode" type="string" indexed="true" stored="true" required="false" multiValued="false" />
     <field name="value" type="float" indexed="true" stored="true" required="false" multiValued="false" />
     <field name="price" type="float" indexed="true" stored="true" required="false" multiValued="false" />
-    <field name="project" type="string" indexed="true" stored="true" required="false" multiValued="true" />
+    <field name="far" type="string" indexed="true" stored="true" required="false" multiValued="false" />
 
     <field name="dirty" type="boolean" indexed="true" stored="true" required="false" multiValued="false" />
 

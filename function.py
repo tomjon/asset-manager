@@ -1,11 +1,6 @@
-import uuid
 import sys
-import base64
 import re
 from decimal import Decimal
-
-FILE_DATA = 'FileData'
-FILE_NAME = 'FileName'
 
 UNITS = ['hz', 'khz', 'mhz', 'ghz']
 FLOAT_EXPR = r'\d*\.?\d+'
@@ -15,39 +10,20 @@ class FunctionError(Exception):
     def __init__(self, message):
         self.message = message
 
-def map_date(name, nodes, doc):
+def map_date(name, value, doc, enums):
     """ All we need is to add the final Z to get a SOLR date formatted string.
     """
-    return ['{0}Z'.format(node.value()) for node in nodes]
+    return ['{0}Z'.format(value)] if value is not None and len(value) > 0 else None
 
-def map_set(name, nodes, doc):
-    """ Ensure the values in the list are unique.
-    """
-    return list(set([node.value() for node in nodes]))
-
-def map_attachment(name, nodes, doc):
-    for node in nodes:
-        data, name = None, None
-        for subfield in node.fields:
-            if subfield.name == FILE_DATA:
-                data = base64.b64decode(subfield.value())
-            elif subfield.name == FILE_NAME:
-                name = subfield.value()
-        assert data is not None and name is not None
-        doc.add_file(name, data[20:]) # skip 20 bytes of metadata added by Access
-    return None
-
-def map_enum(name, nodes, doc):
+def map_enum(name, value, doc, enums):
     """ We want to store this field as an integer, adding the string value to an
         enumeration for the field that is stored in JSON format (as a list).
     """
-    def _get_int_value(v):
-        if name not in doc.enums:
-            doc.enums[name] = [v]
-        elif v not in doc.enums[name]:
-            doc.enums[name].append(v)
-        return doc.enums[name].index(v)
-    return [_get_int_value(node.value()) for node in nodes]
+    if name not in enums:
+        enums[name] = [value]
+    elif value not in enums[name]:
+        enums[name].append(value)
+    return [enums[name].index(value)]
 
 # parse a range like 10hz-15ghz into start/stop freqs in Hz
 def _parse_freq_range(value):
@@ -64,18 +40,21 @@ def _parse_freq_range(value):
     comment = '{0} {1}'.format(g[0].strip(), g[5].strip())
     return fpow(g[1], g[2]), fpow(g[3], g[4]), comment.strip()
 
-def map_non_zero(name, nodes, doc):
-    values = [float(node.value()) for node in nodes]
-    while 0 in values:
-        values.remove(0)
-    return values
+def map_non_zero(name, value, doc, enums):
+    try:
+        value = float(value or 0)
+        return [value] if value != 0 else None
+    except ValueError:
+        raise FunctionError("Could not convert to float: {0}".format(value))
 
-def map_parse_freqs(name, nodes, doc):
+def _append_note(doc, note):
+    if 'notes' not in doc:
+        doc['notes'] = []
+    doc['notes'].append(note)
+
+def map_parse_freqs(name, value, doc, enums):
     """ Parse start/stop frequencies and check they agree with any already defined.
     """
-    if len(nodes) == 0:
-        return None
-    value = nodes[0].value()
     if value == 'n/a':
         if 'start_freq' in doc or 'stop_freq' in doc:
             raise FunctionError("n/a for freq range but start/stop specified")
@@ -83,7 +62,7 @@ def map_parse_freqs(name, nodes, doc):
     r_start, r_stop, comment = _parse_freq_range(value)
     if r_start is None or len(comment) > 0:
         doc['dirty'] = [True]
-        doc.append_list('notes', u'Frequency range: {0}'.format(value))
+        _append_note(doc, u'Frequency range: {0}'.format(value))
         if r_start is None:
             return None
     try:
@@ -96,7 +75,7 @@ def map_parse_freqs(name, nodes, doc):
         if (start != 0 or stop != 0) and (start != r_start or stop != r_stop):
             # we trust the frequency range over start/stop but mark dirty
             doc['dirty'] = [True]
-            doc.append_list('notes', u'Frequency range: {0} (start {1} stop {2})'.format(value, start, stop))
+            _append_note(doc, u'Frequency range: {0} (start {1} stop {2})'.format(value, start, stop))
             return None
     except ValueError:
         raise FunctionError("Could not parse start or stop freq")

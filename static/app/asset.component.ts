@@ -78,9 +78,9 @@ import { LAST_OPTION } from './enum';
                    </h3>
                    <input #upload *ngIf="showUpload" type="file" (change)="onUpload()"/>
                    <div *ngIf="! showUpload">
-                     <div class="attachment" *ngFor="let src of files; let i = index" [hidden]="file_index != i">
-                       <img *ngIf="isImage(src)" src="/file/{{asset.id}}/{{src}}"/>
-                       <a *ngIf="! isImage(src)" target="attachment" href="/file/{{asset.id}}/{{src}}">{{src}}</a>
+                     <div class="attachment" *ngFor="let file of files; let i = index" [hidden]="file_index != i">
+                       <img *ngIf="isImage(file.name)" src="/file/{{asset.id}}/{{file.attachment_id}}"/>
+                       <a *ngIf="! isImage(file.name)" target="attachment" href="/file/{{asset.id}}/{{file.attachment_id}}/{{file.name}}">{{file.name}}</a>
                      </div>
                    </div>
                  </div>
@@ -98,7 +98,7 @@ export class AssetComponent {
   private original: any;
   private asset: any = {};
   private freqs: any = {};
-  private files: string[] = [];
+  private files: any[] = [];
   private file_index: number = -1;
   private showUpload: boolean = false;
   private addNew: any = {};
@@ -148,7 +148,7 @@ export class AssetComponent {
   }
 
   onImgDelete() {
-    this.dataService.deleteAttachment(this.asset, this.files[this.file_index])
+    this.dataService.deleteAttachment(this.asset, this.files[this.file_index].attachment_id)
                     .subscribe(files => {
                       this.files = files;
                       if (this.file_index == this.files.length) --this.file_index;
@@ -171,7 +171,7 @@ export class AssetComponent {
       this.dataService.uploadAttachment(this.asset, name, inputEl.files[0])
                       .subscribe(files => {
                         this.files = files;
-                        this.file_index = this.files.indexOf(name);
+                        this.file_index = this.files.length - 1;
                       });
     }
   }

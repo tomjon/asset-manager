@@ -18,24 +18,21 @@ class FieldMap(object):
             self._fields.append(in_name)
             self._map[in_name] = (out_name, bits[2] if len(bits) > 2 else None)
 
-    def map(self, field, nodes, doc):
+    def map(self, field, value, doc, enums):
         name, fn_name = self._map[field]
-        if name is None:
-            return None, None
-        nodes = [node for node in nodes if node.value().strip() != '?']
+        value = value.strip()
+        if name is None or value == '?' or value == '':
+            return name, None
         if fn_name is not None:
-            try:
-                fn = getattr(function, 'map_{0}'.format(fn_name))
-                values = fn(name, nodes, doc)
-            except AttributeError:
+            fn = getattr(function, 'map_{0}'.format(fn_name), None)
+            if fn is None:
                 raise Exception("No mapping function defined: {0}".format(fn_name))
-            except function.FunctionError as e:
-                print >>sys.stderr, e.message, [node.value() for node in nodes], doc
-                sys.exit(1)
+            values = fn(name, value, doc, enums)
         else:
-            values = [node.value() for node in nodes]
-        return name, values
+            values = [value]
+        return name, values if name != '--' else None
 
-    def iter_fields(self):
+    def iter_fields(self, ignore=False):
         for field in self._fields:
-            yield field
+            if not ignore or self._map[field][0] is not None:
+                yield field
