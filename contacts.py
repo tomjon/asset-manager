@@ -2,18 +2,26 @@
 import csv
 import sys
 import json
+from sql import SqlDatabase
 
-enum = []
+DATABASE = 'sql/assets.db'
+
+if len(sys.argv) != 2:
+    print >>sys.stderr, "Usage: {0} <contacts CSV>".format(sys.argv[0])
+    sys.exit(1)
+
+db = SqlDatabase(DATABASE)
 
 with open(sys.argv[1]) as f:
-    for row in csv.DictReader(f):
-        label = "{0} {1}".format(row['First Name'], row['Last Name'])
-        label = label.strip()
-        if len(label) == 0:
-            label = row['E-mail Address']
-            label = label.strip()
-        if len(label) > 0:
-            enum.append({"order": len(enum), "value": row['ID'], "label": label})
-
-print json.dumps(enum)
+    with db.cursor() as sql:
+        for row in csv.DictReader(f):
+            contact_id = row['ID']
+            data = {}
+            for k, v in row.iteritems():
+                if k in ('ID', 'Attachments'):
+                    continue
+                v = v.strip()
+                if len(v) > 0:
+                    data[k] = v
+            print >>sys.stderr, sql.insert("INSERT INTO contact VALUES (:contact_id, :json)", contact_id=contact_id, json=json.dumps(data))
 

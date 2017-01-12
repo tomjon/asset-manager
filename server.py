@@ -64,17 +64,28 @@ def favicon_endpoint():
     path = os.path.join(application.root_path, 'static', 'favicon.ico')
     return send_file(path, mimetype='image/vnd.microsoft.icon')
 
+def contact_key_fn(contact):
+    contact_id, data = contact
+    return data.get('Last Name', data.get('E-mail Address', None))
+
+def contact_label(data):
+    label = "{0} {1}".format(data.get('First Name', ''), data.get('Last Name', '')).strip()
+    return label if len(label) > 0 else data.get('E-mail Address', '<blank>')
+
 @application.route('/enum')
 @application.route('/enum/<field>', methods=['POST'])
 def enums_endpoint(field=None):
-    """ Endpoint for getting and updating enumerations.
+    """ Endpoint for getting and updating enumerations. Contacts ('owner') are treated here specially.
     """
     with db.cursor() as sql:
         if request.method == 'GET':
-            enums = {}
+            enums = {'owner': []}
             for enum_id, field in sql.selectAll("SELECT enum_id, field FROM enum"):
                 stmt = "SELECT value, label, `order` FROM enum_entry WHERE enum_id=:enum_id"
                 enums[field] = sql.selectAllDict(stmt, enum_id=enum_id)
+            contacts = [(contact_id, json.loads(data)) for contact_id, data in sql.selectAll("SELECT contact_id, json FROM contact")]
+            for (contact_id, data), order in zip(sorted(contacts, key=contact_key_fn), xrange(len(contacts))):
+                enums['owner'].append({'value': contact_id, 'order': order, 'label': contact_label(data)})
             return json.dumps(enums)
         else:
             try:
