@@ -119,7 +119,7 @@ export class TableComponent {
   }
 
   onRowClick(asset: any) {
-    if (asset == this.selected) asset = {};
+    if (asset == this.selected) asset = null;
     this.eventEmitter.emit({asset: asset});
   }
 

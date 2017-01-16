@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
-import { Http, URLSearchParams, Headers } from '@angular/http';
+import { Http, URLSearchParams, Headers, Response } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
 import { Search } from './search';
 import { Results } from './results';
 import { Frequency } from './frequency';
+import { User } from './user';
 
 export var DATETIME_RE = /^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\dZ$/;
 export var DATE_RE = /^\d\d\d\d-\d\d-\d\d$/;
@@ -162,6 +163,58 @@ export class DataService {
     let params: URLSearchParams = new URLSearchParams();
     params.set('label', label);
     return this.http.post(`/enum/${field}`, body, {search: params, headers: headers})
+                    .map(res => res.json())
+                    .catch(this.handleError);
+  }
+
+  private user_from_res(res: Response): User {
+    let data: any = res.json();
+    return data.user_id != undefined ? <User>data : undefined;
+  }
+
+  getCurrentUser(): Observable<User> {
+    return this.http.get(`/user`)
+                    .map(res => this.user_from_res(res))
+                    .catch(this.handleError);
+  }
+
+  updateDetails(user: User): Observable<void> {
+    let headers: Headers = new Headers({'Content-Type': 'application/json'});
+    let body = JSON.stringify(user);
+    return this.http.put(`/user`, body, {headers: headers})
+                    .catch(this.handleError);
+  }
+
+  addUser(user: User): Observable<void> {
+    let headers: Headers = new Headers({'Content-Type': 'application/json'});
+    let body = JSON.stringify(user);
+    return this.http.post(`/user/admin`, body, {headers: headers})
+                    .catch(this.handleError);
+  }
+
+  login(username: string, password: string): Observable<User> {
+    let headers: Headers = new Headers({'Content-Type': 'application/octet'});
+    let params: URLSearchParams = new URLSearchParams();
+    params.set('username', username);
+    return this.http.post(`/login`, password, {search: params, headers: headers})
+                    .map(res => this.user_from_res(res))
+                    .catch(this.handleError);
+  }
+
+  logout(): Observable<void> {
+    return this.http.get(`/logout`)
+                    .catch(this.handleError);
+  }
+
+  addBooking(asset: any, project: any, dueOutDate: string, dueInDate: string, data: any): Observable<any> {
+    let headers: Headers = new Headers({'Content-Type': 'application/json'});
+    let params: URLSearchParams = new URLSearchParams();
+    params.set('asset_id', asset.id);
+    params.set('project', project);
+    params.set('dueOutDate', dueOutDate);
+    params.set('dueInDate', dueInDate);
+    let body = JSON.stringify(data);
+    return this.http.post(`/booking`, body, {search:params, headers: headers})
                     .map(res => res.json())
                     .catch(this.handleError);
   }

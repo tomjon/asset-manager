@@ -1,8 +1,11 @@
 import { Component, Input, Output, ViewChild, ViewChildren, EventEmitter, ElementRef, QueryList } from '@angular/core';
 import { EnumService } from './enum.service';
 import { DataService } from './data.service';
+import { BookingComponent } from './booking.component';
 import { FieldMap } from './field-map';
 import { Frequency } from './frequency';
+import { User, BOOK_ROLE } from './user';
+import { pristine } from './pristine';
 import { LAST_OPTION } from './enum';
 
 /**
@@ -31,6 +34,7 @@ import { LAST_OPTION } from './enum';
                        <span class="glyphicon glyphicon-floppy-disk" (click)="onSave()" [ngClass]="{disabled: form.pristine || original == undefined}"></span>
                        <span class="glyphicon glyphicon-trash" (click)="onDelete()" [ngClass]="{disabled: original == undefined}"></span>
                        <span class="glyphicon glyphicon-plus-sign" (click)="onAdd()"></span>
+                       <span class="glyphicon glyphicon-book" [ngClass]="{disabled: bookDisabled()}" data-toggle="modal" data-target="#bookingModal"></span>
                      </h3>
                    </div>
                    <form role="form" #form="ngForm" class="row">
@@ -85,14 +89,16 @@ import { LAST_OPTION } from './enum';
                    </div>
                  </div>
                </div>
-             </div>`,
+             </div>
+             <bams-booking [asset]=asset></bams-booking>`,
   styles: ['.container-fluid { background: #f0fff0 }',
            '.my-input-group { padding: 0 5px 10px 0 }',
            '.my-input-group:last-child { padding-right: 0 }',
            'textarea { resize: none }',
            '.glyphicon:not(.disabled) { cursor: pointer }',
            '.disabled { color: lightgrey }',
-           '.attachment img { max-width: 100%; max-height: 100% }']
+           '.attachment img { max-width: 100%; max-height: 100% }'],
+  directives: [BookingComponent],
 })
 export class AssetComponent {
   private original: any;
@@ -107,6 +113,7 @@ export class AssetComponent {
   @ViewChild('upload') upload: ElementRef;
   @ViewChildren('addNew') addNewInput: QueryList<ElementRef>;
 
+  @Input('user') user: User;
   @Output('event') event = new EventEmitter<any>();
 
   @Input('asset') set _asset(asset: any) {
@@ -114,7 +121,7 @@ export class AssetComponent {
     this.asset = Object.assign({}, this.original);
     this.file_index = -1;
     this.files = [];
-    this.pristine(this.form);
+    pristine(this.form);
     if (this.asset.id) {
       this.dataService.getAttachments(this.asset)
                       .subscribe(files => {
@@ -138,6 +145,11 @@ export class AssetComponent {
 
   options(field: string) {
     return this.enumService.get(field).options();
+  }
+
+  bookDisabled() {
+    let hasRole: boolean = this.user != undefined && this.user.role >= BOOK_ROLE;
+    return this.original == undefined || ! hasRole;
   }
 
   onImgClick(delta: number) {
@@ -178,13 +190,13 @@ export class AssetComponent {
 
   onReset() {
     this._asset = this.original;
-    this.pristine(this.form);
+    pristine(this.form);
   }
 
   onSave() {
     this.event.emit({save: this.asset});
     Object.assign(this.original, this.asset);
-    this.pristine(this.form);
+    pristine(this.form);
   }
 
   onDelete() {
@@ -223,18 +235,5 @@ export class AssetComponent {
       if (src.endsWith(ext)) return true;
     }
     return false;
-  }
-
-  pristine(form: any, value?: boolean): void {
-    if (value == undefined) value = true; // default argument value not working, weirdly
-    if (! form) return;
-    form['_touched'] = ! value;
-    form['_pristine'] = value;
-    form.form['_touched'] = ! value;
-    form.form['_pristine'] = value;
-    for (let k in form.form.controls) {
-      form.form.controls[k]['_touched'] = ! value;
-      form.form.controls[k]['_pristine'] = value;
-    }
   }
 }

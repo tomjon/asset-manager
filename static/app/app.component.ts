@@ -4,9 +4,11 @@ import { DataService } from './data.service';
 import { EnumService } from './enum.service';
 import { TableComponent } from './table.component';
 import { AssetComponent } from './asset.component';
+import { LoginComponent } from './login.component';
 import { Search } from './search';
 import { Results } from './results';
 import { FieldMap } from './field-map';
+import { User } from './user';
 
 // Add the RxJS Observable operators we need in this app
 import './rxjs-operators';
@@ -17,16 +19,19 @@ import './rxjs-operators';
                <div class="row">
                  <div class="col-lg-12">
                    <h1><img src="/static/ofcom.gif"/> Baldock Asset Database and Scheduling System</h1>
-                   <bams-asset [asset]="asset" (event)="onAssetEvent($event)"></bams-asset>
+                   <bams-login [user]="user" (login)="onLogin($event)"></bams-login>
+                   <bams-asset [user]="user" [asset]="asset" (event)="onAssetEvent($event)"></bams-asset>
                    <bams-table [assets]="results" [search]="search" [selected]="asset" (event)="onTableEvent($event)"></bams-table>
                  </div>
                </div>
              </div>`,
-  directives: [TableComponent, AssetComponent],
+  directives: [TableComponent, AssetComponent, LoginComponent],
   providers: [HTTP_PROVIDERS, DataService, EnumService, FieldMap],
-  styles: ['bams-asset { display: block; margin: 20px 0 20px 0 }']
+  styles: ['bams-asset { display: block; margin: 20px 0 20px 0 }',
+           'bams-login { display: block; position: absolute; right: 10; top: 10 }']
 })
 export class AppComponent {
+  user: User = new User(); // start with an anonymous user
   results: Results = new Results();
   search: Search = new Search();
   asset: any;
@@ -34,8 +39,16 @@ export class AppComponent {
   constructor(private dataService: DataService, private fieldMap: FieldMap) { }
 
   ngOnInit() {
-    //this.dataService.getCurrentUser()
-    //                .subscribe(user => this.user = user);
+    this.dataService.getCurrentUser()
+                    .subscribe(user => {
+                      if (user != undefined) {
+                        this.user = user; // don't overwrite the anonymous user
+                      }
+                    });
+  }
+
+  onLogin(user) {
+    this.user = user;
   }
 
   doSearch() {
@@ -67,7 +80,10 @@ export class AppComponent {
   }
 
   onTableEvent(event: any) {
-    if (event.asset) this.asset = event.asset;
+    if (event.asset !== undefined) {
+      // event.asset == null indicates unselected table row
+      this.asset = event.asset || undefined;
+    }
     if (event.search) this.doSearch();
   }
 }

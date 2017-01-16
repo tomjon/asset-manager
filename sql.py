@@ -34,6 +34,7 @@ class SqlCursor(object):
             values = {}
         values = dict(values) # work on a copy
         values.update(kwargs)
+	print stmt, values
         self.cursor.execute(stmt, values)
 
     def selectOne(self, stmt, values=None, **kwargs):
@@ -59,9 +60,12 @@ class SqlCursor(object):
         return [dict(zip([col[0] for col in self.cursor.description], row)) for row in rows]
 
     def insert(self, stmt, values=None, **kwargs):
+        self.update(stmt, values, **kwargs)
+        return self.cursor.lastrowid
+
+    def update(self, stmt, values=None, **kwargs):
         self._execute(stmt, values, kwargs)
         self._commit = True
-        return self.cursor.lastrowid
 
     def delete(self, stmt, values=None, **kwargs):
         self._execute(stmt, values, kwargs)
