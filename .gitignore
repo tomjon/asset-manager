@@ -97,3 +97,11 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+Asset List.xml
+Contacts.csv
+assets.csv
+data.tgz
+solr/java/bams-enum.jar
+solr/java/bin/
+sql/assets.db

@@ -3,14 +3,14 @@ import { DataService } from './data.service';
 import { EnumService } from './enum.service';
 import { EnumPipe } from './enum.pipe';
 import { pristine } from './pristine';
-import { User, ANONYMOUS, BOOK_ROLE } from './user';
+import { User, ANONYMOUS, ADMIN_ROLE, BOOK_ROLE } from './user';
 
 @Component({
   selector: 'bams-login',
   template: `<div *ngIf="loggedIn()">
                {{user.label}} ({{user.role | enum:'role'}})
                <button class="btn" data-toggle="modal" data-target="#detailsModal" (click)="clearDetails()">Details</button>
-               <button class="btn" data-toggle="modal" data-target="#addUserModal" (click)="clearAddUser()">Add user</button>
+               <button *ngIf="user.role == ADMIN_ROLE" class="btn" data-toggle="modal" data-target="#addUserModal" (click)="clearAddUser()">Add user</button>
                <button class="btn btn-default" (click)="onLogout()">Log out</button>
              </div>
              <div *ngIf="! loggedIn()">
