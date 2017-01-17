@@ -42,26 +42,28 @@ import { LAST_OPTION } from './enum';
                        <div *ngFor="let group of col" class="form-group">
                          <div *ngFor="let input of group" [ngClass]="{'col-lg-6': group.length > 1, 'my-input-group': group.length > 1}">
                            <div *ngIf="input.type != 'area' && input.type != 'enum' && input.type != 'freq'">
-                             <label for="input.field">{{input.label}}</label>
+                             <label htmlFor="{{input.field}}">{{input.label}}</label>
                              <input [type]="input.type" class="form-control" required [(ngModel)]="asset[input.field]" [name]="input.field" />
                            </div>
                            <div *ngIf="input.type == 'freq'">
-                             <label for="input.field">{{input.label}}</label>
-                             <div class="col-lg-7 my-input-group">
-                               <input class="form-control" [type]="input.type" required [(ngModel)]="freqs[input.field].value" [name]="input.field" />
-                             </div>
-                             <div class="col-lg-5 my-input-group">
-                               <select class="form-control" required [name]="input.field + '-units'" [(ngModel)]="freqs[input.field].units">
-                                 <option *ngFor="let o of unitOptions()" [value]="o.value">{{o.label}}</option>
-                               </select>
+                             <label htmlFor="{{input.field}}">{{input.label}}</label>
+                             <div>
+                               <div class="col-lg-7 my-input-group">
+                                 <input class="form-control" [type]="input.type" required [(ngModel)]="freqs[input.field].value" [name]="input.field" />
+                               </div>
+                               <div class="col-lg-5 my-input-group">
+                                 <select class="form-control" required [name]="input.field + '-units'" [(ngModel)]="freqs[input.field].units">
+                                   <option *ngFor="let o of unitOptions()" [value]="o.value">{{o.label}}</option>
+                                 </select>
+                               </div>
                              </div>
                            </div>
                            <div *ngIf="input.type == 'area'">
-                             <label for="input.field">{{input.label}}</label>
+                             <label htmlFor="{{input.field}}">{{input.label}}</label>
                              <textarea class="form-control" required [(ngModel)]="asset[input.field]" [name]="input.field" rows="5"></textarea>
                            </div>
                            <div *ngIf="input.type == 'enum'">
-                             <label for="input.field">{{input.label}}</label>
+                             <label htmlFor="{{input.field}}">{{input.label}}</label>
                              <select *ngIf="addNew.field != input.field" class="form-control" [(ngModel)]="asset[input.field]" [name]="input.field" (ngModelChange)="onEnumChange(input)">
                                <option *ngFor="let o of options(input.field)" [value]="o.value">{{o.label}}</option>
                              </select>
