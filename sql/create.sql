@@ -51,4 +51,5 @@ INSERT INTO enum_entry VALUES (NULL, -1, 1, 2, 'Booker');
 INSERT INTO enum_entry VALUES (NULL, -1, 2, 3, 'Admin');
 INSERT INTO enum VALUES (NULL, 'role');
 UPDATE enum_entry SET enum_id=(SELECT last_insert_rowid()) WHERE enum_id=-1;
+INSERT INTO enum VALUES (NULL, 'project');
 

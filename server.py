@@ -138,7 +138,8 @@ def enums_endpoint(field=None):
             try:
                 entry = sql.selectOneDict("SELECT value, label, `order` FROM enum_entry WHERE enum_id=:enum_id AND label=:label", enum_id=enum_id, label=label)
             except NoResult:
-                next = max(sql.selectOne("SELECT MAX(value), MAX(`order`) FROM enum_entry WHERE enum_id=:enum_id", enum_id=enum_id)) + 1
+                next = max(sql.selectOne("SELECT MAX(value), MAX(`order`) FROM enum_entry WHERE enum_id=:enum_id", enum_id=enum_id))
+                next = next + 1 if next is not None else 0
                 entry = {'enum_id': enum_id, 'order': next, 'value': next, 'label': label}
                 sql.insert("INSERT INTO enum_entry VALUES (NULL, :enum_id, :order, :value, :label)", entry)
             return json.dumps(entry)
