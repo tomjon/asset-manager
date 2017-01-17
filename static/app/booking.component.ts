@@ -6,7 +6,7 @@ import { LAST_OPTION } from './enum';
 import { PROJECT } from './field-map';
 
 @Component({
-  selector: 'bams-booking',
+  selector: 'badass-booking',
   template: `<div id="bookingModal" class="modal fade" role="dialog">
                <form role="form" #form="ngForm">
                  <div class="modal-dialog">

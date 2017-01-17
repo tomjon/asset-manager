@@ -7,7 +7,7 @@ import { FieldMap } from './field-map';
 import { Frequency } from './frequency';
 
 @Component({
-  selector: 'bams-table',
+  selector: 'badass-table',
   template: `<div class="container-fluid">
                <div class="row">
                  <table class="col-lg-12 table table-responsive">

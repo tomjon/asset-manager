@@ -14,21 +14,21 @@ import { User } from './user';
 import './rxjs-operators';
 
 @Component({
-  selector: 'bams-app',
+  selector: 'badass-app',
   template: `<div class="container-fluid">
                <div class="row">
                  <div class="col-lg-12">
                    <h1><img src="/static/ofcom.gif"/> Baldock Asset Database and Scheduling System</h1>
-                   <bams-login [user]="user" (login)="onLogin($event)"></bams-login>
-                   <bams-asset [user]="user" [asset]="asset" (event)="onAssetEvent($event)"></bams-asset>
-                   <bams-table [assets]="results" [search]="search" [selected]="asset" (event)="onTableEvent($event)"></bams-table>
+                   <badass-login [user]="user" (login)="onLogin($event)"></badass-login>
+                   <badass-asset [user]="user" [asset]="asset" (event)="onAssetEvent($event)"></badass-asset>
+                   <badass-table [assets]="results" [search]="search" [selected]="asset" (event)="onTableEvent($event)"></badass-table>
                  </div>
                </div>
              </div>`,
   directives: [TableComponent, AssetComponent, LoginComponent],
   providers: [HTTP_PROVIDERS, DataService, EnumService, FieldMap],
-  styles: ['bams-asset { display: block; margin: 20px 0 20px 0 }',
-           'bams-login { display: block; position: absolute; right: 10; top: 10 }']
+  styles: ['badass-asset { display: block; margin: 20px 0 20px 0 }',
+           'badass-login { display: block; position: absolute; right: 10; top: 10 }']
 })
 export class AppComponent {
   user: User = new User(); // start with an anonymous user

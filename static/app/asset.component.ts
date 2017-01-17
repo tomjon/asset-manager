@@ -23,7 +23,7 @@ import { LAST_OPTION } from './enum';
  * is about to be made, and if they accept, an output event is emitted.
  */
 @Component({
-  selector: 'bams-asset',
+  selector: 'badass-asset',
   template: `<div class="container-fluid">
                <div class="row">
                  <div class="col-lg-8">
@@ -92,7 +92,7 @@ import { LAST_OPTION } from './enum';
                  </div>
                </div>
              </div>
-             <bams-booking [asset]=asset></bams-booking>`,
+             <badass-booking [asset]=asset></badass-booking>`,
   styles: ['.container-fluid { background: #f0fff0 }',
            '.my-input-group { padding: 0 5px 10px 0 }',
            '.my-input-group:last-child { padding-right: 0 }',

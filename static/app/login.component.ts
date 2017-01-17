@@ -6,7 +6,7 @@ import { pristine } from './pristine';
 import { User, ANONYMOUS, ADMIN_ROLE, BOOK_ROLE } from './user';
 
 @Component({
-  selector: 'bams-login',
+  selector: 'badass-login',
   template: `<div *ngIf="loggedIn()">
                {{user.label}} ({{user.role | enum:'role'}})
                <button class="btn" data-toggle="modal" data-target="#detailsModal" (click)="clearDetails()">Details</button>

@@ -4,7 +4,7 @@ import { FIRST_OPTION } from './enum';
 import { FieldMap } from './field-map';
 
 @Component({
-  selector: 'bams-filter',
+  selector: 'badass-filter',
   template: `<div class="panel panel-default filter">
                <b>{{filter.label}}</b>
                <select *ngIf="filter.type == 'enum'" [(ngModel)]="filter.value" (ngModelChange)="eventEmitter.emit({})">
