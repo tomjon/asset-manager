@@ -3,6 +3,7 @@ import { EnumService } from './enum.service';
 import { DataService } from './data.service';
 import { EnumPipe } from './enum.pipe';
 import { LAST_OPTION } from './enum';
+import { PROJECT } from './field-map';
 
 @Component({
   selector: 'bams-booking',
@@ -50,7 +51,7 @@ import { LAST_OPTION } from './enum';
 export class BookingComponent {
   @Input('asset') asset: any;
 
-  project: any = {field: 'project', value: undefined, label: 'Project'}; //FIXME put in field map
+  project: any = PROJECT;
   dueOutDate: string;
   dueInDate: string;
 
@@ -66,7 +67,7 @@ export class BookingComponent {
 
   //FIXME the following three methods are similar as those in asset.component.ts
   options(field: string) {
-    return this.enumService.get(field).options();
+    return this.enumService.get(field).options().splice(1);
   }
 
   onEnumChange(input) {
