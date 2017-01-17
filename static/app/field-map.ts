@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { LAST_OPTION } from './enum';
 
 var CATEGORY = {'field': 'category', 'label': 'Category', 'type': 'enum'};
 var DESCRIPTION = {'field': 'description', 'label': 'Description', 'type': 'text'};
@@ -19,6 +20,8 @@ var OWNER = {'field': 'owner', 'label': 'Owner', 'type': 'enum'};
 var NOTES = {'field': 'notes', 'label': 'Notes', 'type': 'area'};
 
 var FREQ_RANGE = {'field': '', 'label': 'Frequency', 'type': 'freq', 'range': [START_FREQ, STOP_FREQ]};
+
+export var PROJECT = {'field': 'project', 'value': LAST_OPTION.value, 'label': 'Project'};
 
 @Injectable()
 export class FieldMap {
