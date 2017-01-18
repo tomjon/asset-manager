@@ -91,7 +91,7 @@ import { LAST_OPTION } from './enum';
                        </div>
                      </div>
                    </div>
-                   <badass-booking *ngIf="showBookings()" [asset]="asset"></badass-booking>
+                   <badass-booking *ngIf="showBookings()" [user]="user" [asset]="asset"></badass-booking>
                  </div>
                </div>
              </div>`,

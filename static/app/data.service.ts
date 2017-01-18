@@ -212,6 +212,11 @@ export class DataService {
                     .catch(this.handleError);
   }
 
+  deleteBooking(booking: any): Observable<void> {
+    return this.http.delete(`/booking/${booking.booking_id}`)
+                    .catch(this.handleError);
+  }
+
   addBooking(asset: any, project: any, dueOutDate: string, dueInDate: string, data: any): Observable<any> {
     let headers: Headers = new Headers({'Content-Type': 'application/json'});
     let params: URLSearchParams = new URLSearchParams();

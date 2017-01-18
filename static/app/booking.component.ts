@@ -2,6 +2,7 @@ import { Component, Input, Output, ViewChild, ViewChildren, EventEmitter, Elemen
 import { EnumService } from './enum.service';
 import { DataService } from './data.service';
 import { EnumPipe } from './enum.pipe';
+import { User, ADMIN_ROLE } from './user';
 import { LAST_OPTION } from './enum';
 import { PROJECT } from './field-map';
 
@@ -18,13 +19,14 @@ declare var $;
                    <th>Due In</th>
                  </tr>
                  <tr *ngIf="bookings.length == 0">
-                   <td rowspan="4">No bookings</td>
+                   <td rowspan="5">No bookings</td>
                  </tr>
                  <tr *ngFor="let booking of bookings" [ngClass]="{current: current(booking)}">
-                   <td>{{booking.user_label}}</td>
-                   <td>{{booking.project_label}}</td>
-                   <td [ngClass]="{overdue: overdueOut(booking)}">{{booking.due_out_date}}</td>
-                   <td [ngClass]="{overdue: overdueIn(booking)}">{{booking.due_in_date}}</td>
+                   <td class="row">{{booking.user_label}}</td>
+                   <td class="row">{{booking.project_label}}</td>
+                   <td [ngClass]="{row: true, overdue: overdueOut(booking)}">{{booking.due_out_date}}</td>
+                   <td [ngClass]="{row: true, overdue: overdueIn(booking)}">{{booking.due_in_date}}</td>
+                   <td><span *ngIf="canDelete(booking)" class="glyphicon glyphicon-trash" (click)="onDelete(booking)"></span></td>
                  </tr>
                </table>
              </div>
@@ -72,7 +74,8 @@ declare var $;
              </div>`,
   styles: ['th, td { padding: 5px }',
            '.overdue { color: red }',
-           '.current { background: silver }'],
+           '.current .row { background: silver }',
+           '.glyphicon { cursor: pointer }'],
   pipes: [EnumPipe]
 })
 export class BookingComponent {
@@ -81,14 +84,17 @@ export class BookingComponent {
 
   asset: any;
   @Input('asset') set _asset(asset: any) {
+    if (asset == undefined || this.asset == undefined || this.asset.id != asset.id) {
+      this.bookings = undefined;
+    }
     this.asset = asset;
-    this.bookings = undefined;
     this.clash = undefined;
     if (this.asset.id != undefined) {
       this.dataService.getBookings(this.asset)
                       .subscribe(bookings => this.bookings = bookings);
     }
   }
+  @Input('user') user: User;
 
   // values from form inputs
   project: any = PROJECT;
@@ -116,6 +122,18 @@ export class BookingComponent {
 
   overdueIn(booking: any): boolean {
     return booking.out_date && ! booking.in_date && this.today >= booking.due_in_date;
+  }
+
+  canDelete(booking: any): boolean {
+    let role: boolean = this.user.role == ADMIN_ROLE || this.user.user_id == booking.user_id;
+    return booking.in_date == undefined && booking.out_date == undefined && role;
+  }
+
+  onDelete(booking: any) {
+    this.dataService.deleteBooking(booking)
+                    .subscribe(() => {
+                      this._asset = this.asset; // this to just force a reload of the table
+                    });
   }
 
   onSubmit() {

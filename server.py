@@ -262,16 +262,17 @@ def file_endpoint(asset_id=None, attachment_id=None, filename=None):
 
 
 @application.route('/booking/<asset_id>', methods=['GET', 'POST'])
+@application.route('/booking/<booking_id>', methods=['DELETE'])
 @application.role_required([ADMIN_ROLE, BOOK_ROLE, VIEW_ROLE])
-def booking_endpoint(asset_id):
+def booking_endpoint(asset_id=None, booking_id=None):
     """ Add or interact with bookings.
     """
     with application.db.cursor() as sql:
         if request.method == 'GET':
-            return json.dumps(sql.selectAllDict("SELECT booking_id, booking.user_id, user.label AS user_label, project, enum_entry.label AS project_label, due_out_date, due_in_date, out_date, in_date FROM booking, user, enum, enum_entry WHERE asset_id=:asset_id AND booking.user_id=user.user_id AND enum.field='project' AND enum.enum_id=enum_entry.enum_id AND enum_entry.value=booking.project", asset_id=asset_id))
+            return json.dumps(sql.selectAllDict("SELECT booking_id, booking.user_id, user.label AS user_label, project, enum_entry.label AS project_label, due_out_date, due_in_date, out_date, in_date FROM booking, user, enum, enum_entry WHERE asset_id=:asset_id AND date('now') <= due_in_date AND booking.user_id=user.user_id AND enum.field='project' AND enum.enum_id=enum_entry.enum_id AND enum_entry.value=booking.project ORDER BY due_out_date", asset_id=asset_id))
         elif request.method == 'POST':
             if not application.user_has_role([ADMIN_ROLE, BOOK_ROLE]):
-                return 403, "Role required"
+                return "Role required", 403
             # add a booking for the current user - returns a clashing booking if one exists (and doesn't add the submitted booking)
             data = request.get_json() # just to be sure it is valid JSON
             args = request.args.to_dict()
@@ -282,7 +283,13 @@ def booking_endpoint(asset_id):
                 pass
             sql.insert("INSERT INTO booking VALUES (NULL, :asset_id, :user_id, datetime('now'), :dueOutDate, :dueInDate, NULL, NULL, :project, :data)", args, asset_id=asset_id, user_id=current_user.user_id, data=json.dumps(data))
             return json.dumps({})
-
+        elif request.method == 'DELETE':
+            if not application.user_has_role([ADMIN_ROLE, BOOK_ROLE]):
+                return "Role required", 403
+            user_clause = " AND user_id=:user_id" if not application.user_has_role([ADMIN_ROLE]) else ""
+            if sql.delete("DELETE FROM booking WHERE booking_id=:booking_id AND out_date IS NULL AND in_date IS NULL{0}".format(user_clause), booking_id=booking_id, user_id=current_user.user_id) < 1:
+                return "No deletable booking", 400
+            return json.dumps({})
 
 if __name__ == '__main__':
     if 'debug' in sys.argv:
