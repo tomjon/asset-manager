@@ -4,7 +4,7 @@ import { DataService } from './data.service';
 import { BookingComponent } from './booking.component';
 import { FieldMap } from './field-map';
 import { Frequency } from './frequency';
-import { User, BOOK_ROLE } from './user';
+import { User, BOOK_ROLE, VIEW_ROLE } from './user';
 import { pristine } from './pristine';
 import { LAST_OPTION } from './enum';
 
@@ -75,30 +75,33 @@ import { LAST_OPTION } from './enum';
                    </form>
                  </div>
                  <div class="col-lg-4">
-                   <h3>
-                     Attachments
-                     <span class="glyphicon glyphicon-chevron-left" [ngClass]="{disabled: file_index <= 0}" (click)="onImgClick(-1)"></span>
-                     <span class="glyphicon glyphicon-chevron-right" [ngClass]="{disabled: file_index >= files.length - 1}" (click)="onImgClick(+1)"></span>
-                     <span class="glyphicon glyphicon-trash" [ngClass]="{disabled: file_index == -1}" (click)="onImgDelete()"></span>
-                     <span class="glyphicon glyphicon-plus-sign" [ngClass]="{disabled: ! original || original.id == undefined}" (click)="onImgNew()"></span>
-                   </h3>
-                   <input #upload *ngIf="showUpload" type="file" (change)="onUpload()"/>
-                   <div *ngIf="! showUpload">
-                     <div class="attachment" *ngFor="let file of files; let i = index" [hidden]="file_index != i">
-                       <img *ngIf="isImage(file.name)" src="/file/{{asset.id}}/{{file.attachment_id}}"/>
-                       <a *ngIf="! isImage(file.name)" target="attachment" href="/file/{{asset.id}}/{{file.attachment_id}}/{{file.name}}">{{file.name}}</a>
+                   <div class="attachments">
+                     <h3>
+                       Attachments
+                       <span class="glyphicon glyphicon-chevron-left" [ngClass]="{disabled: file_index <= 0}" (click)="onImgClick(-1)"></span>
+                       <span class="glyphicon glyphicon-chevron-right" [ngClass]="{disabled: file_index >= files.length - 1}" (click)="onImgClick(+1)"></span>
+                       <span class="glyphicon glyphicon-trash" [ngClass]="{disabled: file_index == -1}" (click)="onImgDelete()"></span>
+                       <span class="glyphicon glyphicon-plus-sign" [ngClass]="{disabled: ! original || original.id == undefined}" (click)="onImgNew()"></span>
+                     </h3>
+                     <input #upload *ngIf="showUpload" type="file" (change)="onUpload()"/>
+                     <div *ngIf="! showUpload">
+                       <div class="attachment" *ngFor="let file of files; let i = index" [hidden]="file_index != i">
+                         <img *ngIf="isImage(file.name)" src="/file/{{asset.id}}/{{file.attachment_id}}"/>
+                         <a *ngIf="! isImage(file.name)" target="attachment" href="/file/{{asset.id}}/{{file.attachment_id}}/{{file.name}}">{{file.name}}</a>
+                       </div>
                      </div>
                    </div>
+                   <badass-booking *ngIf="showBookings()" [asset]="asset"></badass-booking>
                  </div>
                </div>
-             </div>
-             <badass-booking [asset]=asset></badass-booking>`,
+             </div>`,
   styles: ['.container-fluid { background: #f0fff0 }',
            '.my-input-group { padding: 0 5px 10px 0 }',
            '.my-input-group:last-child { padding-right: 0 }',
            'textarea { resize: none }',
            '.glyphicon:not(.disabled) { cursor: pointer }',
            '.disabled { color: lightgrey }',
+           '.attachments { height: 400px }',
            '.attachment img { max-width: 100%; max-height: 100% }'],
   directives: [BookingComponent],
 })
@@ -140,6 +143,10 @@ export class AssetComponent {
   }
 
   constructor(private fieldMap: FieldMap, private enumService: EnumService, private dataService: DataService) {}
+
+  showBookings() {
+    return this.user != undefined && this.user.role >= VIEW_ROLE;
+  }
 
   unitOptions() {
     return Frequency.unitOptions();

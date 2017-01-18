@@ -261,18 +261,28 @@ def file_endpoint(asset_id=None, attachment_id=None, filename=None):
         return json.dumps(sql.selectAllDict("SELECT attachment_id, name FROM attachment WHERE asset_id=:asset_id", asset_id=asset_id))
 
 
-@application.route('/booking', methods=['POST'])
-@application.role_required([ADMIN_ROLE, BOOK_ROLE])
-def booking_endpoint():
+@application.route('/booking/<asset_id>', methods=['GET', 'POST'])
+@application.role_required([ADMIN_ROLE, BOOK_ROLE, VIEW_ROLE])
+def booking_endpoint(asset_id):
     """ Add or interact with bookings.
     """
     with application.db.cursor() as sql:
-        if request.method == 'POST':
-            # add a booking for the current user
+        if request.method == 'GET':
+            return json.dumps(sql.selectAllDict("SELECT booking_id, booking.user_id, user.label AS user_label, project, enum_entry.label AS project_label, due_out_date, due_in_date, out_date, in_date FROM booking, user, enum, enum_entry WHERE asset_id=:asset_id AND booking.user_id=user.user_id AND enum.field='project' AND enum.enum_id=enum_entry.enum_id AND enum_entry.value=booking.project", asset_id=asset_id))
+        elif request.method == 'POST':
+            if not application.user_has_role([ADMIN_ROLE, BOOK_ROLE]):
+                return 403, "Role required"
+            # add a booking for the current user - returns a clashing booking if one exists (and doesn't add the submitted booking)
             data = request.get_json() # just to be sure it is valid JSON
-            sql.insert("INSERT INTO booking VALUES (NULL, :asset_id, :user_id, datetime('now'), :dueOutDate, :dueInDate, NULL, NULL, :project, :data)", request.args.to_dict(), user_id=current_user.user_id, data=json.dumps(data))
+            args = request.args.to_dict()
+            try:
+                booking = sql.selectOneDict("SELECT booking_id, booking.user_id AS user_id, user.label AS user_label FROM booking, user WHERE asset_id=:asset_id AND booking.user_id=user.user_id AND :dueInDate >= due_out_date AND :dueOutDate <= due_in_date", args, asset_id=asset_id)
+                return json.dumps(booking)
+            except NoResult:
+                pass
+            sql.insert("INSERT INTO booking VALUES (NULL, :asset_id, :user_id, datetime('now'), :dueOutDate, :dueInDate, NULL, NULL, :project, :data)", args, asset_id=asset_id, user_id=current_user.user_id, data=json.dumps(data))
             return json.dumps({})
-        
+
 
 if __name__ == '__main__':
     if 'debug' in sys.argv:
