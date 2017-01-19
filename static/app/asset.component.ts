@@ -35,6 +35,8 @@ import { LAST_OPTION } from './enum';
                        <span class="glyphicon glyphicon-trash" (click)="onDelete()" [ngClass]="{disabled: original == undefined}"></span>
                        <span class="glyphicon glyphicon-plus-sign" (click)="onAdd()"></span>
                        <span class="glyphicon glyphicon-book" [ngClass]="{disabled: bookDisabled()}" data-toggle="modal" data-target="#bookingModal"></span>
+                       <span class="glyphicon glyphicon-export bookOut" (click)="status.book(true)" [ngClass]="{disabled: status.out || ! status.overdue}"></span>
+                       <span class="glyphicon glyphicon-import bookIn" (click)="status.book(false)" [ngClass]="{disabled: ! status.out, overdue: status.out && status.overdue}"></span>
                      </h3>
                    </div>
                    <form role="form" #form="ngForm" class="row">
@@ -91,7 +93,7 @@ import { LAST_OPTION } from './enum';
                        </div>
                      </div>
                    </div>
-                   <badass-booking *ngIf="showBookings()" [user]="user" [asset]="asset"></badass-booking>
+                   <badass-booking *ngIf="showBookings()" [user]="user" [asset]="asset" (status)="setStatus($event)"></badass-booking>
                  </div>
                </div>
              </div>`,
@@ -100,6 +102,8 @@ import { LAST_OPTION } from './enum';
            '.my-input-group:last-child { padding-right: 0 }',
            'textarea { resize: none }',
            '.glyphicon:not(.disabled) { cursor: pointer }',
+           '.bookOut { margin-left: 20px }',
+           '.overdue { color: red }',
            '.disabled { color: lightgrey }',
            '.attachments { height: 400px }',
            '.attachment img { max-width: 100%; max-height: 100% }'],
@@ -113,6 +117,8 @@ export class AssetComponent {
   private file_index: number = -1;
   private showUpload: boolean = false;
   private addNew: any = {};
+
+  private status: any = {};
 
   @ViewChild('form') form: HTMLFormElement;
   @ViewChild('upload') upload: ElementRef;
@@ -143,6 +149,10 @@ export class AssetComponent {
   }
 
   constructor(private fieldMap: FieldMap, private enumService: EnumService, private dataService: DataService) {}
+
+  setStatus(status: any) {
+    this.status = status;
+  }
 
   showBookings() {
     return this.user != undefined && this.user.role >= VIEW_ROLE;

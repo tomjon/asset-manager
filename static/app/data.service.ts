@@ -229,6 +229,16 @@ export class DataService {
                     .catch(this.handleError);
   }
 
+  book(asset: any, out: boolean): Observable<void> {
+    if (out) {
+      return this.http.put(`/book/${asset.id}`, '')
+                      .catch(this.handleError);
+    } else {
+      return this.http.delete(`/book/${asset.id}`)
+                      .catch(this.handleError);
+    }
+  }
+
   private handleError(error: any/*, caught: Observable<any>*/): Observable<any> {
     console.log(`${error._body} - ${error.status} ${error.statusText}`);
     //return Observable.create(observer => { observer.error() });

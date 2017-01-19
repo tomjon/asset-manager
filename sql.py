@@ -66,6 +66,7 @@ class SqlCursor(object):
     def update(self, stmt, values=None, **kwargs):
         self._execute(stmt, values, kwargs)
         self._commit = True
+        return self.cursor.rowcount
 
     def delete(self, stmt, values=None, **kwargs):
         self._execute(stmt, values, kwargs)

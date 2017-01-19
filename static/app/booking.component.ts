@@ -24,8 +24,8 @@ declare var $;
                  <tr *ngFor="let booking of bookings" [ngClass]="{current: current(booking)}">
                    <td class="row">{{booking.user_label}}</td>
                    <td class="row">{{booking.project_label}}</td>
-                   <td [ngClass]="{row: true, overdue: overdueOut(booking)}">{{booking.due_out_date}}</td>
-                   <td [ngClass]="{row: true, overdue: overdueIn(booking)}">{{booking.due_in_date}}</td>
+                   <td class="row" [ngClass]="{good: isOut(booking) || backIn(booking), overdue: overdueOut(booking)}">{{booking.due_out_date}}</td>
+                   <td class="row" [ngClass]="{good: backIn(booking), overdue: overdueIn(booking)}">{{booking.due_in_date}}</td>
                    <td><span *ngIf="canDelete(booking)" class="glyphicon glyphicon-trash" (click)="onDelete(booking)"></span></td>
                  </tr>
                </table>
@@ -73,8 +73,9 @@ declare var $;
                </form>
              </div>`,
   styles: ['th, td { padding: 5px }',
+           '.good { color: green }',
            '.overdue { color: red }',
-           '.current .row { background: silver }',
+           '.current .row { background: lightgrey }',
            '.glyphicon { cursor: pointer }'],
   pipes: [EnumPipe]
 })
@@ -90,11 +91,19 @@ export class BookingComponent {
     this.asset = asset;
     this.clash = undefined;
     if (this.asset.id != undefined) {
-      this.dataService.getBookings(this.asset)
-                      .subscribe(bookings => this.bookings = bookings);
+      this.getBookings();
     }
   }
   @Input('user') user: User;
+
+  @Output('status') status = new EventEmitter<any>();
+
+  book(out: boolean) {
+    if (out != undefined) {
+      this.dataService.book(this.asset, out)
+                      .subscribe(() => this.getBookings());
+    }
+  }
 
   // values from form inputs
   project: any = PROJECT;
@@ -112,16 +121,56 @@ export class BookingComponent {
     this.project.value = 0;
   }
 
+  getBookings() {
+    this.dataService.getBookings(this.asset)
+                    .subscribe(bookings => {
+                      this.bookings = bookings;
+                      this.status.emit(this.getStatus(bookings));
+                    });
+  }
+
   current(booking: any): boolean {
     return this.today >= booking.due_out_date && this.today <= booking.due_in_date;
   }
 
-  overdueOut(booking: any): boolean {
-    return ! booking.out_date && ! booking.in_date && this.today >= booking.due_out_date;
+  // asset is 'out' if it has been taken out but not returned in
+  isOut(booking: any): boolean {
+    return booking.out_date && ! booking.in_date;
   }
 
+  // asset is 'back in' if it has been returned before the due in date
+  backIn(booking: any): boolean {
+    return booking.in_date && booking.in_date <= booking.due_in_date;
+  }
+
+  // asset is 'overdue out' if it has not been taken out, and today is after the due out date;
+  // but today is also before the due in date, in case this is a lapsed booking
+  overdueOut(booking: any): boolean {
+    return ! booking.out_date && this.today >= booking.due_out_date && this.today <= booking.due_in_date;
+  }
+
+  // asset is 'overdue in' if it has been taken out, not returned in, and today is after the due in date
   overdueIn(booking: any): boolean {
     return booking.out_date && ! booking.in_date && this.today >= booking.due_in_date;
+  }
+
+  // analyse bookings to determine the in/out status of the asset (must be correct user)
+  getStatus(bookings: any[]): any {
+    for (let booking of bookings) {
+      if (booking.user_id != this.user.user_id) {
+        continue;
+      }
+      if (this.overdueIn(booking)) {
+        return {out: true, overdue: true, book: this.book.bind(this)};
+      }
+      if (this.isOut(booking)) {
+        return {out: true, book: this.book.bind(this)};
+      }
+      if (this.overdueOut(booking)) {
+        return {out: false, overdue: true, book: this.book.bind(this)};
+      }
+    }
+    return {book: () => {}};
   }
 
   canDelete(booking: any): boolean {

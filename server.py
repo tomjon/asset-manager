@@ -261,15 +261,20 @@ def file_endpoint(asset_id=None, attachment_id=None, filename=None):
         return json.dumps(sql.selectAllDict("SELECT attachment_id, name FROM attachment WHERE asset_id=:asset_id", asset_id=asset_id))
 
 
+@application.route('/booking', methods=['GET'])
 @application.route('/booking/<asset_id>', methods=['GET', 'POST'])
 @application.route('/booking/<booking_id>', methods=['DELETE'])
-@application.role_required([ADMIN_ROLE, BOOK_ROLE, VIEW_ROLE])
 def booking_endpoint(asset_id=None, booking_id=None):
     """ Add or interact with bookings.
     """
     with application.db.cursor() as sql:
-        if request.method == 'GET':
-            return json.dumps(sql.selectAllDict("SELECT booking_id, booking.user_id, user.label AS user_label, project, enum_entry.label AS project_label, due_out_date, due_in_date, out_date, in_date FROM booking, user, enum, enum_entry WHERE asset_id=:asset_id AND date('now') <= due_in_date AND booking.user_id=user.user_id AND enum.field='project' AND enum.enum_id=enum_entry.enum_id AND enum_entry.value=booking.project ORDER BY due_out_date", asset_id=asset_id))
+        if request.method == 'GET' and asset_id is None:
+            # booking data for XJoin (filters and supplementary booking info for assets)
+            return json.dumps(sql.selectAllDict("SELECT booking_id, asset_id, due_out_date, due_in_date FROM booking WHERE (out_date IS NOT NULL AND in_date IS NULL) OR ()"))
+        elif request.method == 'GET':
+            if not application.user_has_role([ADMIN_ROLE, BOOK_ROLE, VIEW_ROLE]):
+                return "Role required", 403
+            return json.dumps(sql.selectAllDict("SELECT booking_id, booking.user_id, user.label AS user_label, project, enum_entry.label AS project_label, due_out_date, due_in_date, out_date, in_date FROM booking, user, enum, enum_entry WHERE asset_id=:asset_id AND (date('now') <= due_in_date OR (out_date IS NOT NULL AND in_date IS NULL)) AND booking.user_id=user.user_id AND enum.field='project' AND enum.enum_id=enum_entry.enum_id AND enum_entry.value=booking.project ORDER BY due_out_date", asset_id=asset_id))
         elif request.method == 'POST':
             if not application.user_has_role([ADMIN_ROLE, BOOK_ROLE]):
                 return "Role required", 403
@@ -290,6 +295,22 @@ def booking_endpoint(asset_id=None, booking_id=None):
             if sql.delete("DELETE FROM booking WHERE booking_id=:booking_id AND out_date IS NULL AND in_date IS NULL{0}".format(user_clause), booking_id=booking_id, user_id=current_user.user_id) < 1:
                 return "No deletable booking", 400
             return json.dumps({})
+
+
+@application.route('/book/<asset_id>', methods=['PUT', 'DELETE'])
+@application.role_required([ADMIN_ROLE, BOOK_ROLE])
+def book_endpoint(asset_id):
+    """ Endpoint for booking out (PUT) or booking in (DELETE) an asset.
+    """
+    with application.db.cursor() as sql:
+        if request.method == 'PUT':
+            if sql.update("UPDATE booking SET out_date=date('now') WHERE asset_id=:asset_id AND user_id=:user_id AND date('now') >= due_out_date AND date('now') <= due_in_date AND out_date IS NULL AND in_date IS NULL", asset_id=asset_id, user_id=current_user.user_id) < 1:
+                return "Bad request", 400
+        elif request.method == 'DELETE':
+            if sql.update("UPDATE booking SET in_date=date('now') WHERE asset_id=:asset_id AND user_id=:user_id AND date('now') >= due_out_date AND out_date IS NOT NULL AND in_date IS NULL", asset_id=asset_id, user_id=current_user.user_id) < 1:
+                return "Bad request", 400
+        return json.dumps({})
+
 
 if __name__ == '__main__':
     if 'debug' in sys.argv:
