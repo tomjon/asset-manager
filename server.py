@@ -26,7 +26,7 @@ def login_endpoint():
     """ Log in endpoint.
     """
     username = request.args['username']
-    password = request.get_data()
+    password = request.get_json()['password']
     user = application.login(username, password)
     if user is None:
         return "Bad credentials", 403

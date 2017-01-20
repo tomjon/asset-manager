@@ -193,10 +193,11 @@ export class DataService {
   }
 
   login(username: string, password: string): Observable<User> {
-    let headers: Headers = new Headers({'Content-Type': 'application/octet'});
+    let headers: Headers = new Headers({'Content-Type': 'application/json'});
     let params: URLSearchParams = new URLSearchParams();
     params.set('username', username);
-    return this.http.post(`/login`, password, {search: params, headers: headers})
+    let body = JSON.stringify({password: password});
+    return this.http.post(`/login`, body, {search: params, headers: headers})
                     .map(res => this.user_from_res(res))
                     .catch(this.handleError);
   }

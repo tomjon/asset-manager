@@ -7,7 +7,7 @@ import functools
 import hashlib
 from time import time
 from sql import NoResult
-from sql_app import SqlApplication
+from sql_app import SqlApplication, SqlDatabase, DATABASE
 from flask import request
 from flask_login import LoginManager, login_required, current_user, login_user, logout_user
 
@@ -22,8 +22,8 @@ class User(object):
         self.role = role
         self.username = username
         self.label = label
-        self.password_salt = password_salt
-        self.password_hash = password_hash
+        self.password_salt = str(password_salt)
+        self.password_hash = str(password_hash)
         self.data = json.loads(data_json)
         self.is_authenticated = True
         self.is_active = True
@@ -37,7 +37,7 @@ class User(object):
     def check_password(self, password):
         """ Check the given pasword against the salt and hash.
         """
-        return hashlib.pbkdf2_hmac('sha256', password, str(self.password_salt), ROUNDS) == str(self.password_hash)
+        return hashlib.pbkdf2_hmac('sha256', password, self.password_salt, ROUNDS) == self.password_hash
 
     def set_password(self, password):
         """ Set the password (generating random salt).
@@ -163,10 +163,10 @@ class UserApplication(SqlApplication):
 
 if __name__ == '__main__':
     if len(sys.argv) != 3:
-        print >>sys.stderr, "Usage: python {0} <username> <password>"
+        print >>sys.stderr, "Usage: python {0} <username> <password>".format(sys.argv[0])
         sys.exit(1)
-    user = User(None, ADMIN_ROLE, sys.argv[1], "New Admin User", None, None, '{}')
-    user.set_password(sys.argv[2])
+    user = User(None, ADMIN_ROLE, unicode(sys.argv[1]), "New Admin User", None, None, '{}')
+    user.set_password(unicode(sys.argv[2]))
     with SqlDatabase(DATABASE).cursor() as sql:
         sql.insert("INSERT INTO user VALUES (NULL, :role, :username, :label, :salt, :hash, :data)", user.to_dict(), salt=buffer(user.password_salt), hash=buffer(user.password_hash))
 
