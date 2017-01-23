@@ -133,6 +133,7 @@ export class AssetComponent {
     this.asset = Object.assign({}, this.original);
     this.file_index = -1;
     this.files = [];
+    this.status = {};
     pristine(this.form);
     if (this.asset.id) {
       this.dataService.getAttachments(this.asset)
