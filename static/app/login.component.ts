@@ -162,7 +162,7 @@ export class LoginComponent {
   onLogout() {
     this.dataService.logout()
                     .subscribe(() => {
-                      this.userEmitter.emit(undefined);
+                      this.userEmitter.emit(new User());
                       this.password = undefined;
                      });
   }
