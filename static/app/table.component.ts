@@ -91,7 +91,7 @@ import { Frequency } from './frequency';
            '.header, .hl { font-weight: bold }',
            '.booking-filters { display: inline }',
            '.booking-filters span, .project-select { margin-right: 10px }',
-           '.project-select { width: 200 }'],
+           '.project-select { width: 200; background: white }'],
   pipes: [EnumPipe]
 })
 export class TableComponent {

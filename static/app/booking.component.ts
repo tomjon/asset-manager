@@ -48,14 +48,14 @@ declare var $;
                        </div>
                        <div class="form-group">
                          <label for="dueOutDate">Due Out Date</label>
-                         <input type="date" required class="form-control" [(ngModel)]="dueOutDate" name="dueOutDate" #f_dueOutDate="ngModel">
+                         <input type="date" required min="{{today}}" class="form-control" [(ngModel)]="dueOutDate" name="dueOutDate" #f_dueOutDate="ngModel">
                          <div [hidden]="f_dueOutDate.valid" class="alert alert-danger">
                            Due out date is required
                          </div>
                        </div>
                        <div class="form-group">
                          <label for="dueInDate">Due In Date</label>
-                         <input type="date" required class="form-control" [(ngModel)]="dueInDate" name="dueInDate" #f_dueInDate="ngModel">
+                         <input type="date" required min="{{dueOutDate}}" class="form-control" [(ngModel)]="dueInDate" name="dueInDate" #f_dueInDate="ngModel">
                          <div [hidden]="f_dueInDate.valid && dueInDate >= dueOutDate" class="alert alert-danger">
                            Due in date is required, and should be the same or after the due out date
                          </div>
