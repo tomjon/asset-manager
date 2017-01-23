@@ -12,22 +12,26 @@ declare var $;
   selector: 'badass-booking',
   template: `<div>
                <table *ngIf="bookings != undefined">
-                 <tr>
-                   <th>User</th>
-                   <th>Project</th>
-                   <th>Due Out</th>
-                   <th>Due In</th>
-                 </tr>
-                 <tr *ngIf="bookings.length == 0">
-                   <td rowspan="5">No future bookings</td>
-                 </tr>
-                 <tr *ngFor="let booking of bookings" [ngClass]="{current: current(booking)}">
-                   <td class="row">{{booking.user_label}}</td>
-                   <td class="row">{{booking.project_label}}</td>
-                   <td class="row" [ngClass]="{good: isOut(booking) || backIn(booking), overdue: overdueOut(booking)}">{{booking.due_out_date}}</td>
-                   <td class="row" [ngClass]="{good: backIn(booking), overdue: overdueIn(booking)}">{{booking.due_in_date}}</td>
-                   <td><span *ngIf="canDelete(booking)" class="glyphicon glyphicon-trash" (click)="onDelete(booking)"></span></td>
-                 </tr>
+                 <thead>
+                   <tr>
+                     <th>User</th>
+                     <th>Project</th>
+                     <th>Due Out</th>
+                     <th>Due In</th>
+                   </tr>
+                 </thead>
+                 <tbody>
+                   <tr *ngIf="bookings.length == 0">
+                     <td rowspan="5">No future bookings</td>
+                   </tr>
+                   <tr *ngFor="let booking of bookings" [ngClass]="{current: current(booking)}">
+                     <td class="row">{{booking.user_label}}</td>
+                     <td class="row">{{booking.project_label}}</td>
+                     <td class="row" [ngClass]="{good: isOut(booking) || backIn(booking), overdue: overdueOut(booking)}">{{booking.due_out_date}}</td>
+                     <td class="row" [ngClass]="{good: backIn(booking), overdue: overdueIn(booking)}">{{booking.due_in_date}}</td>
+                     <td><span *ngIf="canDelete(booking)" class="glyphicon glyphicon-trash" (click)="onDelete(booking)"></span></td>
+                   </tr>
+                 </tbody>
                </table>
              </div>
              <div id="bookingModal" class="modal fade" role="dialog">

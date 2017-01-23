@@ -105,8 +105,9 @@ import { LAST_OPTION } from './enum';
            '.bookOut { margin-left: 20px }',
            '.overdue { color: red }',
            '.disabled { color: lightgrey }',
-           '.attachments { height: 400px }',
-           '.attachment img { max-width: 100%; max-height: 100% }'],
+           '.attachments { height: 350px }',
+           '.attachment img { max-width: 100%; max-height: 100% }',
+           'badass-booking { display: block; height: 177px; overflow: auto }'],
   directives: [BookingComponent],
 })
 export class AssetComponent {
