@@ -18,7 +18,7 @@ import { Frequency } from './frequency';
                            <span *ngFor="let input of fieldMap.bookingFilters" title="{{input.description}}" class="glyphicon glyphicon-{{input.glyph}}" [ngClass]="{selected: filterSelected(input)}" (click)="onBookingFilterClick(input)"></span>
                            {{bookingFilterDate()}}
                          </div>
-                         <input *ngIf="showInput.type == 'xjoin'" type="date" [(ngModel)]="showInput.value" (change)="doDateBookingFilter(showInput)" (blur)="doDateBookingFilter(showInput)" />
+                         <input *ngIf="showInput.type == 'xjoin'" type="date" min="{{today}}" [(ngModel)]="showInput.value" (change)="doDateBookingFilter(showInput)" (blur)="doDateBookingFilter(showInput)" />
                        </td>
                        <td colspan="3" class="calibration header">Calibration</td>
                        <td colspan="2"></td>
@@ -115,6 +115,11 @@ export class TableComponent {
   ngOnInit() {
     this.search.facets = this.fieldMap.enumFields;
     this.doSearch();
+  }
+
+  //FIXME stolen from booking component
+  get today(): string {
+    return new Date().toISOString().substring(0, 10);
   }
 
   unitOptions() {

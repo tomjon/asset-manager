@@ -31,8 +31,8 @@ def booking_endpoint():
                 # all assets that are currently overdue to be returned
                 return json.dumps(sql.selectAllDict("SELECT asset_id FROM booking WHERE out_date IS NOT NULL AND in_date IS NULL AND due_in_date < date('now')"))
         elif 'unavailable' in request.args:
-            # all assets that are NOT available (due in) on the specified date (we use this negatively)
-            return json.dumps(sql.selectAllDict("SELECT asset_id FROM booking WHERE due_out_date <= '{0}' AND '{0}' <= due_in_date".format(request.args['unavailable'])))
+            # all assets that are NOT available (so not due in and not returned early) on the specified date (we use this negatively)
+            return json.dumps(sql.selectAllDict("SELECT asset_id FROM booking WHERE due_out_date <= '{0}' AND '{0}' <= due_in_date AND in_date IS NULL".format(request.args['unavailable'])))
         return "Unknown filter args", 400
 
 
