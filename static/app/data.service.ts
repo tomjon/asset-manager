@@ -69,6 +69,10 @@ export class DataService {
         }
         continue;
       }
+      if (input.type == 'xjoin') {
+        path += `/xjoin_${input.field}:${input.negative ? '-' : ''}${input.value}`;
+        continue;
+      }
       if (input.field == undefined || input.value == '') continue;
       let field = input.field;
       if (input.type == 'text') {
@@ -209,6 +213,12 @@ export class DataService {
 
   getBookings(asset: any): Observable<any[]> {
     return this.http.get(`/booking/${asset.id}`)
+                    .map(res => res.json())
+                    .catch(this.handleError);
+  }
+
+  getBookingsForProject(project_id: string): Observable<any[]> {
+    return this.http.get(`/project/${project_id}`)
                     .map(res => res.json())
                     .catch(this.handleError);
   }

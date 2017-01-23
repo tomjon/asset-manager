@@ -13,7 +13,13 @@ import { Frequency } from './frequency';
                  <table class="col-lg-12 table table-responsive">
                    <thead>
                      <tr>
-                       <td colspan="6"></td>
+                       <td colspan="6">
+                         <div *ngIf="showInput.type != 'xjoin'" class="booking-filters">
+                           <span *ngFor="let input of fieldMap.bookingFilters" title="{{input.description}}" class="glyphicon glyphicon-{{input.glyph}}" [ngClass]="{selected: filterSelected(input)}" (click)="onBookingFilterClick(input)"></span>
+                           {{bookingFilterDate()}}
+                         </div>
+                         <input *ngIf="showInput.type == 'xjoin'" type="date" [(ngModel)]="showInput.value" (change)="doDateBookingFilter(showInput)" (blur)="doDateBookingFilter(showInput)" />
+                       </td>
                        <td colspan="3" class="calibration header">Calibration</td>
                        <td colspan="2"></td>
                      </tr>
@@ -77,11 +83,12 @@ import { Frequency } from './frequency';
            'div.filter { position: absolute; z-index: 1 }',
            'input.freq { width: 80 }',
            'select.freq { width: 60 }',
-           '.header, .hl { font-weight: bold }'],
+           '.header, .hl { font-weight: bold }',
+           '.booking-filters span { margin-right: 10px }'],
   pipes: [EnumPipe]
 })
 export class TableComponent {
-  showInput: string;
+  showInput: any = {};
 
   @ViewChildren('filter') filters: QueryList<ElementRef>;
 
@@ -176,13 +183,13 @@ export class TableComponent {
 
   // select an enum value for an input
   onFilter(input: any) {
-    this.showInput = undefined;
+    this.showInput = {};
     this.doSearch();
   }
 
   // once finished with a filter input, stop showing input, and check for empty value
   checkFilter(input: any) {
-    this.showInput = undefined;
+    this.showInput = {};
     if (input.value == undefined || input.value == '') {
       let index = this.search.filters.indexOf(input);
       this.search.filters.splice(index, 1);
@@ -269,5 +276,31 @@ export class TableComponent {
       label += ` (${counts[option.value]})`;
     }
     return label;
+  }
+
+  // either clear the filter if already selected, or add to the search filters and clear any others
+  onBookingFilterClick(input) {
+    let has = this.search.filters.indexOf(input) != -1;
+    this.search.filters = this.search.filters.filter(filter => filter.type != 'xjoin');
+    if (! has) this.search.filters.push(input);
+    if (! has && input.date) {
+      this.showInput = input;
+    } else {
+      this.doSearch();
+    }
+  }
+
+  doDateBookingFilter(input) {
+    this.showInput = {};
+    this.doSearch();
+  }
+
+  bookingFilterDate(): string {
+    for (let filter of this.search.filters) {
+      if (filter.type == 'xjoin' && filter.date) {
+        return filter.value;
+      }
+    }
+    return '';
   }
 }

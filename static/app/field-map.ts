@@ -22,6 +22,12 @@ var FREQ_RANGE = {'field': '', 'label': 'Frequency', 'type': 'freq', 'range': [S
 
 export var PROJECT = {'field': 'project', 'label': 'Project'};
 
+// booking filters with default values
+var BOOKING_OUT = {'type': 'xjoin', 'field': 'out', 'glyph': 'export', 'value': 'now', 'description': 'Show only assets that are currently out'}
+var BOOKING_DUE_OUT = {'type': 'xjoin', 'field': 'due', 'glyph': 'share', 'value': 'out', 'description': 'Show only assets that are currently due to be taken out'}
+var BOOKING_OVERDUE_IN = {'type': 'xjoin', 'field': 'due', 'glyph': 'warning-sign', 'value': 'in', 'description': 'Show only assets that are currently overdue to be returned'}
+var BOOKING_AVAILABLE = {'type': 'xjoin', 'field': 'unavailable', 'negative': true, 'glyph': 'ok-circle', 'date': true, 'value': 'now', 'description': 'Show only assets that are available to book on the specified date'}
+
 @Injectable()
 export class FieldMap {
   private map: any = {};
@@ -40,6 +46,10 @@ export class FieldMap {
   public tableInputs: any[] = [
     ID_NUMBER, MANUFACTURER, MODEL, SERIAL_NUMBER, CATEGORY, FREQ_RANGE,
     CALIBRATION_DATE, CALIBRATION_DUE, CALIBRATION_TYPE, OWNER, CONDITION
+  ];
+
+  public bookingFilters: any[] = [
+    BOOKING_OUT, BOOKING_DUE_OUT, BOOKING_OVERDUE_IN, BOOKING_AVAILABLE
   ];
 
   public enumFields: string[] = [];

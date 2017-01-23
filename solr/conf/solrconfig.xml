@@ -96,6 +96,8 @@
   <lib path="${solr.install.dir}/../solr/java/lib/json-simple-1.1.1.jar" />
   <lib path="${solr.install.dir}/../solr/java/bams-enum.jar" />
 
+  <lib dir="${solr.install.dir}/../solr/java/xjoin" regex=".*\.jar" />
+
   <!-- Data Directory
 
        Used to specify an alternate directory to hold all index data
@@ -823,6 +825,12 @@
       <str name="wt">json</str>
       <str name="indent">true</str>
     </lst>
+      <arr name="first-components">
+        <str>xjoin</str>
+      </arr>
+      <arr name="last-components">
+        <str>xjoin</str>
+      </arr>
   </requestHandler>
 
 
@@ -1406,6 +1414,19 @@
     <str name="default_no_order">-1</str>
     <str name="reload_prefix">__</str>
   </valueSourceParser>
+
+  <!-- XJoin configuration -->
+  <queryParser name="xjoin" class="org.apache.solr.search.xjoin.XJoinQParserPlugin" />
+
+  <searchComponent name="xjoin" class="org.apache.solr.search.xjoin.XJoinSearchComponent">
+    <str name="factoryClass">org.apache.solr.search.xjoin.simple.SimpleXJoinResultsFactory</str>
+    <str name="joinField">id</str>
+    <lst name="external">
+      <str name="type">JSON</str>
+      <str name="rootUrl">http://localhost:8081/booking</str>
+      <str name="joinIdPath">$[*].asset_id</str>
+    </lst>
+  </searchComponent>
   
 
 

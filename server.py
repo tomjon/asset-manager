@@ -19,6 +19,8 @@ SOLR_COLLECTION = "assets"
 SOLR_QUERY_URL = "http://localhost:8983/solr/{0}/query".format(SOLR_COLLECTION)
 SOLR_UPDATE_URL = "http://localhost:8983/solr/{0}/update".format(SOLR_COLLECTION)
 
+XJOIN_PREFIX = 'xjoin_'
+
 application = UserApplication(__name__) # pylint: disable=invalid-name
 
 @application.route('/login', methods=['POST'])
@@ -184,6 +186,15 @@ def search_endpoint(path=None):
                     return "Bad filter", 400
                 params.append(('fq', '{0}:[0 TO {1}]'.format(field[0], value)))
                 params.append(('fq', '{0}:[{1} TO *]'.format(field[1], value)))
+            elif field.startswith(XJOIN_PREFIX):
+                field = field[len(XJOIN_PREFIX):]
+                neg = False
+                if len(value) > 0 and value[0] == '-':
+                    neg = True
+                    value = value[1:]
+                params.append(('xjoin', 'true'))
+                params.append(('xjoin.external.{0}'.format(field), value))
+                params.append(('fq', '{0}{{!xjoin}}xjoin'.format('-' if neg else '')))
             else:
                 if value != '*':
                     value = '"{0}"'.format(value)
@@ -261,19 +272,14 @@ def file_endpoint(asset_id=None, attachment_id=None, filename=None):
         return json.dumps(sql.selectAllDict("SELECT attachment_id, name FROM attachment WHERE asset_id=:asset_id", asset_id=asset_id))
 
 
-@application.route('/booking', methods=['GET'])
 @application.route('/booking/<asset_id>', methods=['GET', 'POST'])
 @application.route('/booking/<booking_id>', methods=['DELETE'])
+@application.role_required([ADMIN_ROLE, BOOK_ROLE, VIEW_ROLE])
 def booking_endpoint(asset_id=None, booking_id=None):
     """ Add or interact with bookings.
     """
     with application.db.cursor() as sql:
-        if request.method == 'GET' and asset_id is None:
-            # booking data for XJoin (filters and supplementary booking info for assets)
-            return json.dumps(sql.selectAllDict("SELECT booking_id, asset_id, due_out_date, due_in_date FROM booking WHERE (out_date IS NOT NULL AND in_date IS NULL) OR ()"))
-        elif request.method == 'GET':
-            if not application.user_has_role([ADMIN_ROLE, BOOK_ROLE, VIEW_ROLE]):
-                return "Role required", 403
+        if request.method == 'GET':
             return json.dumps(sql.selectAllDict("SELECT booking_id, booking.user_id, user.label AS user_label, project, enum_entry.label AS project_label, due_out_date, due_in_date, out_date, in_date FROM booking, user, enum, enum_entry WHERE asset_id=:asset_id AND (date('now') <= due_in_date OR (out_date IS NOT NULL AND in_date IS NULL)) AND booking.user_id=user.user_id AND enum.field='project' AND enum.enum_id=enum_entry.enum_id AND enum_entry.value=booking.project ORDER BY due_out_date", asset_id=asset_id))
         elif request.method == 'POST':
             if not application.user_has_role([ADMIN_ROLE, BOOK_ROLE]):

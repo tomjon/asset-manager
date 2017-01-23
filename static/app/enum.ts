@@ -26,7 +26,7 @@ export class Enum {
     return undefined;
   }
 
-  public options(add_extra: boolean=true) {
+  public options(add_extra: boolean=true): any[] {
     let options = [];
     for (let e of this.values) {
       options[e.order] = {value: e.value, label: e.label};
