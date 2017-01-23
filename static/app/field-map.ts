@@ -20,13 +20,13 @@ var NOTES = {'field': 'notes', 'label': 'Notes', 'type': 'area'};
 
 var FREQ_RANGE = {'field': '', 'label': 'Frequency', 'type': 'freq', 'range': [START_FREQ, STOP_FREQ]};
 
-export var PROJECT = {'field': 'project', 'label': 'Project'};
+export var PROJECT = {'type': 'xjoin', 'component': 'project', 'field': 'project', 'label': 'Project'};
 
 // booking filters with default values
-var BOOKING_OUT = {'type': 'xjoin', 'field': 'out', 'glyph': 'export', 'value': 'now', 'description': 'Show only assets that are currently out'}
-var BOOKING_DUE_OUT = {'type': 'xjoin', 'field': 'due', 'glyph': 'share', 'value': 'out', 'description': 'Show only assets that are currently due to be taken out'}
-var BOOKING_OVERDUE_IN = {'type': 'xjoin', 'field': 'due', 'glyph': 'warning-sign', 'value': 'in', 'description': 'Show only assets that are currently overdue to be returned'}
-var BOOKING_AVAILABLE = {'type': 'xjoin', 'field': 'unavailable', 'negative': true, 'glyph': 'ok-circle', 'date': true, 'value': 'now', 'description': 'Show only assets that are available to book on the specified date'}
+var BOOKING_OUT = {'type': 'xjoin', 'component': 'booking', 'field': 'out', 'glyph': 'export', 'value': 'now', 'description': 'Show only assets that are currently out'}
+var BOOKING_DUE_OUT = {'type': 'xjoin', 'component': 'booking', 'field': 'due', 'glyph': 'share', 'value': 'out', 'description': 'Show only assets that are currently due to be taken out'}
+var BOOKING_OVERDUE_IN = {'type': 'xjoin', 'component': 'booking', 'field': 'due', 'glyph': 'warning-sign', 'value': 'in', 'description': 'Show only assets that are currently overdue to be returned'}
+var BOOKING_AVAILABLE = {'type': 'xjoin', 'component': 'booking', 'field': 'unavailable', 'negative': true, 'glyph': 'ok-circle', 'date': true, 'value': 'now', 'description': 'Show only assets that are available to book on the specified date'}
 
 @Injectable()
 export class FieldMap {

@@ -187,14 +187,16 @@ def search_endpoint(path=None):
                 params.append(('fq', '{0}:[0 TO {1}]'.format(field[0], value)))
                 params.append(('fq', '{0}:[{1} TO *]'.format(field[1], value)))
             elif field.startswith(XJOIN_PREFIX):
-                field = field[len(XJOIN_PREFIX):]
+                if not application.user_has_role([ADMIN_ROLE, BOOK_ROLE]):
+                    continue
+                _, component, field = field.split('_')
                 neg = False
                 if len(value) > 0 and value[0] == '-':
                     neg = True
                     value = value[1:]
-                params.append(('xjoin', 'true'))
-                params.append(('xjoin.external.{0}'.format(field), value))
-                params.append(('fq', '{0}{{!xjoin}}xjoin'.format('-' if neg else '')))
+                params.append(('xjoin_{0}'.format(component), 'true'))
+                params.append(('xjoin_{0}.external.{1}'.format(component, field), value))
+                params.append(('fq', '{1}{{!xjoin}}xjoin_{0}'.format(component, '-' if neg else '')))
             else:
                 if value != '*':
                     value = '"{0}"'.format(value)

@@ -5,7 +5,6 @@ import { EnumService } from './enum.service';
 import { TableComponent } from './table.component';
 import { AssetComponent } from './asset.component';
 import { LoginComponent } from './login.component';
-import { ProjectComponent } from './project.component';
 import { Search } from './search';
 import { Results } from './results';
 import { FieldMap } from './field-map';
@@ -19,15 +18,14 @@ import './rxjs-operators';
   template: `<div class="container-fluid">
                <div class="row">
                  <div class="col-lg-12">
-                   <h1><img src="/static/ofcom.gif"/> Baldock Asset Database and Scheduling System <button class="btn" data-toggle="modal" data-target="#projectModal">Projects</button></h1>
+                   <h1><img src="/static/ofcom.gif"/> Baldock Asset Database and Scheduling System</h1>
                    <badass-login [user]="user" (login)="onLogin($event)"></badass-login>
                    <badass-asset [user]="user" [asset]="asset" (event)="onAssetEvent($event)"></badass-asset>
-                   <badass-table [assets]="results" [search]="search" [selected]="asset" (event)="onTableEvent($event)"></badass-table>
+                   <badass-table [user]="user" [assets]="results" [search]="search" [selected]="asset" (event)="onTableEvent($event)"></badass-table>
                  </div>
                </div>
-             </div>
-             <badass-project [user]="user"></badass-project>`,
-  directives: [TableComponent, AssetComponent, LoginComponent, ProjectComponent],
+             </div>`,
+  directives: [TableComponent, AssetComponent, LoginComponent],
   providers: [HTTP_PROVIDERS, DataService, EnumService, FieldMap],
   styles: ['badass-asset { display: block; margin: 20px 0 20px 0 }',
            'badass-login { display: block; position: absolute; right: 10; top: 10 }']

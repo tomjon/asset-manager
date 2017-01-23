@@ -826,10 +826,12 @@
       <str name="indent">true</str>
     </lst>
       <arr name="first-components">
-        <str>xjoin</str>
+        <str>xjoin_booking</str>
+        <str>xjoin_project</str>
       </arr>
       <arr name="last-components">
-        <str>xjoin</str>
+        <str>xjoin_booking</str>
+        <str>xjoin_project</str>
       </arr>
   </requestHandler>
 
@@ -1418,12 +1420,22 @@
   <!-- XJoin configuration -->
   <queryParser name="xjoin" class="org.apache.solr.search.xjoin.XJoinQParserPlugin" />
 
-  <searchComponent name="xjoin" class="org.apache.solr.search.xjoin.XJoinSearchComponent">
+  <searchComponent name="xjoin_booking" class="org.apache.solr.search.xjoin.XJoinSearchComponent">
     <str name="factoryClass">org.apache.solr.search.xjoin.simple.SimpleXJoinResultsFactory</str>
     <str name="joinField">id</str>
     <lst name="external">
       <str name="type">JSON</str>
       <str name="rootUrl">http://localhost:8081/booking</str>
+      <str name="joinIdPath">$[*].asset_id</str>
+    </lst>
+  </searchComponent>
+
+  <searchComponent name="xjoin_project" class="org.apache.solr.search.xjoin.XJoinSearchComponent">
+    <str name="factoryClass">org.apache.solr.search.xjoin.simple.SimpleXJoinResultsFactory</str>
+    <str name="joinField">id</str>
+    <lst name="external">
+      <str name="type">JSON</str>
+      <str name="rootUrl">http://localhost:8081/project</str>
       <str name="joinIdPath">$[*].asset_id</str>
     </lst>
   </searchComponent>

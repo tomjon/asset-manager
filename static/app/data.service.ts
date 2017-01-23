@@ -70,7 +70,9 @@ export class DataService {
         continue;
       }
       if (input.type == 'xjoin') {
-        path += `/xjoin_${input.field}:${input.negative ? '-' : ''}${input.value}`;
+        if (input.value != '*') {
+          path += `/xjoin_${input.component}_${input.field}:${input.negative ? '-' : ''}${input.value}`;
+        }
         continue;
       }
       if (input.field == undefined || input.value == '') continue;

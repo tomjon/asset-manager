@@ -15,7 +15,7 @@ from sql_app import SqlApplication
 
 application = SqlApplication(__name__) # pylint: disable=invalid-name
 
-@application.route('/booking', methods=['GET'])
+@application.route('/booking')
 def booking_endpoint():
     """ Booking XJoin endpoint.
     """
@@ -36,13 +36,14 @@ def booking_endpoint():
         return "Unknown filter args", 400
 
 
-@application.route('/project/<project_id>')
-def project_endpoint(project_id):
+@application.route('/project')
+def project_endpoint():
     """ Project XJoin endpoint.
     """
     with application.db.cursor() as sql:
-        # booking data for XJoin (filters for assets based on bookings)
-        return json.dumps(sql.selectAllDict("SELECT asset_id, booking.user_id, user.label, due_out_date, due_in_date, out_date, in_date FROM booking, user WHERE project=:project_id AND user.user_id=booking.user_id", project_id=project_id))
+        if 'project' in request.args:
+            # booking data for XJoin (filters for assets based on bookings)
+            return json.dumps(sql.selectAllDict("SELECT asset_id FROM booking WHERE project=:project_id", project_id=request.args['project']))
 
 
 if __name__ == '__main__':

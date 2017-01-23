@@ -1,9 +1,10 @@
 import { Component, Input, Output, EventEmitter, ViewChildren, QueryList, ElementRef } from '@angular/core';
 import { Search } from './search';
 import { Results } from './results';
+import { User, BOOK_ROLE } from './user';
 import { EnumPipe } from './enum.pipe';
 import { EnumService } from './enum.service';
-import { FieldMap } from './field-map';
+import { FieldMap, PROJECT } from './field-map';
 import { Frequency } from './frequency';
 
 @Component({
@@ -14,6 +15,10 @@ import { Frequency } from './frequency';
                    <thead>
                      <tr>
                        <td colspan="6">
+                         <select [hidden]="! showProjectSelect" class="project-select" [(ngModel)]="project.value" (ngModelChange)="doSearch()">
+                           <option value="*">-- all assets --</option>
+                           <option *ngFor="let o of options(project, false)" [value]="o.value">{{o.label}}</option>
+                         </select>
                          <div *ngIf="showInput.type != 'xjoin'" class="booking-filters">
                            <span *ngFor="let input of fieldMap.bookingFilters" title="{{input.description}}" class="glyphicon glyphicon-{{input.glyph}}" [ngClass]="{selected: filterSelected(input)}" (click)="onBookingFilterClick(input)"></span>
                            {{bookingFilterDate()}}
@@ -84,7 +89,9 @@ import { Frequency } from './frequency';
            'input.freq { width: 80 }',
            'select.freq { width: 60 }',
            '.header, .hl { font-weight: bold }',
-           '.booking-filters span { margin-right: 10px }'],
+           '.booking-filters { display: inline }',
+           '.booking-filters span, .project-select { margin-right: 10px }',
+           '.project-select { width: 200 }'],
   pipes: [EnumPipe]
 })
 export class TableComponent {
@@ -105,15 +112,25 @@ export class TableComponent {
     }
   }
 
+  @Input('user') user: User;
   @Input('selected') selected: any;
   @Input('search') search: Search;
 
   @Output('event') eventEmitter = new EventEmitter<any>();
 
+  project: any;
+
+  get showProjectSelect(): boolean {
+    return this.user.role >= BOOK_ROLE;
+  }
+
   constructor(private fieldMap: FieldMap, private enumService: EnumService) {}
 
   ngOnInit() {
     this.search.facets = this.fieldMap.enumFields;
+    this.project = Object.assign({}, PROJECT);
+    this.project.value = '*';
+    this.search.filters.push(this.project);
     this.doSearch();
   }
 
@@ -264,7 +281,10 @@ export class TableComponent {
     }
   }
 
-  options(input: any): any[] {
+  options(input: any, useCounts:boolean = true): any[] {
+    if (! useCounts) {
+      return this.enumService.get(input.field).options(false);
+    }
     let options = [];
     for (let option of this.enumService.get(input.field).options(false)) {
       let counts = this.results.facets[input.field];
@@ -286,7 +306,7 @@ export class TableComponent {
   // either clear the filter if already selected, or add to the search filters and clear any others
   onBookingFilterClick(input) {
     let has = this.search.filters.indexOf(input) != -1;
-    this.search.filters = this.search.filters.filter(filter => filter.type != 'xjoin');
+    this.search.filters = this.search.filters.filter(filter => filter.component != 'booking');
     if (! has) this.search.filters.push(input);
     if (! has && input.date) {
       this.showInput = input;

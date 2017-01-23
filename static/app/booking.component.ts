@@ -19,7 +19,7 @@ declare var $;
                    <th>Due In</th>
                  </tr>
                  <tr *ngIf="bookings.length == 0">
-                   <td rowspan="5">No bookings</td>
+                   <td rowspan="5">No future bookings</td>
                  </tr>
                  <tr *ngFor="let booking of bookings" [ngClass]="{current: current(booking)}">
                    <td class="row">{{booking.user_label}}</td>
