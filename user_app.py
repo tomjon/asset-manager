@@ -4,12 +4,16 @@ import json
 import sys
 import os
 import functools
-import hashlib
 from time import time
 from sql import NoResult
 from sql_app import SqlApplication, SqlDatabase, DATABASE
 from flask import request
 from flask_login import LoginManager, login_required, current_user, login_user, logout_user
+
+try:
+    from hashlib import pbkdf2_hmac
+except ImportError:
+    from backports.pbkdf2 import pbkdf2_hmac
 
 ROUNDS = 10^6
 ANONYMOUS, VIEW_ROLE, BOOK_ROLE, ADMIN_ROLE = range(4)
@@ -37,13 +41,13 @@ class User(object):
     def check_password(self, password):
         """ Check the given pasword against the salt and hash.
         """
-        return hashlib.pbkdf2_hmac('sha256', password, self.password_salt, ROUNDS) == self.password_hash
+        return pbkdf2_hmac('sha256', str(password), str(self.password_salt), ROUNDS) == self.password_hash
 
     def set_password(self, password):
         """ Set the password (generating random salt).
         """
         self.password_salt = os.urandom(32)
-        self.password_hash = hashlib.pbkdf2_hmac('sha256', password, self.password_salt, ROUNDS)
+        self.password_hash = pbkdf2_hmac('sha256', str(password), str(self.password_salt), ROUNDS)
 
     def to_dict(self):
         """ Return fields in a dictionary, omitting password fields.
