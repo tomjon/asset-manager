@@ -4,7 +4,7 @@ from sql import SqlDatabase
 from werkzeug.local import LocalProxy
 from flask import Flask, g
 
-DATABASE = "sql/assets.db"
+DATABASE = "/home/ses/asset-manager/sql/assets.db"
 
 class SqlApplication(Flask):
     def __init__(self, name):

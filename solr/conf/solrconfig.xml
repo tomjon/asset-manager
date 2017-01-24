@@ -93,10 +93,10 @@
   <!--
      <lib path="../a-jar-that-does-not-exist.jar" /> 
   -->
-  <lib path="${solr.install.dir}/../solr/java/lib/json-simple-1.1.1.jar" />
-  <lib path="${solr.install.dir}/../solr/java/bams-enum.jar" />
+  <lib path="${solr.core.dataDir}/../java/lib/json-simple-1.1.1.jar" />
+  <lib path="${solr.core.dataDir}/../java/bams-enum.jar" />
 
-  <lib dir="${solr.install.dir}/../solr/java/xjoin" regex=".*\.jar" />
+  <lib dir="${solr.core.dataDir}/../java/xjoin" regex=".*\.jar" />
 
   <!-- Data Directory
 
