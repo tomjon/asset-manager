@@ -10,7 +10,7 @@ import { User, ANONYMOUS, ADMIN_ROLE, BOOK_ROLE } from './user';
   template: `<div *ngIf="loggedIn()">
                {{user.label}} ({{user.role | enum:'role'}})
                <button class="btn" data-toggle="modal" data-target="#detailsModal" (click)="clearDetails()">Details</button>
-               <button *ngIf="user.role == ADMIN_ROLE" class="btn" data-toggle="modal" data-target="#addUserModal" (click)="clearAddUser()">Add user</button>
+               <button *ngIf="showAddUser()" class="btn" data-toggle="modal" data-target="#addUserModal" (click)="clearAddUser()">Add user</button>
                <button class="btn btn-default" (click)="onLogout()">Log out</button>
              </div>
              <div *ngIf="! loggedIn()">
@@ -152,6 +152,10 @@ export class LoginComponent {
 
   loggedIn(): boolean {
     return this.user != undefined && this.user.role != ANONYMOUS;
+  }
+
+  showAddUser(): boolean {
+    return this.user.role == ADMIN_ROLE;
   }
 
   onLogin() {
