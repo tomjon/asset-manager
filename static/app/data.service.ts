@@ -173,14 +173,9 @@ export class DataService {
                     .catch(this.handleError);
   }
 
-  private user_from_res(res: Response): User {
-    let data: any = res.json();
-    return data.user_id != undefined ? <User>data : undefined;
-  }
-
   getCurrentUser(): Observable<User> {
     return this.http.get(`/user`)
-                    .map(res => this.user_from_res(res))
+                    .map(res => res.json())
                     .catch(this.handleError);
   }
 
@@ -204,7 +199,7 @@ export class DataService {
     params.set('username', username);
     let body = JSON.stringify({password: password});
     return this.http.post(`/login`, body, {search: params, headers: headers})
-                    .map(res => this.user_from_res(res))
+                    .map(res => res.json())
                     .catch(this.handleError);
   }
 
@@ -252,9 +247,16 @@ export class DataService {
     }
   }
 
-  private handleError(error: any/*, caught: Observable<any>*/): Observable<any> {
-    console.log(`${error._body} - ${error.status} ${error.statusText}`);
-    //return Observable.create(observer => { observer.error() });
-    return Observable.throw(error);
+  private handleError(error: Response | any) {
+    let errMsg: string;
+    if (error instanceof Response) {
+      const body = error.json() || '';
+      const err = body.error || JSON.stringify(body);
+      errMsg = `${error.status} - ${error.statusText || ''} ${err}`;
+    } else {
+      errMsg = error.message ? error.message : error.toString();
+    }
+    console.error(errMsg);
+    return Observable.throw(errMsg);
   }
 }

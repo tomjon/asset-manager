@@ -156,7 +156,14 @@ export class LoginComponent {
 
   onLogin() {
     this.dataService.login(this.username, this.password)
-                    .subscribe(user => this.userEmitter.emit(user));
+                    .subscribe(user => {
+                      if (user.user_id) {
+                        this.userEmitter.emit(user);
+                      } else {
+                        this.username = '';
+                        this.password = '';
+                      }
+                    });
   }
 
   onLogout() {

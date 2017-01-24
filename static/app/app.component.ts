@@ -41,7 +41,7 @@ export class AppComponent {
   ngOnInit() {
     this.dataService.getCurrentUser()
                     .subscribe(user => {
-                      if (user != undefined) {
+                      if (user.user_id) {
                         this.user = user; // don't overwrite the anonymous user
                       }
                     });

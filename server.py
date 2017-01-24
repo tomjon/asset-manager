@@ -31,7 +31,7 @@ def login_endpoint():
     password = request.get_json()['password']
     user = application.login(username, password)
     if user is None:
-        return "Bad credentials", 403
+        return json.dumps({})
     return json.dumps(user.to_dict())
 
 @application.route('/logout')
