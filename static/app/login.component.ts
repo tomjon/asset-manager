@@ -12,11 +12,11 @@ declare var $;
   template: `<div *ngIf="loggedIn()">
                {{user.label}} ({{user.role | enum:'role'}})
                <button class="btn" data-toggle="modal" data-target="#detailsModal" (click)="clearDetails()">Details</button>
-               <button *ngIf="showAddUser()" class="btn" data-toggle="modal" data-target="#addUserModal" (click)="clearAddUser()">Add user</button>
+               <button *ngIf="showUsers()" class="btn" data-toggle="modal" data-target="#usersModal" (click)="loadUsers()">Users</button>
                <button class="btn btn-default" (click)="onLogout()">Log out</button>
              </div>
              <div *ngIf="! loggedIn()">
-               <table>
+               <table class="login">
                  <tr>
                    <td>
                      <label for="username">User Name</label>
@@ -71,6 +71,48 @@ declare var $;
                      </div>
                      <div class="modal-footer">
                        <button type="button" class="btn btn-default" [disabled]="detailsForm.pristine" (click)="onSubmitDetails()" [disabled]="! detailsForm.form.valid">Submit</button>
+                       <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
+                     </div>
+                   </div>
+                 </div>
+               </form>
+             </div>
+             <div id="usersModal" class="modal fade" role="dialog">
+               <form role="form" #usersForm="ngForm">
+                 <div class="modal-dialog">
+                   <div class="modal-content">
+                     <div class="modal-header">
+                       <button type="button" class="close" data-dismiss="modal">&times;</button>
+                       <h4 class="modal-title">Users</h4>
+                     </div>
+                     <div class="modal-body">
+                       <table class="users table table-responsive">
+                         <thead>
+                           <tr>
+                             <th colspan="2"></th>
+                             <th colspan="3" class="assets">Asset Summary</th>
+                           </tr>
+                           <tr>
+                             <th>User</th>
+                             <th>Role</th>
+                             <th>Out</th>
+                             <th>Booked</th>
+                             <th>Overdue</th>
+                           </tr>
+                         </thead>
+                         <tbody>
+                           <tr *ngFor="let user of users">
+                             <td>{{user.label}}</td>
+                             <td>{{user.role | enum:'role'}}</td>
+                             <td>{{user.role >= book_role ? user.out : ''}}</td>
+                             <td>{{user.role >= book_role ? user.booked : ''}}</td>
+                             <td>{{user.role >= book_role ? user.overdue : ''}}</td>
+                           </tr>
+                         </tbody>
+                       </table>
+                     </div>
+                     <div class="modal-footer">
+                       <button type="button" class="btn btn-default" data-toggle="modal" data-target="#addUserModal" (click)="clearAddUser()">Add New User</button>
                        <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
                      </div>
                    </div>
@@ -135,9 +177,11 @@ declare var $;
                  </div>
                </form>
              </div>`,
-  styles: ['table label { width: 90px }',
-           'table input { width: 150px }',
-           'td { text-align: right; padding: 2px }'],
+  styles: ['table.login label { width: 90px }',
+           'table.login input { width: 150px }',
+           '.login td { text-align: right; padding: 2px }',
+           'th.assets { background: lightgrey; text-align: center }'
+         ],
   pipes: [EnumPipe]
 })
 export class LoginComponent {
@@ -150,6 +194,9 @@ export class LoginComponent {
   formUser: User;
   newUser: User = new User(BOOK_ROLE);
   error: any = {};
+
+  users: User[];
+  book_role: number = BOOK_ROLE;
 
   @ViewChild('detailsForm') detailsForm;
   @ViewChild('addUserForm') addUserForm;
@@ -166,8 +213,8 @@ export class LoginComponent {
     return this.user != undefined && this.user.role != ANONYMOUS;
   }
 
-  showAddUser(): boolean {
-    return this.user.role == ADMIN_ROLE;
+  showUsers(): boolean {
+    return this.user != undefined && this.user.role == ADMIN_ROLE;
   }
 
   onLogin() {
@@ -225,5 +272,14 @@ export class LoginComponent {
     this.error = {};
     this.newUser = new User(BOOK_ROLE);
     pristine(this.addUserForm);
+  }
+
+  loadUsers() {
+    if (this.user.role == ADMIN_ROLE) {
+      this.dataService.getUsers()
+                      .subscribe(users => this.users = users);
+    } else {
+      this.users = [];
+    }
   }
 }

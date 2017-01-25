@@ -179,6 +179,12 @@ export class DataService {
                     .catch(this.handleError);
   }
 
+  getUsers(): Observable<User[]> {
+    return this.http.get(`/user/admin`)
+               .map(res => res.json())
+               .catch(this.handleError);
+  }
+
   updateDetails(user: User): Observable<void> {
     let headers: Headers = new Headers({'Content-Type': 'application/json'});
     let body = JSON.stringify(user);

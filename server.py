@@ -60,20 +60,24 @@ def user_endpoint():
         application.update_user(user)
     return json.dumps({})
 
-@application.route('/user/admin', methods=['POST'])
+@application.route('/user/admin', methods=['GET', 'POST'])
 @application.role_required([ADMIN_ROLE])
 def user_admin_endpoint():
-    """ Endpoint for an admin to add a new user.
+    """ Endpoint for an admin to get a list of all users, or add a new user.
     """
-    new_user = request.get_json()
-    if not current_user.check_password(new_user['password']):
-        return "Bad credentials", 401
-    try:
-        if not application.add_user(new_user):
-            return "User already exists", 409
-    except KeyError:
-        return "Bad user details", 400
-    return json.dumps({})
+    if request.method == 'GET':
+        with application.db.cursor() as sql:
+            return json.dumps(sql.selectAllDict("SELECT user.user_id, username, label, role, COUNT(CASE WHEN due_in_date >= date('now') OR (out_date IS NOT NULL AND in_date IS NULL) THEN 1 ELSE NULL END) AS booked, COUNT(CASE WHEN out_date IS NOT NULL AND in_date IS NULL THEN 1 ELSE NULL END) AS out, COUNT(CASE WHEN out_date IS NOT NULL AND in_date IS NULL AND due_in_date < date('now') THEN 1 ELSE NULL END) AS overdue FROM user LEFT JOIN booking ON booking.user_id=user.user_id GROUP BY user.user_id"))
+    else:
+        new_user = request.get_json()
+        if not current_user.check_password(new_user['password']):
+            return "Bad credentials", 401
+        try:
+            if not application.add_user(new_user):
+                return "User already exists", 409
+        except KeyError:
+            return "Bad user details", 400
+        return json.dumps({})
     
 
 class SolrError(Exception):
