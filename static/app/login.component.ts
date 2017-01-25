@@ -5,6 +5,8 @@ import { EnumPipe } from './enum.pipe';
 import { pristine } from './pristine';
 import { User, ANONYMOUS, ADMIN_ROLE, BOOK_ROLE } from './user';
 
+declare var $;
+
 @Component({
   selector: 'badass-login',
   template: `<div *ngIf="loggedIn()">
@@ -63,9 +65,12 @@ import { User, ANONYMOUS, ADMIN_ROLE, BOOK_ROLE } from './user';
                            Password is required to change user details
                          </div>
                        </div>
+                       <div *ngIf="error.status == 401" class="alert alert-danger">
+                         You entered an incorrect password
+                       </div>
                      </div>
                      <div class="modal-footer">
-                       <button type="button" class="btn btn-default" [disabled]="detailsForm.pristine" (click)="onSubmitDetails()" data-dismiss="modal" [disabled]="! detailsForm.form.valid">Submit</button>
+                       <button type="button" class="btn btn-default" [disabled]="detailsForm.pristine" (click)="onSubmitDetails()" [disabled]="! detailsForm.form.valid">Submit</button>
                        <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
                      </div>
                    </div>
@@ -86,6 +91,9 @@ import { User, ANONYMOUS, ADMIN_ROLE, BOOK_ROLE } from './user';
                          <input type="text" required class="form-control" [(ngModel)]="newUser.username" name="username" #g_username="ngModel">
                          <div [hidden]="g_username.valid" class="alert alert-danger">
                            User Name is required
+                         </div>
+                         <div *ngIf="error.status == 409" class="alert alert-danger">
+                           A user with that user name already exists
                          </div>
                        </div>
                        <div class="form-group">
@@ -114,10 +122,13 @@ import { User, ANONYMOUS, ADMIN_ROLE, BOOK_ROLE } from './user';
                          <div [hidden]="g_password.valid" class="alert alert-danger">
                            Your password is required to add a new user
                          </div>
+                         <div *ngIf="error.status == 401" class="alert alert-danger">
+                           You entered an incorrect password
+                         </div>
                        </div>
                      </div>
                      <div class="modal-footer">
-                       <button type="button" class="btn btn-default" [disabled]="addUserForm.pristine" (click)="onAddUser()" data-dismiss="modal" [disabled]="! detailsForm.form.valid">Submit</button>
+                       <button type="button" class="btn btn-default" [disabled]="addUserForm.pristine" (click)="onAddUser()" [disabled]="! detailsForm.form.valid">Submit</button>
                        <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
                      </div>
                    </div>
@@ -138,6 +149,7 @@ export class LoginComponent {
   user: User;
   formUser: User;
   newUser: User = new User(BOOK_ROLE);
+  error: any = {};
 
   @ViewChild('detailsForm') detailsForm;
   @ViewChild('addUserForm') addUserForm;
@@ -159,15 +171,16 @@ export class LoginComponent {
   }
 
   onLogin() {
-    this.dataService.login(this.username, this.password)
-                    .subscribe(user => {
-                      if (user.user_id) {
+    if (this.username && this.password) {
+      this.dataService.login(this.username, this.password)
+                      .subscribe(user => {
                         this.userEmitter.emit(user);
-                      } else {
+                      },
+                      error => {
                         this.username = '';
                         this.password = '';
-                      }
-                    });
+                      });
+    }
   }
 
   onLogout() {
@@ -182,24 +195,34 @@ export class LoginComponent {
     this.dataService.updateDetails(this.formUser)
                     .subscribe(() => {
                       Object.assign(this.user, this.formUser);
+                      $('#detailsModal').modal('hide');
                       this.clearDetails();
+                    },
+                    error => {
+                      this.error = error;
                     });
   }
 
   onAddUser() {
     this.dataService.addUser(this.newUser)
                     .subscribe(() => {
+                      $('#addUserModal').modal('hide');
                       this.clearAddUser();
+                    },
+                    error => {
+                      this.error = error;
                     });
   }
 
   clearDetails() {
+    this.error = {};
     this.formUser.password = undefined;
     this.formUser.new_password = undefined;
     pristine(this.detailsForm);
   }
 
   clearAddUser() {
+    this.error = {};
     this.newUser = new User(BOOK_ROLE);
     pristine(this.addUserForm);
   }

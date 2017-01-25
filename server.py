@@ -31,7 +31,7 @@ def login_endpoint():
     password = request.get_json()['password']
     user = application.login(username, password)
     if user is None:
-        return json.dumps({})
+        return "Bad credentials", 401
     return json.dumps(user.to_dict())
 
 @application.route('/logout')
@@ -55,7 +55,7 @@ def user_endpoint():
             return "Not logged in", 403
         user = request.get_json()
         if not current_user.check_password(user['password']):
-            return "Bad credentials", 403
+            return "Bad credentials", 401
         user['data'] = json.loads(user['data'])
         application.update_user(user)
     return json.dumps({})
@@ -67,10 +67,10 @@ def user_admin_endpoint():
     """
     new_user = request.get_json()
     if not current_user.check_password(new_user['password']):
-        return "Bad credentials", 403
+        return "Bad credentials", 401
     try:
         if not application.add_user(new_user):
-            return "User already exists", 400
+            return "User already exists", 409
     except KeyError:
         return "Bad user details", 400
     return json.dumps({})
