@@ -3,8 +3,7 @@
 from sql import SqlDatabase
 from werkzeug.local import LocalProxy
 from flask import Flask, g
-
-DATABASE = "/home/ses/asset-manager/sql/assets.db"
+from config import DATABASE
 
 class SqlApplication(Flask):
     def __init__(self, name):

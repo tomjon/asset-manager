@@ -105,3 +105,4 @@ data.tgz
 solr/java/bams-enum.jar
 solr/java/bin/
 sql/assets.db
+config.py

@@ -14,8 +14,8 @@ from werkzeug.local import LocalProxy
 from flask import Flask, redirect, request, Response, send_file, g
 from flask_login import LoginManager, login_required, current_user, login_user, logout_user
 from user_app import UserApplication, ADMIN_ROLE, BOOK_ROLE, VIEW_ROLE
+from config import SOLR_COLLECTION
 
-SOLR_COLLECTION = "assets"
 SOLR_QUERY_URL = "http://localhost:8983/solr/{0}/query".format(SOLR_COLLECTION)
 SOLR_UPDATE_URL = "http://localhost:8983/solr/{0}/update".format(SOLR_COLLECTION)
 

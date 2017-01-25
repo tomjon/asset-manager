@@ -1,0 +1,3 @@
+SOLR_COLLECTION = "assets"
+DATABASE = "sql/assets.db"
+ROUNDS = 10^6

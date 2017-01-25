@@ -9,13 +9,13 @@ from sql import NoResult
 from sql_app import SqlApplication, SqlDatabase, DATABASE
 from flask import request
 from flask_login import LoginManager, login_required, current_user, login_user, logout_user
+from config import ROUNDS
 
 try:
     from hashlib import pbkdf2_hmac
 except ImportError:
     from backports.pbkdf2 import pbkdf2_hmac
 
-ROUNDS = 10^6
 ANONYMOUS, VIEW_ROLE, BOOK_ROLE, ADMIN_ROLE = range(4)
 
 class User(object):
