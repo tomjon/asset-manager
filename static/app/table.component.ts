@@ -168,7 +168,6 @@ export class TableComponent {
 
   doSearch(start:number=0) {
     this.search.start = start;
-    console.log(this.search);
     this.eventEmitter.emit({search: true});
   }
 

@@ -1,18 +1,17 @@
 #!/usr/bin/python
-import json
-import sys
+import sql
+from config import DATABASE
 
-for filename in sys.argv[1:]:
-    with open(filename) as f:
-        enum = json.loads(f.read())
+db = sql.SqlDatabase(DATABASE)
 
-    enum.sort(key=lambda x: x['label'])
+with db.cursor() as sql:
+    for enum_id in sql.selectAllSingle("SELECT enum_id FROM enum WHERE field != 'role'"):
+        enum = sql.selectAllDict("SELECT * FROM enum_entry WHERE enum_id=:enum_id", enum_id=enum_id)
 
-    n = 0
-    for value in enum:
-        value['order'] = n
-        n += 1
+        enum.sort(key=lambda x: x['label'])
 
-    with open(filename, 'w') as f:
-        f.write(json.dumps(enum))
+        order = 0
+        for value in enum:
+            sql.update("UPDATE enum_entry SET `order`=:order WHERE entry_id=:entry_id", entry_id=value['entry_id'], order=order)
+            order += 1
 

@@ -55,6 +55,10 @@ class SqlCursor(object):
         self._execute(stmt, values, kwargs)
         return self.cursor.fetchall()
 
+    def selectAllSingle(self, stmt, values=None, **kwargs):
+        self._execute(stmt, values, kwargs)
+        return [v[0] for v in self.cursor.fetchall()]
+
     def selectAllDict(self, stmt, values=None, **kwargs):
         rows = self.selectAll(stmt, values, **kwargs)
         return [dict(zip([col[0] for col in self.cursor.description], row)) for row in rows]
