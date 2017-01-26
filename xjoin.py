@@ -46,7 +46,7 @@ def project_endpoint():
             return json.dumps(sql.selectAllDict("SELECT asset_id FROM booking WHERE project=:project_id", project_id=request.args['project']))
         if 'user' in request.args:
             # booking data for XJoin (filters for assets based on user)
-            return json.dumps(sql.selectAllDict("SELECT asset_id FROM booking WHERE user_id=:user_id", user_id=request.args['user']))
+            return json.dumps(sql.selectAllDict("SELECT asset_id FROM booking WHERE user_id=:user_id AND (due_in_date >= date('now') OR (out_date IS NOT NULL AND in_date IS NULL))", user_id=request.args['user']))
 
 
 if __name__ == '__main__':
