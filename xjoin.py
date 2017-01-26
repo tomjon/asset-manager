@@ -36,14 +36,17 @@ def booking_endpoint():
         return "Unknown filter args", 400
 
 
-@application.route('/project')
+@application.route('/filter')
 def project_endpoint():
-    """ Project XJoin endpoint.
+    """ Filter XJoin endpoint.
     """
     with application.db.cursor() as sql:
         if 'project' in request.args:
             # booking data for XJoin (filters for assets based on bookings)
             return json.dumps(sql.selectAllDict("SELECT asset_id FROM booking WHERE project=:project_id", project_id=request.args['project']))
+        if 'user' in request.args:
+            # booking data for XJoin (filters for assets based on user)
+            return json.dumps(sql.selectAllDict("SELECT asset_id FROM booking WHERE user_id=:user_id", user_id=request.args['user']))
 
 
 if __name__ == '__main__':

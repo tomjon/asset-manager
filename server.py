@@ -61,7 +61,7 @@ def user_endpoint():
     return json.dumps({})
 
 @application.route('/user/admin', methods=['GET', 'POST'])
-@application.role_required([ADMIN_ROLE])
+#@application.role_required([ADMIN_ROLE]) FIXME comes back when there is also a user enum
 def user_admin_endpoint():
     """ Endpoint for an admin to get a list of all users, or add a new user.
     """

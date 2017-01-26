@@ -4,7 +4,8 @@ import { Results } from './results';
 import { User, BOOK_ROLE } from './user';
 import { EnumPipe } from './enum.pipe';
 import { EnumService } from './enum.service';
-import { FieldMap, PROJECT } from './field-map';
+import { DataService } from './data.service';
+import { FieldMap } from './field-map';
 import { Frequency } from './frequency';
 
 @Component({
@@ -15,15 +16,17 @@ import { Frequency } from './frequency';
                    <thead>
                      <tr>
                        <td colspan="6">
-                         <select [hidden]="! showProjectSelect" class="project-select" [(ngModel)]="project.value" (ngModelChange)="doSearch()">
-                           <option value="*">-- all assets --</option>
-                           <option *ngFor="let o of options(project, false)" [value]="o.value">{{o.label}}</option>
-                         </select>
-                         <div *ngIf="showInput.type != 'xjoin'" class="booking-filters">
-                           <span *ngFor="let input of fieldMap.bookingFilters" title="{{input.description}}" class="glyphicon glyphicon-{{input.glyph}}" [ngClass]="{selected: filterSelected(input)}" (click)="onBookingFilterClick(input)"></span>
-                           {{bookingFilterDate()}}
+                         <div *ngIf="showBookingFilters" class="booking-filters">
+                           <div *ngFor="let input of fieldMap.bookingFilters">
+                             <label *ngIf="! input.glyph" [htmlFor]="input.field">{{input.label}}</label>
+                             <select *ngIf="! input.glyph" [name]="input.field" [(ngModel)]="input.value" (ngModelChange)="doSearch()">
+                               <option value="*">-- all assets --</option>
+                               <option *ngFor="let o of options(input, false)" [value]="o.value">{{o.label}}</option>
+                             </select>
+                             <span *ngIf="input.glyph" title="{{input.description}}" class="glyphicon glyphicon-{{input.glyph}}" [ngClass]="{selected: filterSelected(input)}" (click)="onBookingFilterClick(input)"></span>
+                             <input *ngIf="showInput.type == 'xjoin'" type="date" min="{{today}}" [(ngModel)]="showInput.value" (change)="doDateBookingFilter(showInput)" (blur)="doDateBookingFilter(showInput)" />
+                           </div>
                          </div>
-                         <input *ngIf="showInput.type == 'xjoin'" type="date" min="{{today}}" [(ngModel)]="showInput.value" (change)="doDateBookingFilter(showInput)" (blur)="doDateBookingFilter(showInput)" />
                        </td>
                        <td colspan="3" class="calibration header">Calibration</td>
                        <td colspan="2"></td>
@@ -89,9 +92,8 @@ import { Frequency } from './frequency';
            'input.freq { width: 80 }',
            'select.freq { width: 60 }',
            '.header, .hl { font-weight: bold }',
-           '.booking-filters { display: inline }',
-           '.booking-filters span, .project-select { margin-right: 10px }',
-           '.project-select { width: 200; background: white }'],
+           '.booking-filters div { display: inline; margin-right: 10px }',
+           '.booking-filters select { width: 200; background: white }'],
   pipes: [EnumPipe]
 })
 export class TableComponent {
@@ -118,19 +120,26 @@ export class TableComponent {
 
   @Output('event') eventEmitter = new EventEmitter<any>();
 
-  project: any;
+  userOptions: any[] = []; //FIXME temporary until user has an entry in enum table
 
-  get showProjectSelect(): boolean {
+  get showBookingFilters(): boolean {
     return this.user.role >= BOOK_ROLE;
   }
 
-  constructor(private fieldMap: FieldMap, private enumService: EnumService) {}
+  constructor(private fieldMap: FieldMap, private enumService: EnumService, private dataService: DataService) {}
 
   ngOnInit() {
+    //FIXME temporary until user has an entry in enum table
+    this.dataService.getUsers()
+                    .subscribe(users => {
+                      for (let user of users) {
+                        this.userOptions.push({value: user.user_id, label: user.label});
+                      }
+                    });
+
     this.search.facets = this.fieldMap.enumFields;
-    this.project = Object.assign({}, PROJECT);
-    this.project.value = '*';
-    this.search.filters.push(this.project);
+    this.search.filters.push(this.fieldMap.bookingFilters[0]); // project filter
+    this.search.filters.push(this.fieldMap.bookingFilters[1]); // user filter
     this.doSearch();
   }
 
@@ -159,6 +168,7 @@ export class TableComponent {
 
   doSearch(start:number=0) {
     this.search.start = start;
+    console.log(this.search);
     this.eventEmitter.emit({search: true});
   }
 
@@ -282,6 +292,10 @@ export class TableComponent {
   }
 
   options(input: any, useCounts:boolean = true): any[] {
+    if (input.field == 'user') {
+      //FIXME make a user enum, to use in tandem with user table (so label stays only in the enum_entry table, extra stuff in user table)
+      return this.userOptions;
+    }
     if (! useCounts) {
       return this.enumService.get(input.field).options(false);
     }

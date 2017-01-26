@@ -4,7 +4,7 @@ import { DataService } from './data.service';
 import { EnumPipe } from './enum.pipe';
 import { User, ADMIN_ROLE } from './user';
 import { LAST_OPTION } from './enum';
-import { PROJECT } from './field-map';
+import { BOOKING_PROJECT } from './field-map';
 
 declare var $;
 
@@ -110,7 +110,7 @@ export class BookingComponent {
   }
 
   // values from form inputs
-  project: any = PROJECT;
+  project: any = Object.assign({}, BOOKING_PROJECT);
   dueOutDate: string;
   dueInDate: string;
 
