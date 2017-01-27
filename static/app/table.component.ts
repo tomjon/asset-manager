@@ -24,7 +24,8 @@ import { Frequency } from './frequency';
                                <option *ngFor="let o of options(input, false)" [value]="o.value">{{o.label}}</option>
                              </select>
                              <span *ngIf="input.glyph" title="{{input.description}}" class="glyphicon glyphicon-{{input.glyph}}" [ngClass]="{selected: filterSelected(input)}" (click)="onBookingFilterClick(input)"></span>
-                             <input *ngIf="showInput.type == 'xjoin'" type="date" min="{{today}}" [(ngModel)]="showInput.value" (change)="doDateBookingFilter(showInput)" (blur)="doDateBookingFilter(showInput)" />
+                             <input *ngIf="showInput == input" type="date" min="{{today}}" [(ngModel)]="showInput.value" (change)="doDateBookingFilter(showInput)" (blur)="doDateBookingFilter(showInput)" />
+                             <span *ngIf="input.date && filterSelected(input) && showInput != input">{{input.value}}</span>
                            </div>
                          </div>
                        </td>
