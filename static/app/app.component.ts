@@ -21,6 +21,7 @@ import './rxjs-operators';
                    <h1><img src="/static/ofcom.gif"/> Baldock Asset Database and Scheduling System</h1>
                    <badass-login [user]="user" (login)="onLogin($event)"></badass-login>
                    <badass-asset [user]="user" [asset]="asset" (event)="onAssetEvent($event)"></badass-asset>
+                   <div *ngIf="error" class="alert alert-danger">{{error.message}}</div>
                    <badass-table [user]="user" [assets]="results" [search]="search" [selected]="asset" (event)="onTableEvent($event)"></badass-table>
                  </div>
                </div>
@@ -35,6 +36,7 @@ export class AppComponent {
   results: Results = new Results();
   search: Search = new Search();
   asset: any;
+  error: any;
 
   constructor(private dataService: DataService, private fieldMap: FieldMap) { }
 
@@ -53,25 +55,42 @@ export class AppComponent {
 
   doSearch() {
     this.dataService.search(this.search)
-                    .subscribe(results => this.results = results);
+                    .subscribe(results => {
+                      this.results = results;
+                      this.error = undefined;
+                    });
   }
 
   onAssetEvent(event: any) {
     if (event.save) {
       this.dataService.updateAsset(event.save)
-                      .subscribe(() => this.doSearch());
+                      .subscribe(() => {
+                        this.asset = event.save;
+                        this.doSearch();
+                      },
+                      error => {
+                        this.error = error;
+                      });
     }
     else if (event.delete) {
       this.dataService.deleteById(event.delete)
-                      .subscribe(() => this.doSearch());
+                      .subscribe(() => {
+                        this.asset = undefined;
+                        this.doSearch();
+                      },
+                      error => {
+                        this.error = error;
+                      });
     }
     else if (event.add) {
-      this.asset = Object.assign({}, event.add);
-      delete this.asset.id;
-      this.dataService.addAsset(this.asset)
+      this.dataService.addAsset(event.add)
                       .subscribe(id => {
+                        this.asset = Object.assign({}, event.add);
                         this.asset.id = id;
                         this.doSearch();
+                      },
+                      error => {
+                        this.error = error;
                       });
     }
     else {

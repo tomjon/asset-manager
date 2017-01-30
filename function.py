@@ -47,6 +47,17 @@ def map_non_zero(name, value, doc, enums):
     except ValueError:
         raise FunctionError("Could not convert to float: {0}".format(value))
 
+def map_strip_tags(name, value, doc, enums):
+    return [re.sub('<.+?>', '', value)]
+
+def map_validate_cal_dates(name, value, doc, enums):
+    if 'calibration_date' in doc and 'calibration_due' in doc:
+        if doc['calibration_date'][0] > doc['calibration_due'][0]:
+            del doc['calibration_date']
+    if 'calibration_date' in doc and doc['calibration_date'][0].startswith('9999'):
+        del doc['calibration_date']
+    return None    
+
 def _append_note(doc, note):
     if 'notes' not in doc:
         doc['notes'] = []
@@ -61,7 +72,6 @@ def map_parse_freqs(name, value, doc, enums):
 	return None
     r_start, r_stop, comment = _parse_freq_range(value)
     if r_start is None or len(comment) > 0:
-        doc['dirty'] = [True]
         _append_note(doc, u'Frequency range: {0}'.format(value))
         if r_start is None:
             return None
@@ -73,8 +83,7 @@ def map_parse_freqs(name, value, doc, enums):
         if r_stop != 0:
             doc['stop_freq'] = [str(r_stop)]
         if (start != 0 or stop != 0) and (start != r_start or stop != r_stop):
-            # we trust the frequency range over start/stop but mark dirty
-            doc['dirty'] = [True]
+            # we trust the frequency range over start/stop
             _append_note(doc, u'Frequency range: {0} (start {1} stop {2})'.format(value, start, stop))
             return None
     except ValueError:

@@ -21,7 +21,7 @@ class FieldMap(object):
     def map(self, field, value, doc, enums):
         name, fn_name = self._map[field]
         value = value.strip()
-        if name is None or value == '?' or value == '':
+        if field != '--' and (name is None or value == '?' or value == ''):
             return name, None
         if fn_name is not None:
             fn = getattr(function, 'map_{0}'.format(fn_name), None)
@@ -34,5 +34,7 @@ class FieldMap(object):
 
     def iter_fields(self, ignore=False):
         for field in self._fields:
+            if ignore and field == '--':
+                continue
             if not ignore or self._map[field][0] is not None:
                 yield field

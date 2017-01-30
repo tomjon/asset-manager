@@ -7,7 +7,7 @@ Manufacturer			manufacturer		enum
 Model				model
 Item
 Category			category		enum
-Description			description
+Description			description		strip_tags
 Acquired Date			acquired		date
 Notes				notes
 Comments			notes
@@ -15,6 +15,7 @@ Condition			condition		enum
 Last Calibration		calibration_date	date
 Calibration Date		calibration_due		date
 Calibration Type		calibration_type	enum
+--				--			validate_cal_dates
 Start Freq (MHz)		start_freq		non_zero
 Stop Freq (MHz)			stop_freq		non_zero
 Frequency Range			--			parse_freqs

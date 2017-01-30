@@ -24,18 +24,16 @@ def process_row(row, field_map, enums, core):
     """
     doc = {}
     for field in field_map.iter_fields():
-        if field in row:
-            # there are no multiple values
-            name, values = field_map.map(field, unicode(row[field], 'utf-8'), doc, enums)
-            if name is not None and values is not None:
-                doc[name] = values
+        # there are no multiple values
+        value = unicode(row[field] if field in row else '', 'utf-8')
+        name, values = field_map.map(field, value, doc, enums)
+        if name is not None and values is not None and len(values) > 0:
+            doc[name] = values
 
     # formulate SOLR update XML
     xml = ['<doc>']
     for field, values in doc.iteritems():
         for value in values:
-            if field == 'description':
-                value = re.sub('<.+?>', '', value)
             xml.append(u'<field name="{0}"><![CDATA[{1}]]></field>'.format(unicode(field), unicode(value)))
     xml.append('</doc>')
 

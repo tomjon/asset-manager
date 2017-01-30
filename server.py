@@ -221,7 +221,8 @@ def search_endpoint(path=None):
 
 
 @application.route('/asset', methods=['POST'])
-@application.route('/asset/<asset_id>', methods=['GET', 'PUT', 'DELETE'])
+@application.route('/asset/<asset_id>', methods=['PUT', 'DELETE'])
+@application.role_required([ADMIN_ROLE, BOOK_ROLE, VIEW_ROLE])
 def asset_endpoint(asset_id=None):
     """ Asset add, delete, update endpoint.
     """
@@ -242,7 +243,14 @@ def asset_endpoint(asset_id=None):
         return Response(r.text, mimetype=r.headers['content-type'])
     else:
         # add a new asset or update an existing asset
-        data = {'add': {'doc': request.get_json()}}
+        doc = request.get_json()
+
+        # validate doc - not much to do at present
+        if 'calibration_date' in doc and 'calibration_due' in doc:
+            if doc['calibration_date'] > doc['calibration_due']:
+                return "Invalid asset data", 400
+
+        data = {'add': {'doc': doc}}
         data['add']['doc']['id'] = asset_id
         if '_version_' in data['add']['doc']:
             del data['add']['doc']['_version_']
@@ -252,12 +260,24 @@ def asset_endpoint(asset_id=None):
     return Response(json.dumps({'id': asset_id}), mimetype='application/json')
 
 
+@application.route('/asset/<asset_id>')
+def asset_endpoint_GET(asset_id):
+    """ Asset endpoint to get an existing asset.
+    """
+    r = requests.get(SOLR_QUERY_URL, params={'q': 'id:{0}'.format(asset_id)})
+    assert_status_code(r, httplib.OK)
+    return Response(r.text, mimetype=r.headers['content-type'])
+
+
 @application.route('/file/<asset_id>', methods=['GET', 'POST'])
 @application.route('/file/<asset_id>/<attachment_id>', methods=['GET', 'DELETE'])
 @application.route('/file/<asset_id>/<attachment_id>/<filename>', methods=['GET'])
 def file_endpoint(asset_id=None, attachment_id=None, filename=None):
     """ Retrieve, upload or delete a file.
     """
+    if request.method != 'GET':
+        if not application.has_role([ADMIN_ROLE, BOOK_ROLE, VIEW_ROLE]):
+            return "Not authorized", 403
     with application.db.cursor() as sql:
         if request.method == 'GET' and attachment_id is not None:
             # get the attachment with given id, checking the asset_id

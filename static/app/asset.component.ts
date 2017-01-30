@@ -31,9 +31,9 @@ import { LAST_OPTION } from './enum';
                      <h3 class="col-lg-12">
                        Asset
                        <span class="glyphicon glyphicon-arrow-left" (click)="onReset()" [ngClass]="{disabled: form.pristine}"></span>
-                       <span class="glyphicon glyphicon-floppy-disk" (click)="onSave()" [ngClass]="{disabled: form.pristine || original == undefined}"></span>
-                       <span class="glyphicon glyphicon-trash" (click)="onDelete()" [ngClass]="{disabled: original == undefined}"></span>
-                       <span class="glyphicon glyphicon-plus-sign" (click)="onAdd()"></span>
+                       <span class="glyphicon glyphicon-floppy-disk" (click)="onSave()" [ngClass]="{disabled: ! hasRole() || form.pristine || original == undefined}"></span>
+                       <span class="glyphicon glyphicon-trash" (click)="onDelete()" [ngClass]="{disabled: ! hasRole() || original == undefined}"></span>
+                       <span class="glyphicon glyphicon-plus-sign" (click)="onAdd()" [ngClass]="{disabled: ! hasRole()}"></span>
                        <span class="glyphicon glyphicon-book" [ngClass]="{disabled: bookDisabled()}" data-toggle="modal" data-target="#bookingModal"></span>
                        <span class="glyphicon glyphicon-export bookOut" (click)="status.book(true)" [ngClass]="{disabled: status.out || ! status.overdue}"></span>
                        <span class="glyphicon glyphicon-import bookIn" (click)="status.book(false)" [ngClass]="{disabled: ! status.out, overdue: status.out && status.overdue}"></span>
@@ -168,6 +168,10 @@ export class AssetComponent {
     return this.enumService.get(field).options();
   }
 
+  hasRole() {
+    return this.user != undefined && this.user.role >= VIEW_ROLE;
+  }
+
   bookDisabled() {
     let hasRole: boolean = this.user != undefined && this.user.role >= BOOK_ROLE;
     return this.original == undefined || ! hasRole;
@@ -216,13 +220,10 @@ export class AssetComponent {
 
   onSave() {
     this.event.emit({save: this.asset});
-    Object.assign(this.original, this.asset);
-    pristine(this.form);
   }
 
   onDelete() {
     this.event.emit({delete: this.original.id});
-    this._asset = undefined;
   }
 
   onAdd() {
