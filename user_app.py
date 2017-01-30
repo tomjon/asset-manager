@@ -91,7 +91,7 @@ class UserApplication(SqlApplication):
                     self.request_times[current_user.name] = time()
                 if self.user_has_role(roles):
                     return login_required(func)(*args, **kwargs)
-                return self.login_manager.unauthorized() # pylint: disable=no-member
+                return "Need required role", 403
             return _decorated_view
         return _role_decorator
 

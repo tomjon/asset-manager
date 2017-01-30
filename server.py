@@ -240,7 +240,7 @@ def asset_endpoint(asset_id=None):
         # add a new asset or update an existing asset
         doc = request.get_json()
 
-        # validate doc - not much to do at present
+        # validate doc - not much to do at present, but FIXME should validate enum values are in range
         if 'calibration_date' in doc and 'calibration_due' in doc:
             if doc['calibration_date'] > doc['calibration_due']:
                 return "Invalid asset data", 400
