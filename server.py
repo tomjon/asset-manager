@@ -236,11 +236,6 @@ def asset_endpoint(asset_id=None):
     if request.method == 'DELETE':
         # delete an existing asset
         data = {'delete': asset_id}
-    elif request.method == 'GET':
-        # get an existing asset
-        r = requests.get(SOLR_QUERY_URL, params={'q': 'id:{0}'.format(asset_id)})
-        assert_status_code(r, httplib.OK)
-        return Response(r.text, mimetype=r.headers['content-type'])
     else:
         # add a new asset or update an existing asset
         doc = request.get_json()
@@ -254,6 +249,7 @@ def asset_endpoint(asset_id=None):
         data['add']['doc']['id'] = asset_id
         if '_version_' in data['add']['doc']:
             del data['add']['doc']['_version_']
+
     headers = {'Content-Type': 'application/json'}
     r = requests.post(SOLR_UPDATE_URL, headers=headers, params={'commit': 'true'}, data=json.dumps(data))
     assert_status_code(r, httplib.OK)
@@ -266,6 +262,10 @@ def asset_endpoint_GET(asset_id):
     """
     r = requests.get(SOLR_QUERY_URL, params={'q': 'id:{0}'.format(asset_id)})
     assert_status_code(r, httplib.OK)
+    rsp = json.loads(r.text)
+    docs = rsp['response']['docs']
+    if len(docs) == 0:
+        return "Asset not found", 404
     return Response(r.text, mimetype=r.headers['content-type'])
 
 
