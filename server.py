@@ -67,7 +67,10 @@ def user_admin_endpoint():
     """
     if request.method == 'GET':
         with application.db.cursor() as sql:
-            return json.dumps(sql.selectAllDict("SELECT user.user_id, username, label, role, COUNT(CASE WHEN due_in_date >= date('now') OR (out_date IS NOT NULL AND in_date IS NULL) THEN 1 ELSE NULL END) AS booked, COUNT(CASE WHEN out_date IS NOT NULL AND in_date IS NULL THEN 1 ELSE NULL END) AS out, COUNT(CASE WHEN out_date IS NOT NULL AND in_date IS NULL AND due_in_date < date('now') THEN 1 ELSE NULL END) AS overdue FROM user LEFT JOIN booking ON booking.user_id=user.user_id GROUP BY user.user_id"))
+            # returns number of assets 'booked' (i.e. the booking lasts until after today - except for early returns - or the asset is still out),
+            # number of assets 'out' (i.e. have been taken out and not returned),
+            # number of assets 'overdue' (i.e. should have been returned by today, but hasn't been) 
+            return json.dumps(sql.selectAllDict("SELECT user.user_id, username, label, role, COUNT(CASE WHEN IFNULL(in_date, due_in_date) >= date('now') OR (out_date IS NOT NULL AND in_date IS NULL) THEN 1 ELSE NULL END) AS booked, COUNT(CASE WHEN out_date IS NOT NULL AND in_date IS NULL THEN 1 ELSE NULL END) AS out, COUNT(CASE WHEN out_date IS NOT NULL AND in_date IS NULL AND due_in_date < date('now') THEN 1 ELSE NULL END) AS overdue FROM user LEFT JOIN booking ON booking.user_id=user.user_id GROUP BY user.user_id"))
     else:
         new_user = request.get_json()
         if not current_user.check_password(new_user['password']):
@@ -294,7 +297,10 @@ def booking_endpoint(asset_id=None, booking_id=None):
             data = request.get_json() # just to be sure it is valid JSON
             args = request.args.to_dict()
             try:
-                booking = sql.selectOneDict("SELECT booking_id, booking.user_id AS user_id, user.label AS user_label FROM booking, user WHERE asset_id=:asset_id AND booking.user_id=user.user_id AND :dueInDate >= due_out_date AND :dueOutDate <= due_in_date", args, asset_id=asset_id)
+                # the IFNULL ensures that in_date is used in preference to due_in_date, should it be non-null, so that a user can book
+                # an asset where it has been returned early, and can not book an asset that has been returned late (in both cases where
+                # the requested booking would have overlapped or not with the previous booking)
+                booking = sql.selectOneDict("SELECT booking_id, booking.user_id AS user_id, user.label AS user_label FROM booking, user WHERE asset_id=:asset_id AND booking.user_id=user.user_id AND :dueInDate >= due_out_date AND :dueOutDate <= IFNULL(in_date, due_in_date)", args, asset_id=asset_id)
                 return json.dumps(booking)
             except NoResult:
                 pass
@@ -312,7 +318,7 @@ def booking_endpoint(asset_id=None, booking_id=None):
 @application.route('/book/<asset_id>', methods=['PUT', 'DELETE'])
 @application.role_required([ADMIN_ROLE, BOOK_ROLE])
 def book_endpoint(asset_id):
-    """ Endpoint for booking out (PUT) or booking in (DELETE) an asset.
+    """ Endpoint for checking out (PUT) or checking in (DELETE) an asset.
     """
     with application.db.cursor() as sql:
         if request.method == 'PUT':

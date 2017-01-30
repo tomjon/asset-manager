@@ -59,7 +59,7 @@ if __name__ == '__main__':
     sql_conn = sqlite3.connect(sys.argv[3])
     sql = sql_conn.cursor()
 
-    sql.execute("SELECT enum_id FROM enum WHERE field != 'role' AND field != 'owner'")
+    sql.execute("SELECT enum_id FROM enum WHERE field != 'role' AND field != 'owner' AND field != 'project'")
     enum_ids = [str(x[0]) for x in sql.fetchall()]
     sql.execute("DELETE FROM enum_entry WHERE enum_id IN ({0})".format(','.join(enum_ids))) 
     sql.execute("DELETE FROM enum WHERE enum_id IN ({0})".format(','.join(enum_ids)))
