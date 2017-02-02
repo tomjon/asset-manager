@@ -176,7 +176,7 @@ def enums_endpoint(field=None):
     """ Endpoint for getting and updating enumerations. Contacts ('owner') are treated here specially.
     """
     with application.db.cursor() as sql:
-        if request.method == 'GET':
+        if request.method == 'GET': #FIXME this endpoint will go (moved to xjoin.py) when enums served from /search
             enums = {'owner': []}
             for enum_id, field in sql.selectAll("SELECT enum_id, field FROM enum"):
                 stmt = "SELECT value, label, `order` FROM enum_entry WHERE enum_id=:enum_id"
@@ -207,6 +207,11 @@ def search_endpoint(path=None):
               ('start', request.args.get('start', 0)),
               ('rows', request.args.get('rows', 10))]
 
+    # want to force the Enum SOLR component to reload if this is true, by adding
+    # the reload prefix ('__') to the field name in an enum(..) call. The call is
+    # either in a sort spec or will have to a dummy call.
+    reload_enums = request.args.get('reload_enums', False)
+
     sort = ['id asc']
     order = request.args.get('order', None)
     if order is not None:
@@ -216,11 +221,23 @@ def search_endpoint(path=None):
             order = order[1:]
         if len(order) < 2 or order[0] not in '><':
             return "Bad order", 400
-        field = 'enum({0})'.format(order[1:]) if enum else order[1:]
+        if enum:
+            if reload_enums:
+                reload_prefix = '__'
+                reload_enums = False
+            else:
+                reload_prefix = ''
+            field = 'enum({0}{1})'.format(reload_prefix, order[1:])
+        else:
+            field = order[1:]
         sort.append('{0} {1}'.format(field, 'asc' if order[0] == '>' else 'desc'))
         params.append(('fq', '{0}:*'.format(order[1:])))
     sort.reverse()
     params.append(('sort', ','.join(sort)))
+
+    # if reload_enums is still true, we need to add a dummy call to enum(__*)
+    if reload_enums:
+        params.append(('bq', 'enum(__foo)'))
 
     if path is not None:
         for field_value in path.split('/'):

@@ -1,7 +1,5 @@
 package uk.org.ofcom.ses.bams.solr;
 
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
@@ -16,7 +14,6 @@ import org.apache.lucene.queries.function.FunctionValues;
 import org.apache.lucene.queries.function.ValueSource;
 import org.apache.lucene.queries.function.docvalues.DoubleDocValues;
 import org.apache.lucene.util.BytesRef;
-import org.apache.lucene.util.IOUtils;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.search.FunctionQParser;
 import org.apache.solr.search.SyntaxError;
@@ -45,7 +42,7 @@ public class EnumValueSourceParser extends ValueSourceParser {
 	// default order if the enumeration is missing the doc field value
 	private long defaultNoOrder;
 	
-	// reload key, if this is encountered as argument, we reload (and nothing else)
+	// reload key, if this is encountered as argument, we reload enums
 	private String reloadPrefix;
 
 	private void loadEnums() {

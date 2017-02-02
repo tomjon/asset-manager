@@ -150,6 +150,8 @@ export class AssetComponent {
     }
   }
 
+  @Input('search') search;
+
   constructor(private fieldMap: FieldMap, private enumService: EnumService, private dataService: DataService) {}
 
   setStatus(status: any) {
@@ -244,6 +246,7 @@ export class AssetComponent {
                       .subscribe(enumValue => {
                         this.asset[input.field] = enumValue.value;
                         delete this.addNew.field;
+                        this.search.reload_enums = true;
                       });
     } else {
       this.asset[input.field] = undefined;

@@ -48,6 +48,10 @@ export class DataService {
     if (search.facets.length > 0) {
       params.set('facets', search.facets.join(','));
     }
+    if (search.reload_enums) {
+      params.set('reload_enums', 'true');
+      search.reload_enums = false;
+    }
 
     let input = search.order.asc || search.order.desc;
     if (input) {

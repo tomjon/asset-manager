@@ -1413,7 +1413,7 @@
   <!-- example of registering a custom function parser  -->
   
   <valueSourceParser name="enum" class="uk.org.ofcom.ses.bams.solr.EnumValueSourceParser">
-    <str name="url">http://localhost:8080/enum</str>
+    <str name="url">http://localhost:8081/enum</str>
     <str name="default_no_value">-2</str>
     <str name="default_no_order">-1</str>
     <str name="reload_prefix">__</str>

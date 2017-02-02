@@ -15,6 +15,17 @@ from sql_app import SqlApplication
 
 application = SqlApplication(__name__) # pylint: disable=invalid-name
 
+@application.route('/enum')
+def enums_endpoint():
+    """ Endpoint for getting enumerations.
+    """
+    with application.db.cursor() as sql:
+        enums = {'owner': []}
+        for enum_id, field in sql.selectAll("SELECT enum_id, field FROM enum"):
+            stmt = "SELECT value, label, `order` FROM enum_entry WHERE enum_id=:enum_id"
+            enums[field] = sql.selectAllDict(stmt, enum_id=enum_id)
+        return json.dumps(enums)
+
 @application.route('/booking')
 def booking_endpoint():
     """ Booking XJoin endpoint.
