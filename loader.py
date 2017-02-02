@@ -15,9 +15,13 @@ from field_map import FieldMap
 SOLR_URL = 'http://localhost:8983/solr/{0}/update'
 SOLR_HEADERS = {'content-type': 'application/xml'}
 
-def utf8_encoder(unicode_csv_data):
+ENCODING = 'Windows-1252' #'utf-8'
+
+#FIXME: need to create an enumeration for each 'enum' field (as marked in the field map) even if it remains empty
+
+def file_encoder(unicode_csv_data):
     for line in unicode_csv_data:
-        yield line.encode('utf-8')
+        yield line.encode(ENCODING)
 
 def process_row(row, field_map, enums, core):
     """ Process a row and POST to SOLR.
@@ -25,7 +29,7 @@ def process_row(row, field_map, enums, core):
     doc = {}
     for field in field_map.iter_fields():
         # there are no multiple values
-        value = unicode(row[field] if field in row else '', 'utf-8')
+        value = unicode(row[field] if field in row else '', ENCODING)
         name, values = field_map.map(field, value, doc, enums)
         if name is not None and values is not None and len(values) > 0:
             doc[name] = values
@@ -65,9 +69,9 @@ if __name__ == '__main__':
     enums = {}
     count = 0
     try:
-        with codecs.open(sys.argv[2], encoding='utf-8') as f:
+        with codecs.open(sys.argv[2], encoding=ENCODING) as f:
             f.seek(2)
-            reader = csv.DictReader(utf8_encoder(f))
+            reader = csv.DictReader(file_encoder(f))
             for row in reader:
                 process_row(row, field_map, enums, sys.argv[4])
                 count += 1

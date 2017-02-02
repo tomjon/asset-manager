@@ -1,0 +1,41 @@
+ID				id
+ID Number			id_number
+Location			location		enum
+Rack				rack			enum
+Shelf				shelf			enum
+Manufacturer			manufacturer		enum
+Model				model
+Item
+Category			category		enum
+Description			description		strip_tags
+Acquired Date			acquired		date
+Notes				notes
+Comments			notes
+Condition			condition		enum
+Last Calibration		calibration_date	date
+Calibration Date		calibration_due		date
+Calibration Type		calibration_type	enum
+--				--			validate_cal_dates
+Start Freq (MHz)		start_freq		non_zero
+Stop Freq (MHz)			stop_freq		non_zero
+Frequency Range			--			parse_freqs
+Comments History
+Serial Number			serial
+Owner				owner
+Attachments
+E-mail Address			email
+Bar Code ID			barcode
+Current Value			value			non_zero
+Purchase Price			price			non_zero
+Fixed Asset Identifcation	far
+
+# booking fields
+Checked Out Date
+Checked Out To
+Due Date
+Contact Name
+Checked Out Location
+Assets.Project
+Status
+Action
+

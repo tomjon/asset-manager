@@ -5,37 +5,47 @@ Rack				rack			enum
 Shelf				shelf			enum
 Manufacturer			manufacturer		enum
 Model				model
-Item
 Category			category		enum
 Description			description		strip_tags
-Acquired Date			acquired		date
+Acquired Date			acquired_date		date2
 Notes				notes
 Comments			notes
 Condition			condition		enum
-Last Calibration		calibration_date	date
-Calibration Date		calibration_due		date
+Last Calibration		calibration_date	date2
+Calibration Date		calibration_due		date2
 Calibration Type		calibration_type	enum
 --				--			validate_cal_dates
-Start Freq (MHz)		start_freq		non_zero
-Stop Freq (MHz)			stop_freq		non_zero
-Frequency Range			--			parse_freqs
-Comments History
+
+#Start Freq (MHz)		start_freq		non_zero
+#Stop Freq (MHz)		stop_freq		non_zero
+Start Freq (MHz)
+Stop Freq (MHz)
+Frequency Range
+
 Serial Number			serial
 Owner				owner
 Attachments
-E-mail Address			email
+E-mail Address			email			enum
 Bar Code ID			barcode
 Current Value			value			non_zero
 Purchase Price			price			non_zero
-Fixed Asset Identifcation	far
+Fixed Asset Identifcation	far_id
 
-# booking fields
-Checked Out Date
-Checked Out To
-Due Date
-Contact Name
-Checked Out Location
-Assets.Project
-Status
-Action
+#FIXME is asset user the same enum as user? or owner? or something else?
+Asset User			asset_user		enum
+Cost Centre			cost_centre		enum
+Team				team			enum
+Manual Audit Date		audit_date		date2
+SAP ID				sap_id
+#FIXME should this (also?) be a reference into the user enum?
+Asset Manager			manager			enum
+Pat test due			pat_due_date		date2
+IP address			url
+
+# just store these two - they might prove of use later
+Site				site
+RAMS Location			rams_location
+
+Calibration Due Date
+
 

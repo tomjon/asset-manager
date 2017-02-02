@@ -1,6 +1,5 @@
-import sys
 import re
-from decimal import Decimal
+import datetime
 
 UNITS = ['hz', 'khz', 'mhz', 'ghz']
 FLOAT_EXPR = r'\d*\.?\d+'
@@ -13,7 +12,15 @@ class FunctionError(Exception):
 def map_date(name, value, doc, enums):
     """ All we need is to add the final Z to get a SOLR date formatted string.
     """
-    return ['{0}Z'.format(value)] if value is not None and len(value) > 0 else None
+    return ['{0}Z'.format(value)]
+
+def map_date2(name, value, doc, enums):
+    """ Convert from DD/MM/YYYY to SOLR date formatted string.
+    """
+    if value.lower() in ['not cal', 'none', '?', '??']:
+        return None
+    dt = datetime.datetime.strptime(value, '%d/%m/%Y')
+    return ['{0}Z'.format(dt.isoformat())]
 
 def map_enum(name, value, doc, enums):
     """ We want to store this field as an integer, adding the string value to an
@@ -46,6 +53,14 @@ def map_non_zero(name, value, doc, enums):
         return [value] if value != 0 else None
     except ValueError:
         raise FunctionError("Could not convert to float: {0}".format(value))
+
+def map_freq(name, value, doc, enums):
+    value = (value or '').lower().replace('mhz', '')
+    try:
+        value = float(value)
+        return [value] if value != 0 else None
+    except ValueError:
+        raise FunctionError("Could not convert to float: {0}".format(value))    
 
 def map_strip_tags(name, value, doc, enums):
     return [re.sub('<.+?>', '', value)]
