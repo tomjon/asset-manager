@@ -93,20 +93,21 @@ export class DataService {
     return this.http.get(`/search${path}`, {search: params})
                     .map(res => {
                       let json = res.json();
-                      let start = json.response.start;
-                      let total = json.response.numFound;
-                      let assets = this._datetime2dateArray(json.response.docs);
+                      let solr = json['solr'];
+                      let start = solr.response.start;
+                      let total = solr.response.numFound;
+                      let assets = this._datetime2dateArray(solr.response.docs);
                       let facets = {};
-                      if (json.facet_counts) {
-                        for (let field in json.facet_counts.facet_fields) {
-                          let values = json.facet_counts.facet_fields[field];
+                      if (solr.facet_counts) {
+                        for (let field in solr.facet_counts.facet_fields) {
+                          let values = solr.facet_counts.facet_fields[field];
                           facets[field] = {};
                           for (let i: number = 0; i < values.length; i += 2) {
                             facets[field][values[i]] = values[i + 1];
                           }
                         }
                       }
-                      return new Results(start, total, assets, facets);
+                      return new Results(start, total, assets, facets, json['enums']);
                     })
                     .catch(this.handleError);
   }

@@ -20,7 +20,7 @@ def enums_endpoint():
     """ Endpoint for getting enumerations.
     """
     with application.db.cursor() as sql:
-        enums = {'owner': []}
+        enums = {}
         for enum_id, field in sql.selectAll("SELECT enum_id, field FROM enum"):
             stmt = "SELECT value, label, `order` FROM enum_entry WHERE enum_id=:enum_id"
             enums[field] = sql.selectAllDict(stmt, enum_id=enum_id)

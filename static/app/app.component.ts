@@ -13,6 +13,8 @@ import { User } from './user';
 // Add the RxJS Observable operators we need in this app
 import './rxjs-operators';
 
+//FIXME instance of Search to live in DataService? tidies up some dependencies
+
 @Component({
   selector: 'badass-app',
   template: `<div class="container-fluid">
@@ -38,7 +40,7 @@ export class AppComponent {
   asset: any;
   error: any;
 
-  constructor(private dataService: DataService, private fieldMap: FieldMap) { }
+  constructor(private dataService: DataService, private enumService: EnumService, private fieldMap: FieldMap) { }
 
   ngOnInit() {
     this.dataService.getCurrentUser()
@@ -57,6 +59,7 @@ export class AppComponent {
     this.dataService.search(this.search)
                     .subscribe(results => {
                       this.results = results;
+                      this.enumService.setAll(results.enums);
                       this.error = undefined;
                     });
   }

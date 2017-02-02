@@ -170,32 +170,24 @@ def favicon_endpoint():
     path = os.path.join(application.root_path, 'static', 'favicon.ico')
     return send_file(path, mimetype='image/vnd.microsoft.icon')
 
-@application.route('/enum')
 @application.route('/enum/<field>', methods=['POST'])
 def enums_endpoint(field=None):
-    """ Endpoint for getting and updating enumerations. Contacts ('owner') are treated here specially.
+    """ Endpoint for getting and updating enumerations.
     """
     with application.db.cursor() as sql:
-        if request.method == 'GET': #FIXME this endpoint will go (moved to xjoin.py) when enums served from /search
-            enums = {'owner': []}
-            for enum_id, field in sql.selectAll("SELECT enum_id, field FROM enum"):
-                stmt = "SELECT value, label, `order` FROM enum_entry WHERE enum_id=:enum_id"
-                enums[field] = sql.selectAllDict(stmt, enum_id=enum_id)
-            return json.dumps(enums)
-        else:
-            try:
-                enum_id = sql.selectSingle("SELECT enum_id FROM enum WHERE field=:field", field=field)
-            except NoResult:
-                return "No such enum", 400
-            label = request.args.get('label', 'No label')
-            try:
-                entry = sql.selectOneDict("SELECT value, label, `order` FROM enum_entry WHERE enum_id=:enum_id AND label=:label", enum_id=enum_id, label=label)
-            except NoResult:
-                next = max(sql.selectOne("SELECT MAX(value), MAX(`order`) FROM enum_entry WHERE enum_id=:enum_id", enum_id=enum_id))
-                next = next + 1 if next is not None else 0
-                entry = {'enum_id': enum_id, 'order': next, 'value': next, 'label': label}
-                sql.insert("INSERT INTO enum_entry VALUES (NULL, :enum_id, :order, :value, :label)", entry)
-            return json.dumps(entry)
+        try:
+            enum_id = sql.selectSingle("SELECT enum_id FROM enum WHERE field=:field", field=field)
+        except NoResult:
+            return "No such enum", 400
+        label = request.args.get('label', 'No label')
+        try:
+            entry = sql.selectOneDict("SELECT value, label, `order` FROM enum_entry WHERE enum_id=:enum_id AND label=:label", enum_id=enum_id, label=label)
+        except NoResult:
+            next = max(sql.selectOne("SELECT MAX(value), MAX(`order`) FROM enum_entry WHERE enum_id=:enum_id", enum_id=enum_id))
+            next = next + 1 if next is not None else 0
+            entry = {'enum_id': enum_id, 'order': next, 'value': next, 'label': label}
+            sql.insert("INSERT INTO enum_entry VALUES (NULL, :enum_id, :order, :value, :label)", entry)
+        return json.dumps(entry)
         
 
 @application.route('/search')
@@ -276,9 +268,18 @@ def search_endpoint(path=None):
         for field in request.args.get('facets', '').split(','):
             params.append(('facet.field', field))
 
+    # do the SOLR request
     r = requests.get(SOLR_QUERY_URL, params=params)
     assert_status_code(r, httplib.OK)
-    return Response(r.text, mimetype=r.headers['content-type'])
+
+    # get enum definitions
+    with application.db.cursor() as sql:
+        enums = {}
+        for enum_id, field in sql.selectAll("SELECT enum_id, field FROM enum"):
+            stmt = "SELECT value, label, `order` FROM enum_entry WHERE enum_id=:enum_id"
+            enums[field] = sql.selectAllDict(stmt, enum_id=enum_id)
+
+    return Response('{{"solr": {0}, "enums": {1}}}'.format(r.text, json.dumps(enums)), mimetype='application/json')
 
 
 @application.route('/asset', methods=['POST'])

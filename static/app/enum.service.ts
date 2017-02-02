@@ -7,15 +7,15 @@ import { Enum } from './enum';
 export class EnumService {
   private enums: any = {};
 
-  constructor (private dataService: DataService) {
-    this.dataService.getEnums().subscribe(enums => {
-      for (let field in enums) {
-        if (! (field in this.enums)) {
-          this.enums[field] = new Enum(field);
-        }
-        this.enums[field].update(enums[field]);
+  constructor (private dataService: DataService) {}
+
+  setAll(enums: any[]) {
+    for (let field in enums) {
+      if (! (field in this.enums)) {
+        this.enums[field] = new Enum(field);
       }
-    });
+      this.enums[field].update(enums[field]);
+    }
   }
 
   /**
