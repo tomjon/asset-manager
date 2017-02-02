@@ -1,6 +1,6 @@
+#!/usr/bin/python
 """ Flask server for the Server API.
 """
-import json
 import sys
 import os
 import functools
@@ -21,14 +21,13 @@ ANONYMOUS, VIEW_ROLE, BOOK_ROLE, ADMIN_ROLE = range(4)
 class User(object):
     """ User session class for flask login.
     """
-    def __init__(self, user_id, role, username, label, password_salt, password_hash, data_json):
+    def __init__(self, user_id, role, username, label, password_salt, password_hash):
         self.user_id = user_id
         self.role = role
         self.username = username
         self.label = label
         self.password_salt = str(password_salt)
         self.password_hash = str(password_hash)
-        self.data = json.loads(data_json)
         self.is_authenticated = True
         self.is_active = True
         self.is_anonymous = False
@@ -52,7 +51,7 @@ class User(object):
     def to_dict(self):
         """ Return fields in a dictionary, omitting password fields.
         """
-        return {'user_id': self.user_id, 'role': self.role, 'username': self.username, 'label': self.label, 'data': json.dumps(self.data)}
+        return {'user_id': self.user_id, 'role': self.role, 'username': self.username, 'label': self.label}
 
 class UserApplication(SqlApplication):
     def __init__(self, name):
@@ -71,7 +70,7 @@ class UserApplication(SqlApplication):
             return None # log out this user, who was logged in before server restart
         try:
             with self.db.cursor() as sql:
-                values = sql.selectOne("SELECT role, username, label, password_salt, password_hash, json FROM user WHERE user_id=:user_id", user_id=user_id)
+                values = sql.selectOne("SELECT role, username, label, password_salt, password_hash FROM user, enum, enum_entry WHERE user_id=:user_id AND field='user' AND enum.enum_id=enum_entry.enum_id AND value=user_id", user_id=user_id)
         except NoResult:
             return None
         return User(user_id, *values)
@@ -115,7 +114,7 @@ class UserApplication(SqlApplication):
         """
         try:
             with self.db.cursor() as sql:
-                values = sql.selectOne("SELECT user_id, role, username, label, password_salt, password_hash, json FROM user WHERE username=:username", username=username)
+                values = sql.selectOne("SELECT user_id, role, username, label, password_salt, password_hash FROM user, enum, enum_entry WHERE username=:username AND field='user' AND enum.enum_id=enum_entry.enum_id AND value=user_id", username=username)
                 user = User(*values)
                 if user.check_password(password):
                     login_user(user)
@@ -136,17 +135,17 @@ class UserApplication(SqlApplication):
 
     def update_user(self, user_dict):
         """ Update details for the logged in user from the given user dictionary.
-            (Can only change label and json using this method.)
         """
         current_user.label = user_dict['label']
-        current_user.data = user_dict['data']
         new_password = user_dict.get('new_password', '')
         with self.db.cursor() as sql:
             if len(new_password) > 0:
                 current_user.set_password(new_password)
-                sql.update("UPDATE user SET label=:label, password_salt=:salt, password_hash=:hash, json=:data WHERE user_id=:user_id", current_user.to_dict(), salt=buffer(current_user.password_salt), hash=buffer(current_user.password_hash))
+                user_dict = current_user.to_dict()
+                sql.update("UPDATE user SET password_salt=:salt, password_hash=:hash WHERE user_id=:user_id", user_dict, salt=buffer(current_user.password_salt), hash=buffer(current_user.password_hash))
             else:
-                sql.update("UPDATE user SET label=:label, json=:data WHERE user_id=:user_id", current_user.to_dict())
+                user_dict = current_user.to_dict()
+            sql.update("UPDATE enum_entry SET label=:label WHERE enum_id=(SELECT enum_id FROM enum WHERE field='user') AND value=:user_id", user_dict)
 
     def add_user(self, user_dict):
         """ Add a new user with values from the given user dictionary. Returns whether a new user
@@ -159,18 +158,23 @@ class UserApplication(SqlApplication):
                 return False
             except NoResult:
                 pass
-            user = User(None, user_dict['role'], user_dict['username'], user_dict['label'], None, None, json.dumps(user_dict['data'])) #FIXME JSON back and forth...
+            user = User(None, user_dict['role'], user_dict['username'], user_dict['label'], None, None)
             user.set_password(user_dict['new_password'])
-            sql.insert("INSERT INTO user VALUES (NULL, :role, :username, :label, :salt, :hash, :data)", user.to_dict(), salt=buffer(user.password_salt), hash=buffer(user.password_hash))
+            user_dict = user.to_dict()
+            user_id = sql.insert("INSERT INTO user VALUES (NULL, :role, :username, :salt, :hash)", user_dict, salt=buffer(user.password_salt), hash=buffer(user.password_hash))
+            sql.insert("INSERT INTO enum_entry VALUES (NULL, (SELECT enum_id FROM enum WHERE field='user'), :value, :value, :label)", user_dict, value=user_id)
         return True
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 3:
-        print >>sys.stderr, "Usage: python {0} <username> <password>".format(sys.argv[0])
+    if len(sys.argv) != 4:
+        print >>sys.stderr, "Usage: {0} <username> <password> <label>".format(sys.argv[0])
         sys.exit(1)
-    user = User(None, ADMIN_ROLE, unicode(sys.argv[1]), "New Admin User", None, None, '{}')
+    user = User(None, ADMIN_ROLE, unicode(sys.argv[1]), unicode(sys.argv[3]), None, None)
+    #FIXME clearly some consolidation to do here- move all the SQL into the User class? or a new class / set of functions
     user.set_password(unicode(sys.argv[2]))
     with SqlDatabase(DATABASE).cursor() as sql:
-        sql.insert("INSERT INTO user VALUES (NULL, :role, :username, :label, :salt, :hash, :data)", user.to_dict(), salt=buffer(user.password_salt), hash=buffer(user.password_hash))
+        user_dict = user.to_dict()
+        user_id = sql.insert("INSERT INTO user VALUES (NULL, :role, :username, :salt, :hash)", user_dict, salt=buffer(user.password_salt), hash=buffer(user.password_hash))
+        sql.insert("INSERT INTO enum_entry VALUES (NULL, (SELECT enum_id FROM enum WHERE field='user'), :value, :value, :label)", user_dict, value=user_id)
 

@@ -121,8 +121,6 @@ export class TableComponent {
 
   @Output('event') eventEmitter = new EventEmitter<any>();
 
-  userOptions: any[] = []; //FIXME temporary until user has an entry in enum table
-
   get showBookingFilters(): boolean {
     return this.user.role >= BOOK_ROLE;
   }
@@ -130,14 +128,6 @@ export class TableComponent {
   constructor(private fieldMap: FieldMap, private enumService: EnumService, private dataService: DataService) {}
 
   ngOnInit() {
-    //FIXME temporary until user has an entry in enum table
-    this.dataService.getUsers()
-                    .subscribe(users => {
-                      for (let user of users) {
-                        this.userOptions.push({value: user.user_id, label: user.label});
-                      }
-                    });
-
     this.search.facets = this.fieldMap.enumFields;
     this.search.filters.push(this.fieldMap.bookingFilters[0]); // project filter
     this.search.filters.push(this.fieldMap.bookingFilters[1]); // user filter
@@ -292,10 +282,6 @@ export class TableComponent {
   }
 
   options(input: any, useCounts:boolean = true): any[] {
-    if (input.field == 'user') {
-      //FIXME make a user enum, to use in tandem with user table (so label stays only in the enum_entry table, extra stuff in user table)
-      return this.userOptions;
-    }
     if (! useCounts) {
       return this.enumService.get(input.field).options(false);
     }

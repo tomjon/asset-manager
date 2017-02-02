@@ -61,7 +61,7 @@ def user_endpoint():
     return json.dumps({})
 
 @application.route('/user/admin', methods=['GET', 'POST'])
-#@application.role_required([ADMIN_ROLE]) FIXME comes back when there is also a user enum
+@application.role_required([ADMIN_ROLE])
 def user_admin_endpoint():
     """ Endpoint for an admin to get a list of all users, or add a new user.
     """
@@ -70,7 +70,7 @@ def user_admin_endpoint():
             # returns number of assets 'booked' (i.e. the booking lasts until after today - except for early returns - or the asset is still out),
             # number of assets 'out' (i.e. have been taken out and not returned),
             # number of assets 'overdue' (i.e. should have been returned by today, but hasn't been) 
-            return json.dumps(sql.selectAllDict("SELECT user.user_id, username, label, role, COUNT(CASE WHEN IFNULL(in_date, due_in_date) >= date('now') OR (out_date IS NOT NULL AND in_date IS NULL) THEN 1 ELSE NULL END) AS booked, COUNT(CASE WHEN out_date IS NOT NULL AND in_date IS NULL THEN 1 ELSE NULL END) AS out, COUNT(CASE WHEN out_date IS NOT NULL AND in_date IS NULL AND due_in_date < date('now') THEN 1 ELSE NULL END) AS overdue FROM user LEFT JOIN booking ON booking.user_id=user.user_id GROUP BY user.user_id"))
+            return json.dumps(sql.selectAllDict("SELECT user.user_id, username, label, role, COUNT(CASE WHEN IFNULL(in_date, due_in_date) >= date('now') OR (out_date IS NOT NULL AND in_date IS NULL) THEN 1 ELSE NULL END) AS booked, COUNT(CASE WHEN out_date IS NOT NULL AND in_date IS NULL THEN 1 ELSE NULL END) AS out, COUNT(CASE WHEN out_date IS NOT NULL AND in_date IS NULL AND due_in_date < date('now') THEN 1 ELSE NULL END) AS overdue FROM enum, enum_entry, user LEFT JOIN booking ON booking.user_id=user.user_id WHERE field='user' AND enum.enum_id=enum_entry.enum_id AND enum_entry.value=user.user_id GROUP BY user.user_id"))
     else:
         new_user = request.get_json()
         if not current_user.check_password(new_user['password']):
@@ -115,14 +115,6 @@ def favicon_endpoint():
     path = os.path.join(application.root_path, 'static', 'favicon.ico')
     return send_file(path, mimetype='image/vnd.microsoft.icon')
 
-def contact_key_fn(contact):
-    contact_id, data = contact
-    return data.get('Last Name', data.get('E-mail Address', None))
-
-def contact_label(data):
-    label = "{0} {1}".format(data.get('First Name', ''), data.get('Last Name', '')).strip()
-    return label if len(label) > 0 else data.get('E-mail Address', '<blank>')
-
 @application.route('/enum')
 @application.route('/enum/<field>', methods=['POST'])
 def enums_endpoint(field=None):
@@ -134,9 +126,6 @@ def enums_endpoint(field=None):
             for enum_id, field in sql.selectAll("SELECT enum_id, field FROM enum"):
                 stmt = "SELECT value, label, `order` FROM enum_entry WHERE enum_id=:enum_id"
                 enums[field] = sql.selectAllDict(stmt, enum_id=enum_id)
-            contacts = [(contact_id, json.loads(data)) for contact_id, data in sql.selectAll("SELECT contact_id, json FROM contact")]
-            for (contact_id, data), order in zip(sorted(contacts, key=contact_key_fn), xrange(len(contacts))):
-                enums['owner'].append({'value': contact_id, 'order': order, 'label': contact_label(data)})
             return json.dumps(enums)
         else:
             try:
@@ -309,22 +298,21 @@ def booking_endpoint(asset_id=None, booking_id=None):
     """
     with application.db.cursor() as sql:
         if request.method == 'GET':
-            return json.dumps(sql.selectAllDict("SELECT booking_id, booking.user_id, user.label AS user_label, project, enum_entry.label AS project_label, due_out_date, due_in_date, out_date, in_date FROM booking, user, enum, enum_entry WHERE asset_id=:asset_id AND (date('now') <= due_in_date OR (out_date IS NOT NULL AND in_date IS NULL)) AND booking.user_id=user.user_id AND enum.field='project' AND enum.enum_id=enum_entry.enum_id AND enum_entry.value=booking.project ORDER BY due_out_date", asset_id=asset_id))
+            return json.dumps(sql.selectAllDict("SELECT booking_id, booking.user_id, user_enum_entry.label AS user_label, project, project_enum_entry.label AS project_label, due_out_date, due_in_date, out_date, in_date FROM booking, user, enum AS user_enum, enum_entry AS user_enum_entry, enum AS project_enum, enum_entry AS project_enum_entry WHERE asset_id=:asset_id AND (date('now') <= due_in_date OR (out_date IS NOT NULL AND in_date IS NULL)) AND booking.user_id=user.user_id AND user_enum.field='user' AND user_enum.enum_id=user_enum_entry.enum_id AND user_enum_entry.value=user.user_id AND project_enum.field='project' AND project_enum.enum_id=project_enum_entry.enum_id AND project_enum_entry.value=booking.project ORDER BY due_out_date", asset_id=asset_id))
         elif request.method == 'POST':
             if not application.user_has_role([ADMIN_ROLE, BOOK_ROLE]):
                 return "Role required", 403
             # add a booking for the current user - returns a clashing booking if one exists (and doesn't add the submitted booking)
-            data = request.get_json() # just to be sure it is valid JSON
             args = request.args.to_dict()
             try:
                 # the IFNULL ensures that in_date is used in preference to due_in_date, should it be non-null, so that a user can book
                 # an asset where it has been returned early, and can not book an asset that has been returned late (in both cases where
                 # the requested booking would have overlapped or not with the previous booking)
-                booking = sql.selectOneDict("SELECT booking_id, booking.user_id AS user_id, user.label AS user_label FROM booking, user WHERE asset_id=:asset_id AND booking.user_id=user.user_id AND :dueInDate >= due_out_date AND :dueOutDate <= IFNULL(in_date, due_in_date)", args, asset_id=asset_id)
+                booking = sql.selectOneDict("SELECT booking_id, booking.user_id AS user_id, enum_entry.label AS user_label FROM booking, user, enum, enum_entry WHERE asset_id=:asset_id AND booking.user_id=user.user_id AND :dueInDate >= due_out_date AND :dueOutDate <= IFNULL(in_date, due_in_date AND field='user' AND enum_entry.enum_id=enum.enum_id AND enum_entry.value=user.user_id)", args, asset_id=asset_id)
                 return json.dumps(booking)
             except NoResult:
                 pass
-            sql.insert("INSERT INTO booking VALUES (NULL, :asset_id, :user_id, datetime('now'), :dueOutDate, :dueInDate, NULL, NULL, :project, :data)", args, asset_id=asset_id, user_id=current_user.user_id, data=json.dumps(data))
+            sql.insert("INSERT INTO booking VALUES (NULL, :asset_id, :user_id, datetime('now'), :dueOutDate, :dueInDate, NULL, NULL, :project)", args, asset_id=asset_id, user_id=current_user.user_id)
             return json.dumps({})
         elif request.method == 'DELETE':
             if not application.user_has_role([ADMIN_ROLE, BOOK_ROLE]):

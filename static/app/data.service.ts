@@ -179,7 +179,7 @@ export class DataService {
                     .catch(this.handleError);
   }
 
-  getUsers(): Observable<User[]> {
+  getBookingSummary(): Observable<User[]> {
     return this.http.get(`/user/admin`)
                .map(res => res.json())
                .catch(this.handleError);
@@ -231,14 +231,13 @@ export class DataService {
                     .catch(this.handleError);
   }
 
-  addBooking(asset: any, project: any, dueOutDate: string, dueInDate: string, data: any): Observable<any> {
+  addBooking(asset: any, project: any, dueOutDate: string, dueInDate: string): Observable<any> {
     let headers: Headers = new Headers({'Content-Type': 'application/json'});
     let params: URLSearchParams = new URLSearchParams();
     params.set('project', project);
     params.set('dueOutDate', dueOutDate);
     params.set('dueInDate', dueInDate);
-    let body = JSON.stringify(data);
-    return this.http.post(`/booking/${asset.id}`, body, {search:params, headers: headers})
+    return this.http.post(`/booking/${asset.id}`, "", {search:params, headers: headers})
                     .map(res => res.json())
                     .catch(this.handleError);
   }

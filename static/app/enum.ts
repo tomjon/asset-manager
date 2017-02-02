@@ -27,12 +27,20 @@ export class Enum {
   }
 
   public options(add_extra: boolean=true): any[] {
-    let options = [];
+    let ordered = [];
     for (let e of this.values) {
-      options[e.order] = {value: e.value, label: e.label};
+      ordered[e.order] = {value: e.value, label: e.label};
+    }
+    let options = [];
+    if (add_extra) {
+      options.push(FIRST_OPTION);
+    }
+    for (let o of ordered) {
+      if (o) {
+        options.push(o);
+      }
     }
     if (add_extra) {
-      options.splice(0, 0, FIRST_OPTION);
       options.push(LAST_OPTION);
     }
     return options;

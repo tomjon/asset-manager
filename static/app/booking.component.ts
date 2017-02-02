@@ -190,7 +190,7 @@ export class BookingComponent {
   }
 
   onSubmit() {
-    this.dataService.addBooking(this.asset, this.project.value, this.dueOutDate, this.dueInDate, {})
+    this.dataService.addBooking(this.asset, this.project.value, this.dueOutDate, this.dueInDate)
                     .subscribe(booking => {
                       this.clash = booking.booking_id ? booking : undefined;
                       if (! this.clash) {

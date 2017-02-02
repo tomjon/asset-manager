@@ -276,7 +276,7 @@ export class LoginComponent {
 
   loadUsers() {
     if (this.user.role == ADMIN_ROLE) {
-      this.dataService.getUsers()
+      this.dataService.getBookingSummary()
                       .subscribe(users => this.users = users);
     } else {
       this.users = [];
