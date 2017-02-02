@@ -21,6 +21,61 @@ SOLR_UPDATE_URL = "http://localhost:8983/solr/{0}/update".format(SOLR_COLLECTION
 
 XJOIN_PREFIX = 'xjoin_'
 
+USER_BOOKING_SUMMARY_SQL = """
+  SELECT user.user_id, username, label, role,
+         COUNT(CASE WHEN IFNULL(in_date, due_in_date) >= date('now') OR (out_date IS NOT NULL AND in_date IS NULL) THEN 1 ELSE NULL END) AS booked,
+         COUNT(CASE WHEN out_date IS NOT NULL AND in_date IS NULL THEN 1 ELSE NULL END) AS out,
+         COUNT(CASE WHEN out_date IS NOT NULL AND in_date IS NULL AND due_in_date < date('now') THEN 1 ELSE NULL END) AS overdue
+    FROM enum, enum_entry, user LEFT JOIN booking ON booking.user_id=user.user_id
+   WHERE field='user' AND enum.enum_id=enum_entry.enum_id AND enum_entry.value=user.user_id
+GROUP BY user.user_id
+"""
+
+ASSET_BOOKINGS_SQL = """
+  SELECT booking_id,
+         booking.user_id,
+         user_enum_entry.label AS user_label,
+         project,
+         project_enum_entry.label AS project_label,
+         due_out_date, due_in_date, out_date, in_date
+    FROM booking, user,
+         enum AS user_enum, enum_entry AS user_enum_entry,
+         enum AS project_enum, enum_entry AS project_enum_entry
+   WHERE asset_id=:asset_id
+         AND (date('now') <= due_in_date OR (out_date IS NOT NULL AND in_date IS NULL))
+         AND booking.user_id=user.user_id
+         AND user_enum.field='user' AND user_enum.enum_id=user_enum_entry.enum_id AND user_enum_entry.value=user.user_id
+         AND project_enum.field='project' AND project_enum.enum_id=project_enum_entry.enum_id AND project_enum_entry.value=booking.project
+ORDER BY due_out_date
+"""
+
+# the IFNULL ensures that in_date is used in preference to due_in_date, should it be non-null, so that a user can book
+# an asset where it has been returned early, and can not book an asset that has been returned late (in both cases where
+# the requested booking would have overlapped or not with the previous booking)
+CHECK_BOOKING_SQL = """
+  SELECT booking_id, booking.user_id AS user_id, enum_entry.label AS user_label
+    FROM booking, user, enum, enum_entry
+   WHERE asset_id=:asset_id AND booking.user_id=user.user_id
+         AND :dueInDate >= due_out_date AND :dueOutDate <= IFNULL(in_date, due_in_date)
+         AND field='user' AND enum_entry.enum_id=enum.enum_id AND enum_entry.value=user.user_id
+"""
+
+CHECK_OUT_SQL = """
+  UPDATE booking
+     SET out_date=date('now')
+   WHERE asset_id=:asset_id AND user_id=:user_id
+         AND date('now') >= due_out_date AND date('now') <= due_in_date
+         AND out_date IS NULL AND in_date IS NULL
+"""
+
+CHECK_IN_SQL = """
+  UPDATE booking
+     SET in_date=date('now')
+   WHERE asset_id=:asset_id AND user_id=:user_id
+         AND date('now') >= due_out_date
+         AND out_date IS NOT NULL AND in_date IS NULL
+"""
+
 application = UserApplication(__name__) # pylint: disable=invalid-name
 
 @application.route('/login', methods=['POST'])
@@ -70,7 +125,7 @@ def user_admin_endpoint():
             # returns number of assets 'booked' (i.e. the booking lasts until after today - except for early returns - or the asset is still out),
             # number of assets 'out' (i.e. have been taken out and not returned),
             # number of assets 'overdue' (i.e. should have been returned by today, but hasn't been) 
-            return json.dumps(sql.selectAllDict("SELECT user.user_id, username, label, role, COUNT(CASE WHEN IFNULL(in_date, due_in_date) >= date('now') OR (out_date IS NOT NULL AND in_date IS NULL) THEN 1 ELSE NULL END) AS booked, COUNT(CASE WHEN out_date IS NOT NULL AND in_date IS NULL THEN 1 ELSE NULL END) AS out, COUNT(CASE WHEN out_date IS NOT NULL AND in_date IS NULL AND due_in_date < date('now') THEN 1 ELSE NULL END) AS overdue FROM enum, enum_entry, user LEFT JOIN booking ON booking.user_id=user.user_id WHERE field='user' AND enum.enum_id=enum_entry.enum_id AND enum_entry.value=user.user_id GROUP BY user.user_id"))
+            return json.dumps(sql.selectAllDict(USER_BOOKING_SUMMARY_SQL))
     else:
         new_user = request.get_json()
         if not current_user.check_password(new_user['password']):
@@ -298,17 +353,14 @@ def booking_endpoint(asset_id=None, booking_id=None):
     """
     with application.db.cursor() as sql:
         if request.method == 'GET':
-            return json.dumps(sql.selectAllDict("SELECT booking_id, booking.user_id, user_enum_entry.label AS user_label, project, project_enum_entry.label AS project_label, due_out_date, due_in_date, out_date, in_date FROM booking, user, enum AS user_enum, enum_entry AS user_enum_entry, enum AS project_enum, enum_entry AS project_enum_entry WHERE asset_id=:asset_id AND (date('now') <= due_in_date OR (out_date IS NOT NULL AND in_date IS NULL)) AND booking.user_id=user.user_id AND user_enum.field='user' AND user_enum.enum_id=user_enum_entry.enum_id AND user_enum_entry.value=user.user_id AND project_enum.field='project' AND project_enum.enum_id=project_enum_entry.enum_id AND project_enum_entry.value=booking.project ORDER BY due_out_date", asset_id=asset_id))
+            return json.dumps(sql.selectAllDict(ASSET_BOOKINGS_SQL, asset_id=asset_id))
         elif request.method == 'POST':
             if not application.user_has_role([ADMIN_ROLE, BOOK_ROLE]):
                 return "Role required", 403
             # add a booking for the current user - returns a clashing booking if one exists (and doesn't add the submitted booking)
             args = request.args.to_dict()
             try:
-                # the IFNULL ensures that in_date is used in preference to due_in_date, should it be non-null, so that a user can book
-                # an asset where it has been returned early, and can not book an asset that has been returned late (in both cases where
-                # the requested booking would have overlapped or not with the previous booking)
-                booking = sql.selectOneDict("SELECT booking_id, booking.user_id AS user_id, enum_entry.label AS user_label FROM booking, user, enum, enum_entry WHERE asset_id=:asset_id AND booking.user_id=user.user_id AND :dueInDate >= due_out_date AND :dueOutDate <= IFNULL(in_date, due_in_date AND field='user' AND enum_entry.enum_id=enum.enum_id AND enum_entry.value=user.user_id)", args, asset_id=asset_id)
+                booking = sql.selectOneDict(CHECK_BOOKING_SQL, args, asset_id=asset_id)
                 return json.dumps(booking)
             except NoResult:
                 pass
@@ -330,10 +382,10 @@ def book_endpoint(asset_id):
     """
     with application.db.cursor() as sql:
         if request.method == 'PUT':
-            if sql.update("UPDATE booking SET out_date=date('now') WHERE asset_id=:asset_id AND user_id=:user_id AND date('now') >= due_out_date AND date('now') <= due_in_date AND out_date IS NULL AND in_date IS NULL", asset_id=asset_id, user_id=current_user.user_id) < 1:
+            if sql.update(CHECK_OUT_SQL, asset_id=asset_id, user_id=current_user.user_id) < 1:
                 return "Bad request", 400
         elif request.method == 'DELETE':
-            if sql.update("UPDATE booking SET in_date=date('now') WHERE asset_id=:asset_id AND user_id=:user_id AND date('now') >= due_out_date AND out_date IS NOT NULL AND in_date IS NULL", asset_id=asset_id, user_id=current_user.user_id) < 1:
+            if sql.update(CHECK_IN_SQL, asset_id=asset_id, user_id=current_user.user_id) < 1:
                 return "Bad request", 400
         return json.dumps({})
 
