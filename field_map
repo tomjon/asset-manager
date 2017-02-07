@@ -1,18 +1,24 @@
 ID				id
+# no ID Number values in the test data
 ID Number			id_number
 Location			location		enum
+# rack appears to contain lots of non-rack values that look like locations
 Rack				rack			enum
 Shelf				shelf			enum
 Manufacturer			manufacturer		enum
 Model				model
 Category			category		enum
 Description			description		strip_tags
+# no acquired data values in the test data
 Acquired Date			acquired_date		date2
 Notes				notes
+# no comments in the test data but we merge these into notes anyway
 Comments			notes
+# no condition values in the test data
 Condition			condition		enum
 Last Calibration		calibration_date	date2
 Calibration Date		calibration_due		date2
+# cal type has no values in the test data
 Calibration Type		calibration_type	enum
 --				--			validate_cal_dates
 
@@ -25,27 +31,49 @@ Frequency Range
 Serial Number			serial
 Owner				owner
 Attachments
+# no email values in the test data
 E-mail Address			email			enum
+
+# ** Not currently on UI
 Bar Code ID			barcode
+
+# these two have no values in the test data
 Current Value			value			non_zero
 Purchase Price			price			non_zero
+
+# ** Not currently on UI
 Fixed Asset Identifcation	far_id
 
 #FIXME is asset user the same enum as user? or owner? or something else?
+# ** Not currently on UI
 Asset User			asset_user		enum
+
+# ** Not currently on UI
 Cost Centre			cost_centre		enum
+
+# ** Not currently on UI
 Team				team			enum
+
+# ** Not currently on UI
 Manual Audit Date		audit_date		date2
+
+# ** Not currently on UI
 SAP ID				sap_id
+
 #FIXME should this (also?) be a reference into the user enum?
+# ** Not currently on UI
 Asset Manager			manager			enum
+
+# ** Not currently on UI
 Pat test due			pat_due_date		date2
+
+# ** Not currently on UI
 IP address			url
 
 # just store these two - they might prove of use later
 Site				site
 RAMS Location			rams_location
 
+# completely ignore
 Calibration Due Date
-
 
