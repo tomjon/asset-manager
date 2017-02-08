@@ -62,7 +62,7 @@ import { LAST_OPTION } from './enum';
                            </div>
                            <div *ngIf="input.type == 'area'">
                              <label htmlFor="{{input.field}}">{{input.label}}</label>
-                             <textarea class="form-control" required [(ngModel)]="asset[input.field]" [name]="input.field" rows="5"></textarea>
+                             <textarea class="form-control" required [(ngModel)]="asset[input.field]" [name]="input.field" rows="7"></textarea>
                            </div>
                            <div *ngIf="input.type == 'enum'">
                              <label htmlFor="{{input.field}}">{{input.label}}</label>

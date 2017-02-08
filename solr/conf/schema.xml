@@ -123,9 +123,11 @@
     <field name="_root_" type="string" indexed="true" stored="false" docValues="false" />
     <field name="_text_" type="text_general" indexed="true" stored="false" multiValued="true"/>
 
+<!--
     <field name="id_number" type="string" indexed="true" stored="true" required="false" multiValued="false" />
     <field name="__id_number" type="ngram" indexed="true" stored="false" required="false" multiValued="true" />
     <copyField source="id_number" dest="__id_number" />
+-->
 
     <field name="location" type="string" indexed="true" stored="true" required="false" multiValued="false" />
     <field name="rack" type="string" indexed="true" stored="true" required="false" multiValued="false" />
@@ -136,14 +138,18 @@
     <field name="__model" type="ngram" indexed="true" stored="false" required="false" multiValued="true" />
     <copyField source="model" dest="__model" />
 
+    <field name="serial" type="string" indexed="true" stored="true" required="false" multiValued="false" />
+    <field name="__serial" type="ngram" indexed="true" stored="false" required="false" multiValued="true" />
+    <copyField source="serial" dest="__serial" />
+
     <field name="category" type="string" indexed="true" stored="true" required="false" multiValued="false" />
     <field name="description" type="string" indexed="false" stored="true" required="false" multiValued="false" />
 
     <field name="acquired_date" type="date" indexed="true" stored="true" required="false" multiValued="false" />
 
     <field name="notes" type="string" indexed="false" stored="true" required="false" multiValued="true" />
-    <field name="condition" type="string" indexed="true" stored="true" required="false" multiValued="false" />
 
+    <field name="condition" type="string" indexed="true" stored="true" required="false" multiValued="false" />
     <field name="calibration_date" type="date" indexed="true" stored="true" required="false" multiValued="false" />
     <field name="calibration_due" type="date" indexed="true" stored="true" required="false" multiValued="false" />
     <field name="calibration_type" type="string" indexed="true" stored="true" required="false" multiValued="false" />
@@ -151,27 +157,23 @@
     <field name="start_freq" type="float" indexed="true" stored="true" required="false" multiValued="false" />
     <field name="stop_freq" type="float" indexed="true" stored="true" required="false" multiValued="false" />
 
-    <field name="serial" type="string" indexed="true" stored="true" required="false" multiValued="false" />
-    <field name="__serial" type="ngram" indexed="true" stored="false" required="false" multiValued="true" />
-    <copyField source="serial" dest="__serial" />
-
     <field name="owner" type="string" indexed="true" stored="true" required="false" multiValued="false" />
     <field name="email" type="string" indexed="true" stored="true" required="false" multiValued="false" />
+
     <field name="barcode" type="string" indexed="true" stored="true" required="false" multiValued="false" />
     <field name="value" type="float" indexed="true" stored="true" required="false" multiValued="false" />
     <field name="price" type="float" indexed="true" stored="true" required="false" multiValued="false" />
+
     <field name="far_id" type="string" indexed="true" stored="true" required="false" multiValued="false" />
 
-    <field name="asset_user" type="string" indexed="true" stored="true" required="false" multiValued="false" />
-    <field name="cost_centre" type="string" indexed="true" stored="true" required="false" multiValued="false" />
-    <field name="team" type="string" indexed="true" stored="true" required="false" multiValued="false" />
-    <field name="audit_date" type="date" indexed="true" stored="true" required="false" multiValued="false" />
-    <field name="sap_id" type="string" indexed="true" stored="true" required="false" multiValued="false" />
-    <field name="manager" type="string" indexed="true" stored="true" required="false" multiValued="false" />
-    <field name="pat_due_date" type="date" indexed="true" stored="true" required="false" multiValued="false" />
-    <field name="url" type="string" indexed="true" stored="true" required="false" multiValued="true" />
     <field name="site" type="string" indexed="true" stored="true" required="false" multiValued="false" />
     <field name="rams_location" type="string" indexed="true" stored="true" required="false" multiValued="false" />
+    <field name="building" type="string" indexed="true" stored="true" required="false" multiValued="false" />
+
+    <field name="audit_date" type="date" indexed="true" stored="true" required="false" multiValued="false" />
+    <field name="sap_id" type="string" indexed="true" stored="true" required="false" multiValued="false" />
+    <field name="pat_due_date" type="date" indexed="true" stored="true" required="false" multiValued="false" />
+    <field name="url" type="string" indexed="true" stored="true" required="false" multiValued="true" />
 
 
     <!-- Field to use to determine and enforce document uniqueness.

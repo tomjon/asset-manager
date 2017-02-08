@@ -5,7 +5,12 @@ var DESCRIPTION = {'field': 'description', 'label': 'Description', 'type': 'text
 var START_FREQ = {'field': 'start_freq', 'label': 'Start Frequency', 'type': 'freq'};
 var STOP_FREQ = {'field': 'stop_freq', 'label': 'Stop Frequency', 'type': 'freq'};
 var CONDITION = {'field': 'condition', 'label': 'Condition', 'type': 'enum'};
-var ID_NUMBER = {'field': 'id_number', 'label': 'ID Number', 'type': 'text'};
+//var ID_NUMBER = {'field': 'id_number', 'label': 'ID Number', 'type': 'text'};
+var FAR_ID = {'field': 'far_id', 'label': 'FAR ID', 'type': 'text'};
+var SAP_ID = {'field': 'sap_id', 'label': 'SAP ID', 'type': 'text'};
+//FIXME should be type: barcode and display an actual barcode
+var BARCODE = {'field': 'barcode', 'label': 'Bar Code', 'type': 'text'};
+
 var CALIBRATION_DATE = {'field': 'calibration_date', 'label': 'Last Calibration', 'short': 'Last', 'type': 'date'};
 var CALIBRATION_DUE = {'field': 'calibration_due', 'label': 'Calibration Due', 'short': 'Due', 'type': 'date'};
 var CALIBRATION_TYPE = {'field': 'calibration_type', 'label': 'Calibration Type', 'short': 'Type', 'type': 'enum'};
@@ -17,6 +22,10 @@ var MODEL = {'field': 'model', 'label': 'Model', 'type': 'text'};
 var SERIAL_NUMBER = {'field': 'serial', 'label': 'Serial Number', 'type': 'text'};
 var OWNER = {'field': 'owner', 'label': 'Owner', 'type': 'enum'};
 var NOTES = {'field': 'notes', 'label': 'Notes', 'type': 'area'};
+var AUDIT_DATE = {'field': 'audit_date', 'label': 'Audit Date', 'type': 'date'};
+var PAT_DUE_DATE = {'field': 'pat_due_date', 'label': 'PAT Test Due', 'type': 'date'};
+//FIXME should be type: url, and it is multi-valued
+var URLS = {'field': 'url', 'label': 'Links', 'type': 'text'};
 
 var FREQ_RANGE = {'field': '', 'label': 'Frequency', 'type': 'freq', 'range': [START_FREQ, STOP_FREQ]};
 
@@ -33,19 +42,21 @@ export class FieldMap {
   private map: any = {};
 
   public allInputs: any[] = [
-    CATEGORY, DESCRIPTION, START_FREQ, STOP_FREQ, CONDITION, ID_NUMBER,
+    CATEGORY, DESCRIPTION, START_FREQ, STOP_FREQ, CONDITION, FAR_ID,
     CALIBRATION_DATE, CALIBRATION_DUE, CALIBRATION_TYPE, LOCATION, RACK, SHELF,
-    MANUFACTURER, MODEL, SERIAL_NUMBER, OWNER
+    MANUFACTURER, MODEL, SERIAL_NUMBER, OWNER, SAP_ID, BARCODE,
+    AUDIT_DATE, PAT_DUE_DATE, URLS
   ];
 
   public assetInputs: any[] = [
     [[MANUFACTURER, MODEL], [CATEGORY], [DESCRIPTION], [START_FREQ, STOP_FREQ], [OWNER], [NOTES]],
-    [[ID_NUMBER, SERIAL_NUMBER], [CONDITION], [CALIBRATION_DATE], [CALIBRATION_DUE], [CALIBRATION_TYPE], [LOCATION], [RACK, SHELF]]
+    [[SERIAL_NUMBER, FAR_ID], [SAP_ID, BARCODE], [CALIBRATION_DATE, CALIBRATION_DUE], [CALIBRATION_TYPE, CONDITION], [LOCATION], [RACK, SHELF],
+    [AUDIT_DATE, PAT_DUE_DATE], [URLS]]
   ];
 
   public tableInputs: any[] = [
-    ID_NUMBER, MANUFACTURER, MODEL, SERIAL_NUMBER, CATEGORY, FREQ_RANGE,
-    CALIBRATION_DATE, CALIBRATION_DUE, CALIBRATION_TYPE, OWNER, CONDITION
+    MANUFACTURER, MODEL, CATEGORY, SERIAL_NUMBER, OWNER, FREQ_RANGE,
+    CALIBRATION_DATE, CALIBRATION_DUE, CALIBRATION_TYPE, CONDITION
   ];
 
   public bookingFilters: any[] = [
