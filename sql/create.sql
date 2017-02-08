@@ -36,9 +36,15 @@ CREATE TABLE enum_entry(
 
 CREATE TABLE attachment(
 	attachment_id INTEGER PRIMARY KEY,
-	asset_id INTEGER,
 	name VARCHAR(256),
-	data BLOB
+	data BLOB,
+	hash CHAR(32)
+);
+
+CREATE TABLE attachment_asset_pivot(
+	pivot_id INTEGER PRIMARY KEY,
+	attachment_id INTEGER,
+	asset_id INTEGER
 );
 
 CREATE TABLE booking(

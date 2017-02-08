@@ -34,7 +34,7 @@ class SqlCursor(object):
             values = {}
         values = dict(values) # work on a copy
         values.update(kwargs)
-        print stmt, values
+        #print stmt, values
         self.cursor.execute(stmt, values)
 
     def selectOne(self, stmt, values=None, **kwargs):

@@ -142,23 +142,32 @@ export class DataService {
                     .catch(this.handleError);
   }
 
-  deleteAttachment(asset: any, file_id: number): Observable<any[]> {
-    return this.http.delete(`/file/${asset.id}/${file_id}`)
-                    .map(res => res.json())
+  deleteAttachment(attachment_id: number): Observable<void> {
+    return this.http.delete(`/file/${attachment_id}`)
                     .catch(this.handleError);
   }
 
-  uploadAttachment(asset: any, name: string, file: FileList): Observable<any[]> {
+  uploadAttachment(name: string, file: FileList): Observable<any> {
     let params: URLSearchParams = new URLSearchParams();
     params.set('name', name);
-    return this.http.post(`/file/${asset.id}`, file, {search: params})
+    return this.http.post(`/file`, file, {search: params})
                     .map(res => res.json())
                     .catch(this.handleError);
   }
 
   getAttachments(asset: any): Observable<any[]> {
-    return this.http.get(`/file/${asset.id}`)
+    return this.http.get(`/attachment/${asset.id}`)
                     .map(res => res.json())
+                    .catch(this.handleError);
+  }
+
+  addAssociation(asset: any, attachment_id: number): Observable<void> {
+    return this.http.put(`/attachment/${asset.id}/${attachment_id}`, null)
+                    .catch(this.handleError);
+  }
+
+  removeAssociation(asset: any, attachment_id: number): Observable<void> {
+    return this.http.delete(`/attachment/${asset.id}/${attachment_id}`)
                     .catch(this.handleError);
   }
 

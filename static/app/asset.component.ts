@@ -88,8 +88,8 @@ import { LAST_OPTION } from './enum';
                      <input #upload *ngIf="showUpload" type="file" (change)="onUpload()"/>
                      <div *ngIf="! showUpload">
                        <div class="attachment" *ngFor="let file of files; let i = index" [hidden]="file_index != i">
-                         <img *ngIf="isImage(file.name)" src="/file/{{asset.id}}/{{file.attachment_id}}"/>
-                         <a *ngIf="! isImage(file.name)" target="attachment" href="/file/{{asset.id}}/{{file.attachment_id}}/{{file.name}}">{{file.name}}</a>
+                         <img *ngIf="isImage(file.name)" src="/file/{{file.attachment_id}}"/>
+                         <a *ngIf="! isImage(file.name)" target="attachment" href="/file/{{file.attachment_id}}/{{file.name}}">{{file.name}}</a>
                        </div>
                      </div>
                    </div>
@@ -187,9 +187,9 @@ export class AssetComponent {
   }
 
   onImgDelete() {
-    this.dataService.deleteAttachment(this.asset, this.files[this.file_index].attachment_id)
-                    .subscribe(files => {
-                      this.files = files;
+    this.dataService.deleteAttachment(this.files[this.file_index].attachment_id)
+                    .subscribe(() => {
+                      delete this.files[this.file_index];
                       if (this.file_index == this.files.length) --this.file_index;
                       if (this.files.length == 0) this.file_index = -1;
                     });
@@ -207,10 +207,12 @@ export class AssetComponent {
       let i = Math.max(name.lastIndexOf('/'), name.lastIndexOf('\\')) + 1;
       if (i >= name.length) return;
       name = name.substring(i);
-      this.dataService.uploadAttachment(this.asset, name, inputEl.files[0])
-                      .subscribe(files => {
-                        this.files = files;
+      this.dataService.uploadAttachment(name, inputEl.files[0])
+                      .subscribe(data => {
+                        this.files.push(data);
                         this.file_index = this.files.length - 1;
+                        this.dataService.addAssociation(this.asset, data.attachment_id)
+                                        .subscribe();
                       });
     }
   }

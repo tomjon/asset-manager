@@ -76,6 +76,35 @@ CHECK_IN_SQL = """
          AND out_date IS NOT NULL AND in_date IS NULL
 """
 
+GET_ATTACHMENT_SQL = """
+  SELECT name, data
+    FROM attachment
+   WHERE attachment_id=:attachment_id
+"""
+
+ALL_ATTACHMENTS_SQL = """
+  SELECT attachment_id, name
+    FROM attachment
+"""
+
+COUNT_ASSETS_FOR_ATTACHMENT_SQL = """
+  SELECT COUNT(asset_id)
+    FROM attachment_asset_pivot
+   WHERE attachment_id=:attachment_id
+"""
+
+DELETE_ATTACHMENT_SQL = """
+  DELETE
+    FROM attachment
+   WHERE attachment_id=:attachment_id
+"""
+
+ASSET_ATTACHMENTS_SQL = """
+  SELECT pivot.attachment_id, name
+    FROM attachment_asset_pivot AS pivot, attachment
+   WHERE pivot.asset_id=:asset_id AND pivot.attachment_id=attachment.attachment_id
+"""
+
 application = UserApplication(__name__) # pylint: disable=invalid-name
 
 @application.route('/login', methods=['POST'])
@@ -331,36 +360,68 @@ def asset_endpoint_GET(asset_id):
     return Response(r.text, mimetype=r.headers['content-type'])
 
 
-@application.route('/file/<asset_id>', methods=['GET', 'POST'])
-@application.route('/file/<asset_id>/<attachment_id>', methods=['GET', 'DELETE'])
-@application.route('/file/<asset_id>/<attachment_id>/<filename>', methods=['GET'])
-def file_endpoint(asset_id=None, attachment_id=None, filename=None):
-    """ Retrieve, upload or delete a file.
+@application.route('/file', methods=['GET', 'POST'])
+@application.route('/file/<attachment_id>', methods=['GET', 'DELETE'])
+@application.route('/file/<attachment_id>/<filename>')
+def file_endpoint(attachment_id=None, filename=None):
+    """ Get the data for the attachment with given id, or list all attachment ids,
+        or delete an attachment, or add a new attachment (if the data is already present
+        simply respond with the attachment id).
+
+        Currently, name is a property of the attachment, so if you upload the same
+        file with a different name, you get told the old name. We could make the name
+        a property of the association (i.e. a column on attachment_asset_pivot).
     """
-    if request.method != 'GET':
-        if not application.has_role([ADMIN_ROLE, BOOK_ROLE, VIEW_ROLE]):
-            return "Not authorized", 403
     with application.db.cursor() as sql:
         if request.method == 'GET' and attachment_id is not None:
-            # get the attachment with given id, checking the asset_id
-            stmt = "SELECT name, data FROM attachment WHERE asset_id=:asset_id AND attachment_id=:attachment_id"
             try:
-                name, data = sql.selectOne(stmt, asset_id=asset_id, attachment_id=attachment_id)
+                name, data = sql.selectOne(GET_ATTACHMENT_SQL, attachment_id=attachment_id)
             except NoResult:
                 return "No such attachment", 404
             mimetype = mimetypes.guess_type(name)[0] or 'application/octet-stream'
             return Response(str(data), mimetype=mimetype)
-        if request.method == 'DELETE':
-            # delete attachment with given id, checking the asset_id
-            values = {'asset_id': asset_id, 'attachment_id': attachment_id}
-            sql.delete("DELETE FROM attachment WHERE asset_id=:asset_id AND attachment_id=:attachment_id", values)
+        if request.method == 'GET':
+            return json.dumps(sql.selectAllDict(ALL_ATTACHMENTS_SQL))
+        if not application.user_has_role([ADMIN_ROLE]):
+            return "Not authorized", 403
         if request.method == 'POST':
-            # save a new attachment
             name = request.args.get('name')
-            values = {'asset_id': asset_id, 'name': name, 'data': buffer(request.get_data())}
-            sql.insert("INSERT INTO attachment VALUES (NULL, :asset_id, :name, :data)", values)
-        # for these we return a list of attachment ids for this asset
-        return json.dumps(sql.selectAllDict("SELECT attachment_id, name FROM attachment WHERE asset_id=:asset_id", asset_id=asset_id))
+            values = {'name': name, 'data': buffer(request.get_data())}
+            values['hash'] = hashlib.md5(values['data']).hexdigest()
+            try:
+                attachment_id, name = sql.selectOne("SELECT attachment_id, name FROM attachment WHERE hash=:hash", values)
+            except NoResult:
+                attachment_id = sql.insert("INSERT INTO attachment VALUES (NULL, :name, :data, :hash)", values)
+            return json.dumps({'attachment_id': attachment_id, 'name': name})
+        if request.method == 'DELETE':
+            # only allow deletion of an attachment if it is orphaned
+            if sql.selectSingle(COUNT_ASSETS_FOR_ATTACHMENT_SQL) != 0:
+                return "Attachment not orphaned", 400
+            sql.delete(DELETE_ATTACHMENT_SQL, attachment_id=attachment_id)
+            return json.dumps({})
+
+
+@application.route('/attachment/<asset_id>')
+@application.route('/attachment/<asset_id>/<attachment_id>', methods=['PUT', 'DELETE'])
+def attachment_endpoint(**values):
+    """ Get all attachment ids for an asset, attach an attachment file to an asset, or remove the attachment from the asset.
+    """
+    with application.db.cursor() as sql:
+        if request.method == 'GET':
+            return json.dumps(sql.selectAllDict(ASSET_ATTACHMENTS_SQL, values))
+        if not application.user_has_role([ADMIN_ROLE, BOOK_ROLE]):
+            return "Not authorized", 403
+        if request.method == 'DELETE':
+            count = sql.delete("DELETE FROM attachment_asset_pivot WHERE asset_id=:asset_id AND attachment_id=:attachment_id", values)
+            if count == 0:
+                return "No such association", 404
+            return json.dumps({})
+        if request.method == 'PUT':
+            count = sql.selectSingle("SELECT COUNT(*) FROM attachment_asset_pivot WHERE asset_id=:asset_id AND attachment_id=:attachment_id", values)
+            if count != 0:
+                return "Association already exists", 409
+            sql.insert("INSERT INTO attachment_asset_pivot VALUES (NULL, :attachment_id, :asset_id)", values)
+            return json.dumps({})
 
 
 @application.route('/booking/<asset_id>', methods=['GET', 'POST'])
