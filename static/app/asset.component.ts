@@ -2,6 +2,7 @@ import { Component, Input, Output, ViewChild, ViewChildren, EventEmitter, Elemen
 import { EnumService } from './enum.service';
 import { DataService } from './data.service';
 import { BookingComponent } from './booking.component';
+import { AttachmentComponent } from './attachment.component';
 import { FieldMap } from './field-map';
 import { Frequency } from './frequency';
 import { User, BOOK_ROLE, VIEW_ROLE } from './user';
@@ -77,22 +78,7 @@ import { LAST_OPTION } from './enum';
                    </form>
                  </div>
                  <div class="col-lg-4">
-                   <div class="attachments">
-                     <h3>
-                       Attachments
-                       <span class="glyphicon glyphicon-chevron-left" [ngClass]="{disabled: file_index <= 0}" (click)="onImgClick(-1)"></span>
-                       <span class="glyphicon glyphicon-chevron-right" [ngClass]="{disabled: file_index >= files.length - 1}" (click)="onImgClick(+1)"></span>
-                       <span class="glyphicon glyphicon-trash" [ngClass]="{disabled: file_index == -1}" (click)="onImgDelete()"></span>
-                       <span class="glyphicon glyphicon-plus-sign" [ngClass]="{disabled: ! original || original.id == undefined}" (click)="onImgNew()"></span>
-                     </h3>
-                     <input #upload *ngIf="showUpload" type="file" (change)="onUpload()"/>
-                     <div *ngIf="! showUpload">
-                       <div class="attachment" *ngFor="let file of files; let i = index" [hidden]="file_index != i">
-                         <img *ngIf="isImage(file.name)" src="/file/{{file.attachment_id}}"/>
-                         <a *ngIf="! isImage(file.name)" target="attachment" href="/file/{{file.attachment_id}}/{{file.name}}">{{file.name}}</a>
-                       </div>
-                     </div>
-                   </div>
+                   <badass-attachment [user]="user" [asset]="asset"></badass-attachment>
                    <badass-booking *ngIf="showBookings()" [user]="user" [asset]="asset" (status)="setStatus($event)"></badass-booking>
                  </div>
                </div>
@@ -105,24 +91,18 @@ import { LAST_OPTION } from './enum';
            '.bookOut { margin-left: 20px }',
            '.overdue { color: red }',
            '.disabled { color: lightgrey }',
-           '.attachments { height: 350px }',
-           '.attachment img { max-width: 100%; max-height: 100% }',
            'badass-booking { display: block; height: 177px; overflow: auto }'],
-  directives: [BookingComponent],
+  directives: [BookingComponent, AttachmentComponent],
 })
 export class AssetComponent {
   private original: any;
   private asset: any = {};
   private freqs: any = {};
-  private files: any[] = [];
-  private file_index: number = -1;
-  private showUpload: boolean = false;
   private addNew: any = {};
 
   private status: any = {};
 
   @ViewChild('form') form: HTMLFormElement;
-  @ViewChild('upload') upload: ElementRef;
   @ViewChildren('addNew') addNewInput: QueryList<ElementRef>;
 
   @Input('user') user: User;
@@ -131,17 +111,8 @@ export class AssetComponent {
   @Input('asset') set _asset(asset: any) {
     this.original = asset;
     this.asset = Object.assign({}, this.original);
-    this.file_index = -1;
-    this.files = [];
     this.status = {};
     pristine(this.form);
-    if (this.asset.id) {
-      this.dataService.getAttachments(this.asset)
-                      .subscribe(files => {
-                        this.files = files;
-                        this.file_index = this.files.length > 0 ? 0 : -1;
-                      });
-    }
     // pull out frequencies
     for (let input of this.fieldMap.allInputs) {
       if (input.type == 'freq') {
@@ -177,44 +148,6 @@ export class AssetComponent {
   bookDisabled() {
     let hasRole: boolean = this.user != undefined && this.user.role >= BOOK_ROLE;
     return this.original == undefined || ! hasRole;
-  }
-
-  onImgClick(delta: number) {
-    if (this.files.length == 0) return;
-    this.file_index += delta;
-    this.file_index = Math.max(0, this.file_index);
-    this.file_index = Math.min(this.files.length - 1, this.file_index);
-  }
-
-  onImgDelete() {
-    this.dataService.deleteAttachment(this.files[this.file_index].attachment_id)
-                    .subscribe(() => {
-                      delete this.files[this.file_index];
-                      if (this.file_index == this.files.length) --this.file_index;
-                      if (this.files.length == 0) this.file_index = -1;
-                    });
-  }
-
-  onImgNew() {
-    this.showUpload = true;
-  }
-
-  onUpload() {
-    this.showUpload = false;
-    let inputEl = this.upload.nativeElement;
-    if (inputEl.files.length > 0) {
-      let name = inputEl.value;
-      let i = Math.max(name.lastIndexOf('/'), name.lastIndexOf('\\')) + 1;
-      if (i >= name.length) return;
-      name = name.substring(i);
-      this.dataService.uploadAttachment(name, inputEl.files[0])
-                      .subscribe(data => {
-                        this.files.push(data);
-                        this.file_index = this.files.length - 1;
-                        this.dataService.addAssociation(this.asset, data.attachment_id)
-                                        .subscribe();
-                      });
-    }
   }
 
   onReset() {
@@ -254,13 +187,5 @@ export class AssetComponent {
       this.asset[input.field] = undefined;
       delete this.addNew.field;
     }
-  }
-
-  isImage(src): boolean {
-    src = src.toLowerCase();
-    for (let ext of ['.jpg', '.jpeg', '.gif', '.png', '.bmp']) {
-      if (src.endsWith(ext)) return true;
-    }
-    return false;
   }
 }
