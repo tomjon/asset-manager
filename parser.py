@@ -9,7 +9,7 @@ import site
 import xml.sax
 import re
 import base64
-import sqlite3
+import os
 from field_map import FieldMap
 
 ENTITY_RE = re.compile(r'(_[^_]+_)')
@@ -62,7 +62,7 @@ class Node(object):
                 d[name].append(v)
         return d
 
-    def save_attachments(self, sql):
+    def save_attachments(self, path):
         for node in self.nodes:
             if node.name != ATTACHMENTS:
                 continue
@@ -72,10 +72,14 @@ class Node(object):
                     data = base64.b64decode(subnode.value())
                 elif subnode.name == FILE_NAME:
                     name = subnode.value()
+            asset_id = self.id_node.value()
             assert data is not None and name is not None
-            attachment = {'asset_id': self.id_node.value(), 'name': name, 'value': buffer(data[20:])} # skip 20 bytes of metadata added by Access
-            print >>sys.stderr, "Saving attachment", attachment['asset_id'], attachment['name']
-            sql.execute("INSERT INTO attachment VALUES (NULL, :asset_id, :name, :value)", attachment)
+            print >>sys.stderr, "Saving attachment", asset_id, name
+            asset_path = os.path.join(path, asset_id)
+            if not os.path.exists(asset_path):
+                os.makedirs(asset_path)
+            with open(os.path.join(asset_path, name), 'w') as f:
+                f.write(buffer(data[20:])) # skip 20 bytes of metadata added by Access
 
 class Handler(xml.sax.ContentHandler, xml.sax.ErrorHandler):
     """ SAX XML handler. Whitespace is stripped and content characters
@@ -114,15 +118,12 @@ class Handler(xml.sax.ContentHandler, xml.sax.ErrorHandler):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) not in (3, 4):
-        print >>sys.stderr, "Usage: {0} <map file> <xml file> [<SQL db>]".format(sys.argv[0])
+    if len(sys.argv) != 4:
+        print >>sys.stderr, "Usage: {0} <map file> <xml file> <files path>".format(sys.argv[0])
         sys.exit(1)
 
     with open(sys.argv[1]) as f:
         fields = list(FieldMap(f).iter_fields(True))
-
-    sql_conn = sqlite3.connect(sys.argv[3]) if len(sys.argv) == 4 else None
-    sql = sql_conn.cursor() if sql_conn is not None else None
 
     print '#', ','.join(fields)
 
@@ -137,8 +138,7 @@ if __name__ == '__main__':
             v = ''.join(v)
             row.append('"{0}"'.format(v.replace('"', '""')) if len(v) > 0 else '')
         print ','.join(row)
-        if sql is not None:
-            node.save_attachments(sql)
+        node.save_attachments(sys.argv[3])
 
     try:
         with open(sys.argv[2]) as f:
@@ -147,10 +147,5 @@ if __name__ == '__main__':
         print >>sys.stderr, handler.count, "documents processed"
     except KeyboardInterrupt:
         print >>sys.stderr, "Processing interrupted"
-
-    if sql_conn is not None:
-        sql_conn.commit()
-        sql_conn.close()
-
 
 
