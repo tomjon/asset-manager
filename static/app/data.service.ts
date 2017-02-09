@@ -142,6 +142,12 @@ export class DataService {
                     .catch(this.handleError);
   }
 
+  loadAttachments(): Observable<any[]> {
+    return this.http.get(`/file`)
+                    .map(res => res.json())
+                    .catch(this.handleError);
+  }
+
   deleteAttachment(attachment_id: number): Observable<void> {
     return this.http.delete(`/file/${attachment_id}`)
                     .catch(this.handleError);

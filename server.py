@@ -395,7 +395,7 @@ def file_endpoint(attachment_id=None, filename=None):
             return json.dumps({'attachment_id': attachment_id, 'name': name})
         if request.method == 'DELETE':
             # only allow deletion of an attachment if it is orphaned
-            if sql.selectSingle(COUNT_ASSETS_FOR_ATTACHMENT_SQL) != 0:
+            if sql.selectSingle(COUNT_ASSETS_FOR_ATTACHMENT_SQL, attachment_id=attachment_id) != 0:
                 return "Attachment not orphaned", 400
             sql.delete(DELETE_ATTACHMENT_SQL, attachment_id=attachment_id)
             return json.dumps({})

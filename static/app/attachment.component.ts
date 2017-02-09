@@ -12,14 +12,11 @@ declare var $;
                  <span class="glyphicon glyphicon-chevron-left" [ngClass]="{disabled: file_index <= 0}" (click)="onImgClick(-1)"></span>
                  <span class="glyphicon glyphicon-chevron-right" [ngClass]="{disabled: file_index >= files.length - 1}" (click)="onImgClick(+1)"></span>
                  <span class="glyphicon glyphicon-trash" [ngClass]="{disabled: file_index == -1}" (click)="onImgDelete()"></span>
-                 <span class="glyphicon glyphicon-plus-sign" [ngClass]="{disabled: canUpload()}" (click)="onImgNew()"></span>
+                 <span class="glyphicon glyphicon-plus-sign" [ngClass]="{disabled: ! canUpload()}" (click)="onThumbnails()" data-toggle="modal" data-target="#thumbnailsModal"></span>
                </h3>
-               <input #upload *ngIf="showUpload" type="file" (change)="onUpload()"/>
-               <div *ngIf="! showUpload">
-                 <div class="attachment" *ngFor="let file of files; let i = index" [hidden]="file_index != i">
-                   <img *ngIf="isImage(file.name)" src="/file/{{file.attachment_id}}"/>
-                   <a *ngIf="! isImage(file.name)" target="attachment" href="/file/{{file.attachment_id}}/{{file.name}}">{{file.name}}</a>
-                 </div>
+               <div class="attachment" *ngFor="let file of files; let i = index" [hidden]="file_index != i">
+                 <img *ngIf="isImage(file.name)" src="/file/{{file.attachment_id}}"/>
+                 <a *ngIf="! isImage(file.name)" target="attachment" href="/file/{{file.attachment_id}}/{{file.name}}">{{file.name}}</a>
                </div>
              </div>
              <div id="thumbnailsModal" class="modal fade" role="dialog">
@@ -30,6 +27,11 @@ declare var $;
                      <h4 class="modal-title">Attachments</h4>
                    </div>
                    <div class="modal-body">
+                     <div class="thumbnails" *ngFor="let file of thumbnails">
+                       <img *ngIf="isImage(file.name)" src="/file/{{file.attachment_id}}"/>
+                       <a *ngIf="! isImage(file.name)" target="attachment" href="/file/{{file.attachment_id}}/{{file.name}}">{{file.name}}</a>
+                     </div>
+                     <input #upload type="file" (change)="onUpload()"/>
                    </div>
                    <div class="modal-footer">
                      <button type="button" class="btn btn-default" (click)="onAddNew()">Add New</button>
@@ -41,12 +43,14 @@ declare var $;
   styles: ['.attachments { height: 350px }',
            '.attachment img { max-width: 100%; max-height: 100% }',
            '.glyphicon:not(.disabled) { cursor: pointer }',
-           '.disabled { color: lightgrey }']
+           '.disabled { color: lightgrey }',
+           '.thumbnails img { width: 50px; float: left }']
 })
 export class AttachmentComponent {
   private files: any[] = [];
   private file_index: number = -1;
-  private showUpload: boolean = false;
+
+  private thumbnails: any[] = [];
 
   asset: any;
   @Input('asset') set _asset(asset: any) {
@@ -88,20 +92,23 @@ export class AttachmentComponent {
   }
 
   onImgDelete() {
-    this.dataService.deleteAttachment(this.files[this.file_index].attachment_id)
+    this.dataService.removeAssociation(this.asset, this.files[this.file_index].attachment_id)
                     .subscribe(() => {
-                      delete this.files[this.file_index];
-                      if (this.file_index == this.files.length) --this.file_index;
-                      if (this.files.length == 0) this.file_index = -1;
+                      this.dataService.deleteAttachment(this.files[this.file_index].attachment_id)
+                                      .subscribe(() => {
+                                        --this.file_index;
+                                        //this.files = this.files.splice(0, this.files.length - 1);
+                                        this.files.pop();
+                                      });
                     });
   }
 
-  onAddNew() {
-    this.showUpload = true;
+  onThumbnails() {
+    this.dataService.loadAttachments()
+                    .subscribe(files => this.thumbnails = files);
   }
 
   onUpload() {
-    this.showUpload = false;
     let inputEl = this.upload.nativeElement;
     if (inputEl.files.length > 0) {
       let name = inputEl.value;
