@@ -420,6 +420,9 @@ def attachment_endpoint(**values):
                 return "No such association", 404
             return json.dumps({})
         if request.method == 'PUT':
+            count = sql.selectSingle("SELECT COUNT(*) FROM attachment WHERE attachment_id=:attachment_id", values)
+            if count == 0:
+                return "Bad attachment id", 400
             count = sql.selectSingle("SELECT COUNT(*) FROM attachment_asset_pivot WHERE asset_id=:asset_id AND attachment_id=:attachment_id", values)
             if count != 0:
                 return "Association already exists", 409

@@ -32,14 +32,14 @@ declare var $;
                          <span *ngIf="! isImage(file.name)" class="glyphicon glyphicon-file" title="{{file.name}}"></span>
                        </div>
                        <p>
-                         {{file.name}} {{file.count}}
-                         <span *ngIf="file.count == 0" class="glyphicon glyphicon-trash" [ngClass]="{disabled: ! canUpload()}" (click)="onDelete(file)"></span>
+                         {{file.name}}
+                         <span *ngIf="file.count == 0" class="glyphicon glyphicon-trash" [ngClass]="{disabled: ! canUpload()}" (click)="onDelete($event, file)"></span>
                        </p>
                      </div>
                    </div>
                    <div class="modal-footer">
-                     <input #upload type="file"/>
-                     <button type="button" class="btn btn-default" (click)="onAddNew()">Add New</button>
+                     <input #upload type="file" (change)="setFileCount()"/>
+                     <button type="button" class="btn btn-default" [ngClass]="{disabled: ! canAddNew()}" (click)="onAddNew()">Add New</button>
                      <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
                    </div>
                  </div>
@@ -57,7 +57,7 @@ declare var $;
            '.container p span { float: right }',
            '.thumbnails-dialog { width: 80% }',
            '.modal-footer input { float: left }',
-           '.selected { border-color: lightblue }']
+           '.selected { background: lightblue }']
 })
 export class AttachmentComponent {
   private files: any[] = [];
@@ -66,8 +66,7 @@ export class AttachmentComponent {
   // all attachments - not thumbnails, but attachment id, name and reference count
   private thumbnails: any[] = [];
 
-  // attachment look up for the asset (if any) from attachment_id to name
-  private attachments: any = {};
+  private fileCount: number = 0;
 
   asset: any;
   @Input('asset') set _asset(asset: any) {
@@ -93,12 +92,16 @@ export class AttachmentComponent {
     return this.user.role >= BOOK_ROLE;
   }
 
+  canAddNew(): boolean {
+    return this.fileCount > 0;
+  }
+
   isSelectable(): boolean {
     return this.asset.id != undefined;
   }
 
   isSelected(file): boolean {
-    return file.attachment_id in this.attachments;
+    return this.files.find(f => f.attachment_id == file.attachment_id) != undefined;
   }
 
   isImage(src): boolean {
@@ -117,7 +120,8 @@ export class AttachmentComponent {
     this.file_index = Math.min(this.files.length - 1, this.file_index);
   }
 
-  onDelete(file) {
+  onDelete(event: Event, file) {
+    event.stopPropagation();
     this.dataService.deleteAttachment(file.attachment_id)
                     .subscribe(() => {
                       let i = this.thumbnails.indexOf(file);
@@ -128,15 +132,11 @@ export class AttachmentComponent {
   onThumbnails() {
     this.dataService.loadAttachments()
                     .subscribe(files => this.thumbnails = files);
-    this.attachments = {};
-    if (this.asset) {
-      this.dataService.loadAssociations(this.asset)
-                      .subscribe(attachments => {
-                        for (let attachment of attachments) {
-                          this.attachments[attachment.attachment_id] = attachment.name;
-                        }
-                      });
-    }
+  }
+
+  setFileCount() {
+    let inputEl = this.upload.nativeElement;
+    this.fileCount = inputEl.files.length;
   }
 
   onAddNew() {
@@ -149,12 +149,13 @@ export class AttachmentComponent {
       this.dataService.uploadAttachment(name, inputEl.files[0])
                       .subscribe(data => {
                         if (! data.conflict) {
+                          data.count = 0;
                           this.thumbnails.push(data);
                         }
                         if (this.asset) {
-                          let file: any = {}; //FIXME find file by attachment_id in this.thumbnails
-                          if (! (file.attachment_id in this.attachments)) {
-                            this.onClick(file);
+                          let file: any = this.thumbnails.find(file => file.attachment_id == data.attachment_id);
+                          if (! this.isSelected(file)) {
+                            this.onClick(file); // add association if not already selected
                           }
                         }
                       });
@@ -164,17 +165,19 @@ export class AttachmentComponent {
   // add/remove association
   onClick(file: any) {
     if (! this.asset) return;
-    if (file.attachment_id in this.attachments) {
+    if (this.isSelected(file)) {
       this.dataService.removeAssociation(this.asset, file.attachment_id)
                       .subscribe(() => {
                         --file.count;
-                        delete this.attachments[file.attachment_id];
+                        let i = this.files.findIndex(f => f.attachment_id == file.attachment_id);
+                        this.files.splice(i, 1);
+                        if (i <= this.file_index) --this.file_index;
                       });
     } else {
       this.dataService.addAssociation(this.asset, file.attachment_id)
                       .subscribe(() => {
                         ++file.count;
-                        this.attachments[file.attachment_id] = file.name;
+                        this.files.push(file);
                       });
     }
   }
