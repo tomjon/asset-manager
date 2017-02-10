@@ -167,6 +167,12 @@ export class DataService {
                     .catch(this.handleError);
   }
 
+  loadAssociations(asset: any): Observable<any[]> {
+    return this.http.get(`/attachment/${asset.id}`)
+                    .map(res => res.json())
+                    .catch(this.handleError);
+  }
+
   addAssociation(asset: any, attachment_id: number): Observable<void> {
     return this.http.put(`/attachment/${asset.id}/${attachment_id}`, null)
                     .catch(this.handleError);

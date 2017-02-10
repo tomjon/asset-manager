@@ -26,14 +26,14 @@ declare var $;
                      <h4 class="modal-title">Attachments</h4>
                    </div>
                    <div class="modal-body">
-                     <div class="thumbnail container" *ngFor="let file of thumbnails" (click)="onClick(file)">
+                     <div class="thumbnail container" *ngFor="let file of thumbnails" (click)="onClick(file)" [ngClass]="{selected: isSelected(file), selectable: isSelectable()}">
                        <div class="thumbnail-img">
                          <img *ngIf="isImage(file.name)" src="/file/{{file.attachment_id}}" title="{{file.name}}"/>
                          <span *ngIf="! isImage(file.name)" class="glyphicon glyphicon-file" title="{{file.name}}"></span>
                        </div>
                        <p>
-                         {{file.name}}
-                         <span class="glyphicon glyphicon-trash" [ngClass]="{disabled: ! canUpload()}" (click)="onDelete(file)"></span>
+                         {{file.name}} {{file.count}}
+                         <span *ngIf="file.count == 0" class="glyphicon glyphicon-trash" [ngClass]="{disabled: ! canUpload()}" (click)="onDelete(file)"></span>
                        </p>
                      </div>
                    </div>
@@ -47,22 +47,27 @@ declare var $;
              </div>`,
   styles: ['.attachments { height: 350px }',
            '.attachment img { max-width: 100%; max-height: 100% }',
-           '.glyphicon:not(.disabled) { cursor: pointer }',
+           '.glyphicon:not(.disabled), .selectable { cursor: pointer }',
            '.disabled { color: lightgrey }',
            '.container { display: inline-block; vertical-align: top; margin: 5px; width: 210px; height: 150px }',
-           '.thumbnail-img { height: 100px; margin: auto }',
+           '.thumbnail-img { height: 100px }',
            '.thumbnail-img img { max-width: 200px; max-height: 100px }',
            '.thumbnail-img span { font-size: 80px }',
            '.container p { overflow-wrap: break-word; margin-top: 5px }',
            '.container p span { float: right }',
            '.thumbnails-dialog { width: 80% }',
-           '.modal-footer input { float: left }']
+           '.modal-footer input { float: left }',
+           '.selected { border-color: lightblue }']
 })
 export class AttachmentComponent {
   private files: any[] = [];
   private file_index: number = -1;
 
+  // all attachments - not thumbnails, but attachment id, name and reference count
   private thumbnails: any[] = [];
+
+  // attachment look up for the asset (if any) from attachment_id to name
+  private attachments: any = {};
 
   asset: any;
   @Input('asset') set _asset(asset: any) {
@@ -88,6 +93,14 @@ export class AttachmentComponent {
     return this.user.role >= BOOK_ROLE;
   }
 
+  isSelectable(): boolean {
+    return this.asset.id != undefined;
+  }
+
+  isSelected(file): boolean {
+    return file.attachment_id in this.attachments;
+  }
+
   isImage(src): boolean {
     if (! src) return false;
     src = src.toLowerCase();
@@ -105,19 +118,25 @@ export class AttachmentComponent {
   }
 
   onDelete(file) {
-/*    this.dataService.removeAssociation(this.asset, this.files[this.file_index].attachment_id)
+    this.dataService.deleteAttachment(file.attachment_id)
                     .subscribe(() => {
-                      this.dataService.deleteAttachment(this.files[this.file_index].attachment_id)
-                                      .subscribe(() => {
-                                        --this.file_index;
-                                        this.files.pop();
-                                      });
-                    });*/
+                      let i = this.thumbnails.indexOf(file);
+                      if (i != -1) this.thumbnails.splice(i, 1);
+                    });
   }
 
   onThumbnails() {
     this.dataService.loadAttachments()
                     .subscribe(files => this.thumbnails = files);
+    this.attachments = {};
+    if (this.asset) {
+      this.dataService.loadAssociations(this.asset)
+                      .subscribe(attachments => {
+                        for (let attachment of attachments) {
+                          this.attachments[attachment.attachment_id] = attachment.name;
+                        }
+                      });
+    }
   }
 
   onAddNew() {
@@ -129,17 +148,34 @@ export class AttachmentComponent {
       name = name.substring(i);
       this.dataService.uploadAttachment(name, inputEl.files[0])
                       .subscribe(data => {
-                        //FIXME if it's a repeat, don't do this push; might need the server to respond with 409 if a repeat
-                        this.thumbnails.push(data);
-/*                        this.files.push(data);
-                        this.file_index = this.files.length - 1;
-                        this.dataService.addAssociation(this.asset, data.attachment_id)
-                                        .subscribe();*/ //FIXME do the association automatically if an asset is selected; they can always remove the assoc later
+                        if (! data.conflict) {
+                          this.thumbnails.push(data);
+                        }
+                        if (this.asset) {
+                          let file: any = {}; //FIXME find file by attachment_id in this.thumbnails
+                          if (! (file.attachment_id in this.attachments)) {
+                            this.onClick(file);
+                          }
+                        }
                       });
     }
   }
 
+  // add/remove association
   onClick(file: any) {
-
+    if (! this.asset) return;
+    if (file.attachment_id in this.attachments) {
+      this.dataService.removeAssociation(this.asset, file.attachment_id)
+                      .subscribe(() => {
+                        --file.count;
+                        delete this.attachments[file.attachment_id];
+                      });
+    } else {
+      this.dataService.addAssociation(this.asset, file.attachment_id)
+                      .subscribe(() => {
+                        ++file.count;
+                        this.attachments[file.attachment_id] = file.name;
+                      });
+    }
   }
 }

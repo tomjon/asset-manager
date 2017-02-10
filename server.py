@@ -83,8 +83,9 @@ GET_ATTACHMENT_SQL = """
 """
 
 ALL_ATTACHMENTS_SQL = """
-  SELECT attachment_id, name
-    FROM attachment
+  SELECT name, a.attachment_id, COUNT(p.attachment_id) AS count
+    FROM attachment AS a LEFT JOIN attachment_asset_pivot AS p ON a.attachment_id=p.attachment_id
+GROUP BY a.attachment_id
 """
 
 COUNT_ASSETS_FOR_ATTACHMENT_SQL = """
@@ -388,11 +389,13 @@ def file_endpoint(attachment_id=None, filename=None):
             name = request.args.get('name')
             values = {'name': name, 'data': buffer(request.get_data())}
             values['hash'] = hashlib.md5(values['data']).hexdigest()
+            conflict = False
             try:
                 attachment_id, name = sql.selectOne("SELECT attachment_id, name FROM attachment WHERE hash=:hash", values)
+                conflict = True
             except NoResult:
                 attachment_id = sql.insert("INSERT INTO attachment VALUES (NULL, :name, :data, :hash)", values)
-            return json.dumps({'attachment_id': attachment_id, 'name': name})
+            return json.dumps({'attachment_id': attachment_id, 'name': name, 'conflict': conflict})
         if request.method == 'DELETE':
             # only allow deletion of an attachment if it is orphaned
             if sql.selectSingle(COUNT_ASSETS_FOR_ATTACHMENT_SQL, attachment_id=attachment_id) != 0:
