@@ -9,31 +9,36 @@ declare var $;
   template: `<div class="attachments">
                <h3>
                  Attachments
-                 <span class="glyphicon glyphicon-chevron-left" [ngClass]="{disabled: file_index <= 0}" (click)="onImgClick(-1)"></span>
-                 <span class="glyphicon glyphicon-chevron-right" [ngClass]="{disabled: file_index >= files.length - 1}" (click)="onImgClick(+1)"></span>
-                 <span class="glyphicon glyphicon-trash" [ngClass]="{disabled: file_index == -1}" (click)="onImgDelete()"></span>
-                 <span class="glyphicon glyphicon-plus-sign" [ngClass]="{disabled: ! canUpload()}" (click)="onThumbnails()" data-toggle="modal" data-target="#thumbnailsModal"></span>
+                 <span class="glyphicon glyphicon-chevron-left" [ngClass]="{disabled: file_index <= 0}" (click)="onNavigate(-1)"></span>
+                 <span class="glyphicon glyphicon-chevron-right" [ngClass]="{disabled: file_index >= files.length - 1}" (click)="onNavigate(+1)"></span>
+                 <span class="glyphicon glyphicon-th" [ngClass]="{disabled: ! canUpload()}" (click)="onThumbnails()" data-toggle="modal" data-target="#thumbnailsModal"></span>
                </h3>
                <div class="attachment" *ngFor="let file of files; let i = index" [hidden]="file_index != i">
-                 <img *ngIf="isImage(file.name)" src="/file/{{file.attachment_id}}"/>
-                 <a *ngIf="! isImage(file.name)" target="attachment" href="/file/{{file.attachment_id}}/{{file.name}}">{{file.name}}</a>
+                 <img *ngIf="isImage(file.name)" src="/file/{{file.attachment_id}}" title="{{file.name}}"/>
+                 <a *ngIf="! isImage(file.name)" target="attachment" href="/file/{{file.attachment_id}}/{{file.name}}" title="{{file.name}}">{{file.name}}</a>
                </div>
              </div>
              <div id="thumbnailsModal" class="modal fade" role="dialog">
-               <div class="modal-dialog">
+               <div class="modal-dialog thumbnails-dialog">
                  <div class="modal-content">
                    <div class="modal-header">
                      <button type="button" class="close" data-dismiss="modal">&times;</button>
                      <h4 class="modal-title">Attachments</h4>
                    </div>
                    <div class="modal-body">
-                     <div class="thumbnails" *ngFor="let file of thumbnails">
-                       <img *ngIf="isImage(file.name)" src="/file/{{file.attachment_id}}"/>
-                       <a *ngIf="! isImage(file.name)" target="attachment" href="/file/{{file.attachment_id}}/{{file.name}}">{{file.name}}</a>
+                     <div class="thumbnail container" *ngFor="let file of thumbnails" (click)="onClick(file)">
+                       <div class="thumbnail-img">
+                         <img *ngIf="isImage(file.name)" src="/file/{{file.attachment_id}}" title="{{file.name}}"/>
+                         <span *ngIf="! isImage(file.name)" class="glyphicon glyphicon-file" title="{{file.name}}"></span>
+                       </div>
+                       <p>
+                         {{file.name}}
+                         <span class="glyphicon glyphicon-trash" [ngClass]="{disabled: ! canUpload()}" (click)="onDelete(file)"></span>
+                       </p>
                      </div>
-                     <input #upload type="file" (change)="onUpload()"/>
                    </div>
                    <div class="modal-footer">
+                     <input #upload type="file"/>
                      <button type="button" class="btn btn-default" (click)="onAddNew()">Add New</button>
                      <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
                    </div>
@@ -44,7 +49,14 @@ declare var $;
            '.attachment img { max-width: 100%; max-height: 100% }',
            '.glyphicon:not(.disabled) { cursor: pointer }',
            '.disabled { color: lightgrey }',
-           '.thumbnails img { width: 50px; float: left }']
+           '.container { display: inline-block; vertical-align: top; margin: 5px; width: 210px; height: 150px }',
+           '.thumbnail-img { height: 100px; margin: auto }',
+           '.thumbnail-img img { max-width: 200px; max-height: 100px }',
+           '.thumbnail-img span { font-size: 80px }',
+           '.container p { overflow-wrap: break-word; margin-top: 5px }',
+           '.container p span { float: right }',
+           '.thumbnails-dialog { width: 80% }',
+           '.modal-footer input { float: left }']
 })
 export class AttachmentComponent {
   private files: any[] = [];
@@ -77,6 +89,7 @@ export class AttachmentComponent {
   }
 
   isImage(src): boolean {
+    if (! src) return false;
     src = src.toLowerCase();
     for (let ext of ['.jpg', '.jpeg', '.gif', '.png', '.bmp']) {
       if (src.endsWith(ext)) return true;
@@ -84,23 +97,22 @@ export class AttachmentComponent {
     return false;
   }
 
-  onImgClick(delta: number) {
+  onNavigate(delta: number) {
     if (this.files.length == 0) return;
     this.file_index += delta;
     this.file_index = Math.max(0, this.file_index);
     this.file_index = Math.min(this.files.length - 1, this.file_index);
   }
 
-  onImgDelete() {
-    this.dataService.removeAssociation(this.asset, this.files[this.file_index].attachment_id)
+  onDelete(file) {
+/*    this.dataService.removeAssociation(this.asset, this.files[this.file_index].attachment_id)
                     .subscribe(() => {
                       this.dataService.deleteAttachment(this.files[this.file_index].attachment_id)
                                       .subscribe(() => {
                                         --this.file_index;
-                                        //this.files = this.files.splice(0, this.files.length - 1);
                                         this.files.pop();
                                       });
-                    });
+                    });*/
   }
 
   onThumbnails() {
@@ -108,7 +120,7 @@ export class AttachmentComponent {
                     .subscribe(files => this.thumbnails = files);
   }
 
-  onUpload() {
+  onAddNew() {
     let inputEl = this.upload.nativeElement;
     if (inputEl.files.length > 0) {
       let name = inputEl.value;
@@ -117,11 +129,17 @@ export class AttachmentComponent {
       name = name.substring(i);
       this.dataService.uploadAttachment(name, inputEl.files[0])
                       .subscribe(data => {
-                        this.files.push(data);
+                        //FIXME if it's a repeat, don't do this push; might need the server to respond with 409 if a repeat
+                        this.thumbnails.push(data);
+/*                        this.files.push(data);
                         this.file_index = this.files.length - 1;
                         this.dataService.addAssociation(this.asset, data.attachment_id)
-                                        .subscribe();
+                                        .subscribe();*/ //FIXME do the association automatically if an asset is selected; they can always remove the assoc later
                       });
     }
+  }
+
+  onClick(file: any) {
+
   }
 }
