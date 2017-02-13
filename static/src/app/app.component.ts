@@ -13,8 +13,7 @@ import { User } from './user';
 
 @Component({
   selector: 'badass-app',
-  template: `<button (click)="show = !show">toggle show ({{show}})</button>
-      <div class="container-fluid">
+  template: `<div class="container-fluid">
                <div class="row">
                  <div class="col-lg-12">
                    <h1><img src="/static/ofcom.gif"/> Baldock Asset Database and Scheduling System</h1>
