@@ -181,8 +181,8 @@ declare var $;
            'table.login input { width: 150px }',
            '.login td { text-align: right; padding: 2px }',
            'th.assets { background: lightgrey; text-align: center }'
-         ],
-  pipes: [EnumPipe]
+         ]//,
+  //pipes: [EnumPipe]
 })
 export class LoginComponent {
   @Output('login') userEmitter = new EventEmitter<User>();

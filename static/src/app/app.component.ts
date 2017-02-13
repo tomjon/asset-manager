@@ -1,5 +1,4 @@
-import { Component } from '@angular/core';
-import { HTTP_PROVIDERS } from '@angular/http';
+import { Component, trigger, transition, style, animate, state } from '@angular/core';
 import { DataService } from './data.service';
 import { EnumService } from './enum.service';
 import { TableComponent } from './table.component';
@@ -10,14 +9,12 @@ import { Results } from './results';
 import { FieldMap } from './field-map';
 import { User } from './user';
 
-// Add the RxJS Observable operators we need in this app
-import './rxjs-operators';
-
 //FIXME instance of Search to live in DataService? tidies up some dependencies
 
 @Component({
   selector: 'badass-app',
-  template: `<div class="container-fluid">
+  template: `<button (click)="show = !show">toggle show ({{show}})</button>
+      <div class="container-fluid">
                <div class="row">
                  <div class="col-lg-12">
                    <h1><img src="/static/ofcom.gif"/> Baldock Asset Database and Scheduling System</h1>
@@ -28,8 +25,6 @@ import './rxjs-operators';
                  </div>
                </div>
              </div>`,
-  directives: [TableComponent, AssetComponent, LoginComponent],
-  providers: [HTTP_PROVIDERS, DataService, EnumService, FieldMap],
   styles: ['badass-asset { display: block; margin: 20px 0 20px 0 }',
            'badass-login { display: block; position: absolute; right: 10; top: 10 }']
 })
@@ -39,6 +34,8 @@ export class AppComponent {
   search: Search = new Search();
   asset: any;
   error: any;
+
+  show: boolean = false;
 
   constructor(private dataService: DataService, private enumService: EnumService, private fieldMap: FieldMap) { }
 

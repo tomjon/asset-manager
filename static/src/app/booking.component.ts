@@ -80,8 +80,8 @@ declare var $;
            '.good { color: green }',
            '.overdue { color: red }',
            '.current .row { background: lightgrey }',
-           '.glyphicon { cursor: pointer }'],
-  pipes: [EnumPipe]
+           '.glyphicon { cursor: pointer }']//,
+  //pipes: [EnumPipe]
 })
 export class BookingComponent {
   bookings: any[];
