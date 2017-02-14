@@ -9,8 +9,6 @@ import { User } from './user';
 export var DATETIME_RE = /^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\dZ$/;
 export var DATE_RE = /^\d\d\d\d-\d\d-\d\d$/;
 
-declare var $;
-
 @Injectable()
 export class DataService {
   constructor(private http: Http) { }
@@ -92,7 +90,6 @@ export class DataService {
         path += `/-${field}:*`;
       }
     }
-    $("body").hide();
     return this.http.get(`/search${path}`, {search: params})
                     .map(res => {
                       let json = res.json();
@@ -110,7 +107,6 @@ export class DataService {
                           }
                         }
                       }
-                      $("body").show();
                       return new Results(start, total, assets, facets, json['enums']);
                     })
                     .catch(this.handleError);

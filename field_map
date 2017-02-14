@@ -36,7 +36,8 @@ Frequency Range
 
 # these two are completely dependent
 Owner				owner			enum
-E-mail Address			email			enum
+# ignore email address
+E-mail Address
 
 Bar Code ID			barcode
 

@@ -32,7 +32,7 @@ declare var $;
                  </tr>
                </table>
              </div>
-             <div id="detailsModal" class="modal fade" role="dialog">
+             <div id="detailsModal" class="modal" role="dialog">
                <form role="form" #detailsForm="ngForm">
                  <div class="modal-dialog">
                    <div class="modal-content">
@@ -77,7 +77,7 @@ declare var $;
                  </div>
                </form>
              </div>
-             <div id="usersModal" class="modal fade" role="dialog">
+             <div id="usersModal" class="modal" role="dialog">
                <form role="form" #usersForm="ngForm">
                  <div class="modal-dialog">
                    <div class="modal-content">

@@ -25,7 +25,7 @@ import { User } from './user';
                </div>
              </div>`,
   styles: ['badass-asset { display: block; margin: 20px 0 20px 0 }',
-           'badass-login { display: block; position: absolute; right: 10; top: 10 }']
+           'badass-login { display: block; position: absolute; right: 10px; top: 10px }']
 })
 export class AppComponent {
   user: User = new User(); // start with an anonymous user
