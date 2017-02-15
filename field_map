@@ -41,10 +41,10 @@ Purchase Price			price			non_zero
 
 Fixed Assed Identification	far_id
 
-# just store these three - they might prove of use later
-Site				site
-RAMS Location			rams_location
-Building			building
+# just store these three as enums - they might prove of use later
+Site				site			enum			Baldock
+RAMS Location			rams_location		enum
+Building			building		enum
 
 Manual Audit Date		audit_date		date2
 SAP ID				sap_id

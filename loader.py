@@ -66,7 +66,10 @@ if __name__ == '__main__':
     sql.execute("DELETE FROM enum_entry WHERE enum_id IN ({0})".format(','.join(enum_ids))) 
     sql.execute("DELETE FROM enum WHERE enum_id IN ({0})".format(','.join(enum_ids)))
 
-    enums = {'condition': []}
+    enums = {}
+    for field in field_map._enum_fields:
+        enums[field] = []
+
     count = 0
     try:
         with codecs.open(sys.argv[2], encoding=ENCODING) as f:

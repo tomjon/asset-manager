@@ -7,6 +7,7 @@ class FieldMap(object):
     def __init__(self, f):
         self._fields = []
         self._map = {}
+        self._enum_fields = []
         for line in f:
             line = line.strip()
             if len(line) == 0 or line[0] == '#':
@@ -14,9 +15,13 @@ class FieldMap(object):
             bits = line.split('\t')
             while '' in bits:
                 bits.remove('')
-            in_name, out_name = bits[0], bits[1] if len(bits) > 1 else None
+            while len(bits) < 4:
+                bits.append(None)
+            in_name, out_name, fn_name, fn_args = bits
             self._fields.append(in_name)
-            self._map[in_name] = (out_name, bits[2] if len(bits) > 2 else None, bits[3] if len(bits) > 3 else None)
+            self._map[in_name] = (out_name, fn_name, fn_args)
+            if fn_name == 'enum':
+                self._enum_fields.append(out_name)
 
     def map(self, field, value, doc, enums):
         name, fn_name, default_value = self._map[field]
