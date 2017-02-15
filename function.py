@@ -60,7 +60,7 @@ def map_freq(name, value, doc, enums):
         value = float(value)
         return [value] if value != 0 else None
     except ValueError:
-        raise FunctionError("Could not convert to float: {0}".format(value))    
+        raise FunctionError("Could not convert to float: {0}".format(value))
 
 def map_strip_tags(name, value, doc, enums):
     return [re.sub('<.+?>', '', value)]
@@ -71,7 +71,7 @@ def map_validate_cal_dates(name, value, doc, enums):
             del doc['calibration_date']
     if 'calibration_date' in doc and doc['calibration_date'][0].startswith('9999'):
         del doc['calibration_date']
-    return None    
+    return None
 
 def _append_note(doc, note):
     if 'notes' not in doc:

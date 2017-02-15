@@ -123,12 +123,6 @@
     <field name="_root_" type="string" indexed="true" stored="false" docValues="false" />
     <field name="_text_" type="text_general" indexed="true" stored="false" multiValued="true"/>
 
-<!--
-    <field name="id_number" type="string" indexed="true" stored="true" required="false" multiValued="false" />
-    <field name="__id_number" type="ngram" indexed="true" stored="false" required="false" multiValued="true" />
-    <copyField source="id_number" dest="__id_number" />
--->
-
     <field name="location" type="string" indexed="true" stored="true" required="false" multiValued="false" />
     <field name="rack" type="string" indexed="true" stored="true" required="false" multiValued="false" />
     <field name="shelf" type="string" indexed="true" stored="true" required="false" multiValued="false" />
@@ -144,8 +138,6 @@
 
     <field name="category" type="string" indexed="true" stored="true" required="false" multiValued="false" />
     <field name="description" type="string" indexed="false" stored="true" required="false" multiValued="false" />
-
-    <field name="acquired_date" type="date" indexed="true" stored="true" required="false" multiValued="false" />
 
     <field name="notes" type="string" indexed="false" stored="true" required="false" multiValued="true" />
 

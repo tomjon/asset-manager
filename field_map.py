@@ -16,11 +16,13 @@ class FieldMap(object):
                 bits.remove('')
             in_name, out_name = bits[0], bits[1] if len(bits) > 1 else None
             self._fields.append(in_name)
-            self._map[in_name] = (out_name, bits[2] if len(bits) > 2 else None)
+            self._map[in_name] = (out_name, bits[2] if len(bits) > 2 else None, bits[3] if len(bits) > 3 else None)
 
     def map(self, field, value, doc, enums):
-        name, fn_name = self._map[field]
+        name, fn_name, default_value = self._map[field]
         value = value.strip()
+        if default_value is not None and value.strip() == '':
+            value = default_value
         if field != '--' and (name is None or value.lower() in ['?', '', 'n/a', 'na']):
             return name, None
         if fn_name is not None:

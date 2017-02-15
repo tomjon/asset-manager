@@ -1,8 +1,5 @@
 ID				id
 
-# no ID Number values in the latest data
-#ID Number			id_number
-
 Location			location		enum
 Rack				rack			enum
 Shelf				shelf			enum
@@ -14,15 +11,12 @@ Serial No.			serial
 Category			category		enum
 Description			description		strip_tags
 
-# no acquired data values in the latest data
-Acquired Date			acquired_date		date2
-
 Notes				notes
 # no comments in the latest data but we merge these into notes anyway
 Comments			notes
 
 # no condition values in the latest data
-Condition			condition		enum
+Condition			condition		enum			Servicable
 Cal Date			calibration_date	date2
 Cal Due				calibration_due		date2
 # calibration type has no values in the latest data
@@ -56,4 +50,3 @@ Manual Audit Date		audit_date		date2
 SAP ID				sap_id
 PAT test due			pat_due_date		date2
 IP address			url
-
