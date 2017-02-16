@@ -16,6 +16,13 @@ from flask_login import LoginManager, login_required, current_user, login_user, 
 from user_app import UserApplication, ADMIN_ROLE, BOOK_ROLE, VIEW_ROLE
 from config import SOLR_COLLECTION
 
+if __name__ == '__main__':
+    # development environment (run locally with "python server.py debug" at URL http://localhost:8080/static/index.html)
+    application = UserApplication(__name__, static_folder="../ui/dist", static_path="/dev") # pylint: disable=invalid-name
+else:
+    # production environment (run by Apache mod_wsgi at URL http://server/)
+    application = UserApplication(__name__, static_folder=None) # pylint: disable=invalid-name
+
 SOLR_QUERY_URL = "http://localhost:8983/solr/{0}/query".format(SOLR_COLLECTION)
 SOLR_UPDATE_URL = "http://localhost:8983/solr/{0}/update".format(SOLR_COLLECTION)
 
@@ -106,12 +113,11 @@ ASSET_ATTACHMENTS_SQL = """
    WHERE pivot.asset_id=:asset_id AND pivot.attachment_id=attachment.attachment_id
 """
 
-if __name__ == '__main__':
-    # development environment (run locally with "python server.py debug" at URL http://localhost:8080/static/index.html)
-    application = UserApplication(__name__, static_folder="ui/dist", static_path="/dev") # pylint: disable=invalid-name
-else:
-    # production environment (run by Apache mod_wsgi at URL http://server/)
-    application = UserApplication(__name__, static_folder=None) # pylint: disable=invalid-name
+@application.route('/')
+def main_endpoint():
+    """ Output brief info.
+    """
+    return json.dumps({'name': 'BADASS Server API'})
 
 @application.route('/login', methods=['POST'])
 def login_endpoint():
@@ -191,12 +197,6 @@ def assert_status_code(r, status_code):
     """
     if r.status_code != status_code:
         raise SolrError(r.status_code)
-
-@application.route('/')
-def main_endpoint():
-    """ Output brief info.
-    """
-    return json.dumps({'name': 'BADASS Server API'})
 
 @application.route('/enum/<field>', methods=['POST'])
 def enums_endpoint(field=None):

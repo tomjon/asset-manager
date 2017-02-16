@@ -13,7 +13,14 @@ from flask import Flask, redirect, request, Response, send_file, g
 from user_app import UserApplication, ADMIN_ROLE, BOOK_ROLE, VIEW_ROLE
 from sql_app import SqlApplication
 
-application = SqlApplication(__name__) # pylint: disable=invalid-name
+application = SqlApplication(__name__, static_path=None) # pylint: disable=invalid-name
+
+
+@application.route('/')
+def main_endpoint():
+    """ Output brief info.
+    """
+    return json.dumps({'name': 'BADASS XJoin (SOLR) API'})
 
 @application.route('/enum')
 def enums_endpoint():
@@ -44,7 +51,7 @@ def booking_endpoint():
         elif 'unavailable' in request.args:
             # all assets that are NOT available (so not due in and not returned early) on the specified date (we use this negatively)
             return json.dumps(sql.selectAllDict("SELECT asset_id FROM booking WHERE due_out_date <= '{0}' AND '{0}' <= due_in_date AND in_date IS NULL".format(request.args['unavailable'])))
-        return "Unknown filter args", 400
+    return "Unknown booking arguments", 400
 
 
 @application.route('/filter')
@@ -58,6 +65,7 @@ def project_endpoint():
         if 'user' in request.args:
             # booking data for XJoin (filters for assets based on user)
             return json.dumps(sql.selectAllDict("SELECT asset_id FROM booking WHERE user_id=:user_id AND (due_in_date >= date('now') OR (out_date IS NOT NULL AND in_date IS NULL))", user_id=request.args['user']))
+    return "Unknown filter arguments", 400
 
 
 if __name__ == '__main__':
