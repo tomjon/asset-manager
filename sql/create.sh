@@ -1,3 +1,3 @@
-rm assets.db
-cat create.sql | sqlite3 assets.db
-echo .tables | sqlite3 assets.db
+rm $1 
+cat create.sql | sqlite3 $1
+echo .tables | sqlite3 $1
