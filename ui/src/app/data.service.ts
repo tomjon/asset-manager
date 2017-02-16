@@ -11,7 +11,11 @@ export var DATE_RE = /^\d\d\d\d-\d\d-\d\d$/;
 
 @Injectable()
 export class DataService {
-  constructor(private http: Http) { }
+  private base_url: string;
+
+  constructor(private http: Http) {
+    this.base_url = window.location.protocol + '//' + window.location.hostname + ":8080";
+  }
 
   /**
    * A pair of functions to convert between date-times (2015-04-24T00:00:00Z)
@@ -90,7 +94,7 @@ export class DataService {
         path += `/-${field}:*`;
       }
     }
-    return this.http.get(`/search${path}`, {search: params})
+    return this.http.get(`${this.base_url}/search${path}`, {search: params})
                     .map(res => {
                       let json = res.json();
                       let solr = json['solr'];
@@ -115,20 +119,20 @@ export class DataService {
   updateAsset(asset: any): Observable<void> {
     let headers = new Headers({'Content-Type': 'application/json'});
     let body = JSON.stringify(this._date2datetime(asset));
-    return this.http.put(`/asset/${asset.id}`, body, {headers: headers})
+    return this.http.put(`${this.base_url}/asset/${asset.id}`, body, {headers: headers})
                     .catch(this.handleError);
   }
 
   addAsset(asset: any): Observable<string> {
     let headers = new Headers({'Content-Type': 'application/json'});
     let body = JSON.stringify(this._date2datetime(asset));
-    return this.http.post(`/asset`, body, {headers: headers})
+    return this.http.post(`${this.base_url}/asset`, body, {headers: headers})
                     .map(res => res.json().id)
                     .catch(this.handleError);
   }
 
   getAsset(id: string): Observable<any> {
-    return this.http.get(`/asset/${id}`)
+    return this.http.get(`${this.base_url}/asset/${id}`)
                     .map(res => {
                       let docs = res.json().response.docs;
                       let assets = this._datetime2dateArray(docs);
@@ -138,47 +142,47 @@ export class DataService {
   }
 
   deleteById(id: string): Observable<void> {
-    return this.http.delete(`/asset/${id}`)
+    return this.http.delete(`${this.base_url}/asset/${id}`)
                     .catch(this.handleError);
   }
 
   loadAttachments(): Observable<any[]> {
-    return this.http.get(`/file`)
+    return this.http.get(`${this.base_url}/file`)
                     .map(res => res.json())
                     .catch(this.handleError);
   }
 
   deleteAttachment(attachment_id: number): Observable<void> {
-    return this.http.delete(`/file/${attachment_id}`)
+    return this.http.delete(`${this.base_url}/file/${attachment_id}`)
                     .catch(this.handleError);
   }
 
   uploadAttachment(name: string, file: FileList): Observable<any> {
     let params: URLSearchParams = new URLSearchParams();
     params.set('name', name);
-    return this.http.post(`/file`, file, {search: params})
+    return this.http.post(`${this.base_url}/file`, file, {search: params})
                     .map(res => res.json())
                     .catch(this.handleError);
   }
 
   getAttachments(asset: any): Observable<any[]> {
-    return this.http.get(`/attachment/${asset.id}`)
+    return this.http.get(`${this.base_url}/attachment/${asset.id}`)
                     .map(res => res.json())
                     .catch(this.handleError);
   }
 
   addAssociation(asset: any, attachment_id: number): Observable<void> {
-    return this.http.put(`/attachment/${asset.id}/${attachment_id}`, null)
+    return this.http.put(`${this.base_url}/attachment/${asset.id}/${attachment_id}`, null)
                     .catch(this.handleError);
   }
 
   removeAssociation(asset: any, attachment_id: number): Observable<void> {
-    return this.http.delete(`/attachment/${asset.id}/${attachment_id}`)
+    return this.http.delete(`${this.base_url}/attachment/${asset.id}/${attachment_id}`)
                     .catch(this.handleError);
   }
 
   getEnums(): Observable<any> {
-    return this.http.get(`/enum`)
+    return this.http.get(`${this.base_url}/enum`)
                     .map(res => res.json())
                     .catch(this.handleError);
   }
@@ -188,19 +192,19 @@ export class DataService {
     let body = JSON.stringify(label);
     let params: URLSearchParams = new URLSearchParams();
     params.set('label', label);
-    return this.http.post(`/enum/${field}`, body, {search: params, headers: headers})
+    return this.http.post(`${this.base_url}/enum/${field}`, body, {search: params, headers: headers})
                     .map(res => res.json())
                     .catch(this.handleError);
   }
 
   getCurrentUser(): Observable<User> {
-    return this.http.get(`/user`)
+    return this.http.get(`${this.base_url}/user`)
                     .map(res => res.json())
                     .catch(this.handleError);
   }
 
   getBookingSummary(): Observable<User[]> {
-    return this.http.get(`/user/admin`)
+    return this.http.get(`${this.base_url}/user/admin`)
                .map(res => res.json())
                .catch(this.handleError);
   }
@@ -208,14 +212,14 @@ export class DataService {
   updateDetails(user: User): Observable<void> {
     let headers: Headers = new Headers({'Content-Type': 'application/json'});
     let body = JSON.stringify(user);
-    return this.http.put(`/user`, body, {headers: headers})
+    return this.http.put(`${this.base_url}/user`, body, {headers: headers})
                     .catch(this.handleError);
   }
 
   addUser(user: User): Observable<void> {
     let headers: Headers = new Headers({'Content-Type': 'application/json'});
     let body = JSON.stringify(user);
-    return this.http.post(`/user/admin`, body, {headers: headers})
+    return this.http.post(`${this.base_url}/user/admin`, body, {headers: headers})
                     .catch(this.handleError);
   }
 
@@ -224,30 +228,30 @@ export class DataService {
     let params: URLSearchParams = new URLSearchParams();
     params.set('username', username);
     let body = JSON.stringify({password: password});
-    return this.http.post(`/login`, body, {search: params, headers: headers})
+    return this.http.post(`${this.base_url}/login`, body, {search: params, headers: headers})
                     .map(res => res.json())
                     .catch(this.handleError);
   }
 
   logout(): Observable<void> {
-    return this.http.get(`/logout`)
+    return this.http.get(`${this.base_url}/logout`)
                     .catch(this.handleError);
   }
 
   getBookings(asset: any): Observable<any[]> {
-    return this.http.get(`/booking/${asset.id}`)
+    return this.http.get(`${this.base_url}/booking/${asset.id}`)
                     .map(res => res.json())
                     .catch(this.handleError);
   }
 
   getBookingsForProject(project_id: string): Observable<any[]> {
-    return this.http.get(`/project/${project_id}`)
+    return this.http.get(`${this.base_url}/project/${project_id}`)
                     .map(res => res.json())
                     .catch(this.handleError);
   }
 
   deleteBooking(booking: any): Observable<void> {
-    return this.http.delete(`/booking/${booking.booking_id}`)
+    return this.http.delete(`${this.base_url}/booking/${booking.booking_id}`)
                     .catch(this.handleError);
   }
 
@@ -257,17 +261,17 @@ export class DataService {
     params.set('project', project);
     params.set('dueOutDate', dueOutDate);
     params.set('dueInDate', dueInDate);
-    return this.http.post(`/booking/${asset.id}`, "", {search:params, headers: headers})
+    return this.http.post(`${this.base_url}/booking/${asset.id}`, "", {search:params, headers: headers})
                     .map(res => res.json())
                     .catch(this.handleError);
   }
 
   book(asset: any, out: boolean): Observable<void> {
     if (out) {
-      return this.http.put(`/book/${asset.id}`, '')
+      return this.http.put(`${this.base_url}/book/${asset.id}`, '')
                       .catch(this.handleError);
     } else {
-      return this.http.delete(`/book/${asset.id}`)
+      return this.http.delete(`${this.base_url}/book/${asset.id}`)
                       .catch(this.handleError);
     }
   }
