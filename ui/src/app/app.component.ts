@@ -16,7 +16,7 @@ import { User } from './user';
   template: `<div class="container-fluid">
                <div class="row">
                  <div class="col-lg-12">
-                   <h1><img src="/static/ofcom.gif"/> Baldock Asset Database and Scheduling System</h1>
+                   <h1><img src="assets/ofcom.gif"/> Baldock Asset Database and Scheduling System</h1>
                    <badass-login [user]="user" (login)="onLogin($event)"></badass-login>
                    <badass-asset [user]="user" [asset]="asset" [search]="search" (event)="onAssetEvent($event)"></badass-asset>
                    <div *ngIf="error" class="alert alert-danger">{{error.message}}</div>

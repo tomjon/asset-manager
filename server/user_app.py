@@ -54,8 +54,8 @@ class User(object):
         return {'user_id': self.user_id, 'role': self.role, 'username': self.username, 'label': self.label}
 
 class UserApplication(SqlApplication):
-    def __init__(self, name):
-        super(UserApplication, self).__init__(name)
+    def __init__(self, name, **args):
+        super(UserApplication, self).__init__(name, **args)
         self.secret_key = os.urandom(32)
         self.request_times = {}
         self.logged_in_users = []

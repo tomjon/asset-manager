@@ -6,8 +6,8 @@ from flask import Flask, g
 from config import DATABASE
 
 class SqlApplication(Flask):
-    def __init__(self, name):
-        super(SqlApplication, self).__init__(name)
+    def __init__(self, name, **args):
+        super(SqlApplication, self).__init__(name, **args)
         self.teardown_appcontext_funcs.append(self._teardown_db)
         self.db = LocalProxy(self._get_db)
 

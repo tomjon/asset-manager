@@ -106,7 +106,12 @@ ASSET_ATTACHMENTS_SQL = """
    WHERE pivot.asset_id=:asset_id AND pivot.attachment_id=attachment.attachment_id
 """
 
-application = UserApplication(__name__) # pylint: disable=invalid-name
+if __name__ == '__main__':
+    # development environment (run locally with "python server.py debug" at URL http://localhost:8080/static/index.html)
+    application = UserApplication(__name__, static_folder="ui/dist", static_path="/dev") # pylint: disable=invalid-name
+else:
+    # production environment (run by Apache mod_wsgi at URL http://server/)
+    application = UserApplication(__name__, static_folder=None) # pylint: disable=invalid-name
 
 @application.route('/login', methods=['POST'])
 def login_endpoint():
@@ -187,18 +192,11 @@ def assert_status_code(r, status_code):
     if r.status_code != status_code:
         raise SolrError(r.status_code)
 
-@application.route('/', methods=['GET', 'POST'])
+@application.route('/')
 def main_endpoint():
-    """ Redirect / to index.
+    """ Output brief info.
     """
-    return redirect("/static/index.html")
-
-@application.route('/favicon.ico')
-def favicon_endpoint():
-    """ Serve a favicon.
-    """
-    path = os.path.join(application.root_path, 'static', 'favicon.ico')
-    return send_file(path, mimetype='image/vnd.microsoft.icon')
+    return json.dumps({'name': 'BADASS Server API'})
 
 @application.route('/enum/<field>', methods=['POST'])
 def enums_endpoint(field=None):
