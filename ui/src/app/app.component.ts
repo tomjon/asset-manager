@@ -36,15 +36,13 @@ export class AppComponent {
   asset: any;
   error: any;
 
-  show: boolean = false;
-
   constructor(private dataService: DataService, private enumService: EnumService, private fieldMap: FieldMap) { }
 
   ngOnInit() {
     this.dataService.getCurrentUser()
                     .subscribe(user => {
                       if (user.user_id) {
-                        this.user = user; // don't overwrite the anonymous user
+                        this.onLogin(user);
                       }
                     });
   }

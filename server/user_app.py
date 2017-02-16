@@ -30,7 +30,7 @@ class User(object):
         self.password_hash = str(password_hash)
         self.is_authenticated = True
         self.is_active = True
-        self.is_anonymous = False
+        self.is_anonymous = False	
 
     def get_id(self):
         """ Get the user id.
@@ -48,10 +48,12 @@ class User(object):
         self.password_salt = os.urandom(32)
         self.password_hash = pbkdf2_hmac('sha256', str(password), str(self.password_salt), ROUNDS)
 
-    def to_dict(self):
+    def to_dict(self, db):
         """ Return fields in a dictionary, omitting password fields.
         """
-        return {'user_id': self.user_id, 'role': self.role, 'username': self.username, 'label': self.label}
+	with db.cursor() as sql:
+            roleLabel = sql.selectSingle("SELECT label FROM enum, enum_entry WHERE field='role' AND enum_entry.enum_id=enum.enum_id AND value=:role", role=self.role)
+        return {'user_id': self.user_id, 'role': self.role, 'username': self.username, 'label': self.label, 'roleLabel': roleLabel}
 
 class UserApplication(SqlApplication):
     def __init__(self, name, **args):
@@ -141,10 +143,10 @@ class UserApplication(SqlApplication):
         with self.db.cursor() as sql:
             if len(new_password) > 0:
                 current_user.set_password(new_password)
-                user_dict = current_user.to_dict()
+                user_dict = current_user.to_dict(self.db)
                 sql.update("UPDATE user SET password_salt=:salt, password_hash=:hash WHERE user_id=:user_id", user_dict, salt=buffer(current_user.password_salt), hash=buffer(current_user.password_hash))
             else:
-                user_dict = current_user.to_dict()
+                user_dict = current_user.to_dict(self.db)
             sql.update("UPDATE enum_entry SET label=:label WHERE enum_id=(SELECT enum_id FROM enum WHERE field='user') AND value=:user_id", user_dict)
 
     def add_user(self, user_dict):
@@ -160,7 +162,7 @@ class UserApplication(SqlApplication):
                 pass
             user = User(None, user_dict['role'], user_dict['username'], user_dict['label'], None, None)
             user.set_password(user_dict['new_password'])
-            user_dict = user.to_dict()
+            user_dict = user.to_dict(self.db)
             user_id = sql.insert("INSERT INTO user VALUES (NULL, :role, :username, :salt, :hash)", user_dict, salt=buffer(user.password_salt), hash=buffer(user.password_hash))
             sql.insert("INSERT INTO enum_entry VALUES (NULL, (SELECT enum_id FROM enum WHERE field='user'), :value, :value, :label)", user_dict, value=user_id)
         return True
@@ -174,7 +176,7 @@ if __name__ == '__main__':
     #FIXME clearly some consolidation to do here- move all the SQL into the User class? or a new class / set of functions
     user.set_password(unicode(sys.argv[2]))
     with SqlDatabase(DATABASE).cursor() as sql:
-        user_dict = user.to_dict()
+        user_dict = user.to_dict(self.db)
         user_id = sql.insert("INSERT INTO user VALUES (NULL, :role, :username, :salt, :hash)", user_dict, salt=buffer(user.password_salt), hash=buffer(user.password_hash))
         sql.insert("INSERT INTO enum_entry VALUES (NULL, (SELECT enum_id FROM enum WHERE field='user'), :value, :value, :label)", user_dict, value=user_id)
 

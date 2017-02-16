@@ -6,6 +6,7 @@ export var ADMIN_ROLE = 3;
 export class User {
   public user_id: number;
   public role: number;
+  public roleLabel: string;
   public username: string;
   public label: string;
   public data: any;

@@ -10,7 +10,7 @@ declare var $;
 @Component({
   selector: 'badass-login',
   template: `<div *ngIf="loggedIn()">
-               {{user.label}} ({{user.role | enum:'role'}})
+               {{user.label}} ({{user.roleLabel}})
                <button class="btn" data-toggle="modal" data-target="#detailsModal" (click)="clearDetails()">Details</button>
                <button *ngIf="showUsers()" class="btn" data-toggle="modal" data-target="#usersModal" (click)="loadUsers()">Users</button>
                <button class="btn btn-default" (click)="onLogout()">Log out</button>

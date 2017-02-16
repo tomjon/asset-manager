@@ -128,7 +128,7 @@ def login_endpoint():
     user = application.login(username, password)
     if user is None:
         return "Bad credentials", 401
-    return json.dumps(user.to_dict())
+    return json.dumps(user.to_dict(application.db))
 
 @application.route('/logout')
 def logout_endpoint():
@@ -144,7 +144,7 @@ def user_endpoint():
     if request.method == 'GET':
         # if not logged in, return {}
         if hasattr(current_user, 'to_dict'):
-            return json.dumps(current_user.to_dict())
+            return json.dumps(current_user.to_dict(application.db))
     elif request.method == 'PUT':
         # update details for the logged in user (can only change label and json using this endpoint)
         if current_user.is_anonymous:
