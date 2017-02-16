@@ -14,7 +14,7 @@ declare var $;
                  <span class="glyphicon glyphicon-th" [ngClass]="{disabled: ! canUpload()}" (click)="onThumbnails()" data-toggle="modal" data-target="#thumbnailsModal"></span>
                </h3>
                <div class="attachment" *ngFor="let file of files; let i = index" [hidden]="file_index != i">
-                 <img *ngIf="isImage(file.name)" src="/file/{{file.attachment_id}}" title="{{file.name}}"/>
+                 <img *ngIf="isImage(file.name)" src="{{base_url}}/file/{{file.attachment_id}}" title="{{file.name}}"/>
                  <a *ngIf="! isImage(file.name)" target="attachment" href="/file/{{file.attachment_id}}/{{file.name}}" title="{{file.name}}">{{file.name}}</a>
                </div>
              </div>
@@ -67,6 +67,9 @@ export class AttachmentComponent {
   private thumbnails: any[] = [];
 
   private fileCount: number = 0;
+
+  // base URL for file links
+  private base_url: string = window.location.protocol + '//' + window.location.hostname + ":8080";
 
   asset: any;
   @Input('asset') set _asset(asset: any) {

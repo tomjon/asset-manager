@@ -23,9 +23,11 @@ import { User } from './user';
                    <badass-table [user]="user" [assets]="results" [search]="search" [selected]="asset" (event)="onTableEvent($event)"></badass-table>
                  </div>
                </div>
-             </div>`,
+             </div>
+             <div id="blocker"></div>`,
   styles: ['badass-asset { display: block; margin: 20px 0 20px 0 }',
-           'badass-login { display: block; position: absolute; right: 10px; top: 10px }']
+           'badass-login { display: block; position: absolute; right: 10px; top: 10px }',
+           '#blocker { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background: black; opacity: 0.1 }']
 })
 export class AppComponent {
   user: User = new User(); // start with an anonymous user
