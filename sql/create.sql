@@ -17,6 +17,7 @@ CREATE TABLE user(
 	user_id INTEGER PRIMARY KEY,
 	role INTEGER,
 	username VARCHAR(256),
+    email VARCHAR(256),
 	password_salt BLOB,
 	password_hash BLOB
 );

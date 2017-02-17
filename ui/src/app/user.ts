@@ -8,6 +8,7 @@ export class User {
   public role: number;
   public roleLabel: string;
   public username: string;
+  public email: string;
   public label: string;
   public data: any;
 

@@ -29,7 +29,7 @@ SOLR_UPDATE_URL = "http://localhost:8983/solr/{0}/update".format(SOLR_COLLECTION
 XJOIN_PREFIX = 'xjoin_'
 
 USER_BOOKING_SUMMARY_SQL = """
-  SELECT user.user_id, username, label, role,
+  SELECT user.user_id, username, label, role, email,
          COUNT(CASE WHEN IFNULL(in_date, due_in_date) >= date('now') OR (out_date IS NOT NULL AND in_date IS NULL) THEN 1 ELSE NULL END) AS booked,
          COUNT(CASE WHEN out_date IS NOT NULL AND in_date IS NULL THEN 1 ELSE NULL END) AS out,
          COUNT(CASE WHEN out_date IS NOT NULL AND in_date IS NULL AND due_in_date < date('now') THEN 1 ELSE NULL END) AS overdue
@@ -153,7 +153,6 @@ def user_endpoint():
         user = request.get_json()
         if not current_user.check_password(user['password']):
             return "Bad credentials", 401
-        user['data'] = json.loads(user['data'])
         application.update_user(user)
     return json.dumps({})
 

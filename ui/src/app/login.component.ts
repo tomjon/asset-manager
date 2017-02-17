@@ -55,6 +55,13 @@ declare var $;
                          </div>
                        </div>
                        <div class="form-group">
+                         <label for="email">Email Address</label>
+                         <input type="text" required class="form-control" [(ngModel)]="formUser.email" name="email" #f_email="ngModel">
+                         <div [hidden]="f_email.valid" class="alert alert-danger">
+                           Email Address is required
+                         </div>
+                       </div>
+                       <div class="form-group">
                          <label for="new_password">New Password (leave blank if not changing password)</label>
                          <input type="text" class="form-control" [(ngModel)]="formUser.new_password" name="new_password">
                        </div>
@@ -102,7 +109,7 @@ declare var $;
                          </thead>
                          <tbody>
                            <tr *ngFor="let user of users">
-                             <td>{{user.label}}</td>
+                             <td><a href="mailto:{{user.email}}">{{user.label}}</a></td>
                              <td>{{user.role | enum:'role'}}</td>
                              <td>{{user.role >= book_role ? user.out : ''}}</td>
                              <td>{{user.role >= book_role ? user.booked : ''}}</td>

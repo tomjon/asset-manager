@@ -21,10 +21,11 @@ ANONYMOUS, VIEW_ROLE, BOOK_ROLE, ADMIN_ROLE = range(4)
 class User(object):
     """ User session class for flask login.
     """
-    def __init__(self, user_id, role, username, label, password_salt, password_hash):
+    def __init__(self, user_id, role, username, email, label, password_salt, password_hash):
         self.user_id = user_id
         self.role = role
         self.username = username
+        self.email = email
         self.label = label
         self.password_salt = str(password_salt)
         self.password_hash = str(password_hash)
@@ -51,9 +52,9 @@ class User(object):
     def to_dict(self, db):
         """ Return fields in a dictionary, omitting password fields.
         """
-	with db.cursor() as sql:
+        with db.cursor() as sql:
             roleLabel = sql.selectSingle("SELECT label FROM enum, enum_entry WHERE field='role' AND enum_entry.enum_id=enum.enum_id AND value=:role", role=self.role)
-        return {'user_id': self.user_id, 'role': self.role, 'username': self.username, 'label': self.label, 'roleLabel': roleLabel}
+        return {'user_id': self.user_id, 'role': self.role, 'username': self.username, 'email': self.email, 'label': self.label, 'roleLabel': roleLabel}
 
 class UserApplication(SqlApplication):
     def __init__(self, name, **args):
@@ -72,7 +73,7 @@ class UserApplication(SqlApplication):
             return None # log out this user, who was logged in before server restart
         try:
             with self.db.cursor() as sql:
-                values = sql.selectOne("SELECT role, username, label, password_salt, password_hash FROM user, enum, enum_entry WHERE user_id=:user_id AND field='user' AND enum.enum_id=enum_entry.enum_id AND value=user_id", user_id=user_id)
+                values = sql.selectOne("SELECT role, username, email, label, password_salt, password_hash FROM user, enum, enum_entry WHERE user_id=:user_id AND field='user' AND enum.enum_id=enum_entry.enum_id AND value=user_id", user_id=user_id)
         except NoResult:
             return None
         return User(user_id, *values)
@@ -116,7 +117,7 @@ class UserApplication(SqlApplication):
         """
         try:
             with self.db.cursor() as sql:
-                values = sql.selectOne("SELECT user_id, role, username, label, password_salt, password_hash FROM user, enum, enum_entry WHERE username=:username AND field='user' AND enum.enum_id=enum_entry.enum_id AND value=user_id", username=username)
+                values = sql.selectOne("SELECT user_id, role, username, email, label, password_salt, password_hash FROM user, enum, enum_entry WHERE username=:username AND field='user' AND enum.enum_id=enum_entry.enum_id AND value=user_id", username=username)
                 user = User(*values)
                 if user.check_password(password):
                     login_user(user)
@@ -139,6 +140,7 @@ class UserApplication(SqlApplication):
         """ Update details for the logged in user from the given user dictionary.
         """
         current_user.label = user_dict['label']
+        current_user.email = user_dict['email']
         new_password = user_dict.get('new_password', '')
         with self.db.cursor() as sql:
             if len(new_password) > 0:
@@ -147,6 +149,7 @@ class UserApplication(SqlApplication):
                 sql.update("UPDATE user SET password_salt=:salt, password_hash=:hash WHERE user_id=:user_id", user_dict, salt=buffer(current_user.password_salt), hash=buffer(current_user.password_hash))
             else:
                 user_dict = current_user.to_dict(self.db)
+            sql.update("UPDATE user SET email=:email WHERE user_id=:user_id", user_dict)
             sql.update("UPDATE enum_entry SET label=:label WHERE enum_id=(SELECT enum_id FROM enum WHERE field='user') AND value=:user_id", user_dict)
 
     def add_user(self, user_dict):
@@ -160,10 +163,10 @@ class UserApplication(SqlApplication):
                 return False
             except NoResult:
                 pass
-            user = User(None, user_dict['role'], user_dict['username'], user_dict['label'], None, None)
+            user = User(None, user_dict['role'], user_dict['username'], user_dict['email'], user_dict['label'], None, None)
             user.set_password(user_dict['new_password'])
             user_dict = user.to_dict(self.db)
-            user_id = sql.insert("INSERT INTO user VALUES (NULL, :role, :username, :salt, :hash)", user_dict, salt=buffer(user.password_salt), hash=buffer(user.password_hash))
+            user_id = sql.insert("INSERT INTO user VALUES (NULL, :role, :username, :email, :salt, :hash)", user_dict, salt=buffer(user.password_salt), hash=buffer(user.password_hash))
             sql.insert("INSERT INTO enum_entry VALUES (NULL, (SELECT enum_id FROM enum WHERE field='user'), :value, :value, :label)", user_dict, value=user_id)
         return True
 
