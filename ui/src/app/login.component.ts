@@ -95,9 +95,9 @@ declare var $;
                            <tr>
                              <th>User</th>
                              <th>Role</th>
-                             <th>Out</th>
-                             <th>Booked</th>
-                             <th>Overdue</th>
+                             <th class="sh">Out</th>
+                             <th class="sh">Booked</th>
+                             <th class="sh">Overdue</th>
                            </tr>
                          </thead>
                          <tbody>
@@ -180,9 +180,8 @@ declare var $;
   styles: ['table.login label { width: 90px }',
            'table.login input { width: 150px }',
            '.login td { text-align: right; padding: 2px }',
-           'th.assets { background: lightgrey; text-align: center }'
-         ]//,
-  //pipes: [EnumPipe]
+           'th.assets { background: lightgrey; text-align: center }',
+           '.sh { width: 100px }']
 })
 export class LoginComponent {
   @Output('login') userEmitter = new EventEmitter<User>();
@@ -253,6 +252,7 @@ export class LoginComponent {
   onAddUser() {
     this.dataService.addUser(this.newUser)
                     .subscribe(() => {
+                      this.users.push(Object.assign({out: 0, booked: 0, overdue: 0}, this.newUser));
                       $('#addUserModal').modal('hide');
                       this.clearAddUser();
                     },
