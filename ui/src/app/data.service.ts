@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Http, URLSearchParams, Headers, Response } from '@angular/http';
+import { Http, URLSearchParams, Headers, Response, RequestOptionsArgs } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
 import { Search } from './search';
 import { Results } from './results';
@@ -18,6 +18,49 @@ export class DataService {
   constructor(private http: Http) {
     this.base_url = window.location.protocol + '//' + window.location.hostname + ":8080";
     $("#blocker").hide();
+  }
+
+  busy(obs: Observable<any>): Observable<any> {
+    $("#blocker").show();
+    return Observable.create(observer => {
+      obs.subscribe(observer);
+      return () => $("#blocker").hide();
+    });
+  }
+
+  private wrap(http) {
+    let self = this;
+    return function() {
+      let maybeOpts = arguments[arguments.length - 1];
+      if (typeof(maybeOpts) == "RequestOptionsArgs") {
+        maybeOpts.withCredentials = true;
+      }
+      return this.busy(http.apply(this, arguments)).catch(this.handleError);
+    }.bind(self);
+  }
+
+  private get(path: string, args: RequestOptionsArgs={}): Observable<any> {
+    args.headers = new Headers({'Content-Type': 'application/json'});
+    args.withCredentials = true;
+    return this.busy(this.http.get(`${this.base_url}/${path}`, args).catch(this.handleError));
+  }
+
+  private put(path: string, body: any, args: RequestOptionsArgs={}): Observable<any> {
+    args.headers = new Headers({'Content-Type': 'application/json'});
+    args.withCredentials = true;
+    return this.busy(this.http.put(`${this.base_url}/${path}`, body, args).catch(this.handleError));
+  }
+
+  private delete(path: string, args: RequestOptionsArgs={}): Observable<any> {
+    args.headers = new Headers({'Content-Type': 'application/json'});
+    args.withCredentials = true;
+    return this.busy(this.http.delete(`${this.base_url}/${path}`, args).catch(this.handleError));
+  }
+
+  private post(path: string, body: any, args: RequestOptionsArgs={}): Observable<any> {
+    args.headers = new Headers({'Content-Type': 'application/json'});
+    args.withCredentials = true;
+    return this.busy(this.http.post(`${this.base_url}/${path}`, body, args).catch(this.handleError));
   }
 
   /**
@@ -45,14 +88,6 @@ export class DataService {
       }
     }
     return doc;
-  }
-
-  busy(obs: Observable<any>): Observable<any> {
-    $("#blocker").show();
-    return Observable.create(observer => {
-      obs.subscribe(observer);
-      return () => $("#blocker").hide();
-    });
   }
 
   search(search: Search): Observable<Results> {
@@ -105,7 +140,7 @@ export class DataService {
         path += `/-${field}:*`;
       }
     }
-    return this.busy(this.http.get(`${this.base_url}/search${path}`, {search: params}))
+    return this.get(`search${path}`, {search: params})
                .map(res => {
                  let json = res.json();
                  let solr = json['solr'];
@@ -123,167 +158,135 @@ export class DataService {
                    }
                 }
                  return new Results(start, total, assets, facets, json['enums']);
-               })
-               .catch(this.handleError);
+               });
   }
 
   updateAsset(asset: any): Observable<void> {
-    let headers = new Headers({'Content-Type': 'application/json'});
     let body = JSON.stringify(this._date2datetime(asset));
-    return this.http.put(`${this.base_url}/asset/${asset.id}`, body, {headers: headers})
-                    .catch(this.handleError);
+    return this.put(`asset/${asset.id}`, body);
   }
 
   addAsset(asset: any): Observable<string> {
-    let headers = new Headers({'Content-Type': 'application/json'});
     let body = JSON.stringify(this._date2datetime(asset));
-    return this.http.post(`${this.base_url}/asset`, body, {headers: headers})
-                    .map(res => res.json().id)
-                    .catch(this.handleError);
+    return this.post(`asset`, body)
+               .map(res => res.json().id);
   }
 
   getAsset(id: string): Observable<any> {
-    return this.http.get(`${this.base_url}/asset/${id}`)
-                    .map(res => {
-                      let docs = res.json().response.docs;
-                      let assets = this._datetime2dateArray(docs);
-                      return assets.length > 0 ? assets[0] : {};
-                    })
-                    .catch(this.handleError);
+    return this.get(`asset/${id}`)
+               .map(res => {
+                 let docs = res.json().response.docs;
+                 let assets = this._datetime2dateArray(docs);
+                 return assets.length > 0 ? assets[0] : {};
+               });
   }
 
   deleteById(id: string): Observable<void> {
-    return this.http.delete(`${this.base_url}/asset/${id}`)
-                    .catch(this.handleError);
+    return this.delete(`asset/${id}`);
   }
 
   loadAttachments(): Observable<any[]> {
-    return this.http.get(`${this.base_url}/file`)
-                    .map(res => res.json())
-                    .catch(this.handleError);
+    return this.get(`file`)
+               .map(res => res.json());
   }
 
   deleteAttachment(attachment_id: number): Observable<void> {
-    return this.http.delete(`${this.base_url}/file/${attachment_id}`)
-                    .catch(this.handleError);
+    return this.delete(`file/${attachment_id}`);
   }
 
   uploadAttachment(name: string, file: FileList): Observable<any> {
     let params: URLSearchParams = new URLSearchParams();
     params.set('name', name);
-    return this.http.post(`${this.base_url}/file`, file, {search: params})
-                    .map(res => res.json())
-                    .catch(this.handleError);
+    return this.post(`file`, file, {search: params})
+               .map(res => res.json());
   }
 
   getAttachments(asset: any): Observable<any[]> {
-    return this.http.get(`${this.base_url}/attachment/${asset.id}`)
-                    .map(res => res.json())
-                    .catch(this.handleError);
+    return this.get(`attachment/${asset.id}`)
+               .map(res => res.json());
   }
 
   addAssociation(asset: any, attachment_id: number): Observable<void> {
-    return this.http.put(`${this.base_url}/attachment/${asset.id}/${attachment_id}`, null)
-                    .catch(this.handleError);
+    return this.put(`attachment/${asset.id}/${attachment_id}`, null);
   }
 
   removeAssociation(asset: any, attachment_id: number): Observable<void> {
-    return this.http.delete(`${this.base_url}/attachment/${asset.id}/${attachment_id}`)
-                    .catch(this.handleError);
+    return this.delete(`attachment/${asset.id}/${attachment_id}`);
   }
 
   getEnums(): Observable<any> {
-    return this.http.get(`${this.base_url}/enum`)
-                    .map(res => res.json())
-                    .catch(this.handleError);
+    return this.get(`enum`)
+               .map(res => res.json());
   }
 
   addNewEnumLabel(field: string, label: any): Observable<any> {
-    let headers: Headers = new Headers({'Content-Type': 'application/json'});
     let body = JSON.stringify(label);
     let params: URLSearchParams = new URLSearchParams();
     params.set('label', label);
-    return this.http.post(`${this.base_url}/enum/${field}`, body, {search: params, headers: headers})
-                    .map(res => res.json())
-                    .catch(this.handleError);
+    return this.post(`enum/${field}`, body, {search: params})
+               .map(res => res.json());
   }
 
   getCurrentUser(): Observable<User> {
-    return this.http.get(`${this.base_url}/user`)
-                    .map(res => res.json())
-                    .catch(this.handleError);
+    return this.get(`user`)
+               .map(res => res.json());
   }
 
   getBookingSummary(): Observable<User[]> {
-    return this.http.get(`${this.base_url}/user/admin`)
-               .map(res => res.json())
-               .catch(this.handleError);
+    return this.get(`user/admin`)
+               .map(res => res.json());
   }
 
   updateDetails(user: User): Observable<void> {
-    let headers: Headers = new Headers({'Content-Type': 'application/json'});
     let body = JSON.stringify(user);
-    return this.http.put(`${this.base_url}/user`, body, {headers: headers})
-                    .catch(this.handleError);
+    return this.put(`user`, body);
   }
 
   addUser(user: User): Observable<void> {
-    let headers: Headers = new Headers({'Content-Type': 'application/json'});
     let body = JSON.stringify(user);
-    return this.http.post(`${this.base_url}/user/admin`, body, {headers: headers})
-                    .catch(this.handleError);
+    return this.post(`user/admin`, body);
   }
 
   login(username: string, password: string): Observable<User> {
-    let headers: Headers = new Headers({'Content-Type': 'application/json'});
     let params: URLSearchParams = new URLSearchParams();
     params.set('username', username);
     let body = JSON.stringify({password: password});
-    return this.http.post(`${this.base_url}/login`, body, {search: params, headers: headers})
-                    .map(res => res.json())
-                    .catch(this.handleError);
+    return this.post(`login`, body, {search: params})
+               .map(res => res.json());
   }
 
   logout(): Observable<void> {
-    return this.http.get(`${this.base_url}/logout`)
-                    .catch(this.handleError);
+    return this.get(`logout`);
   }
 
   getBookings(asset: any): Observable<any[]> {
-    return this.http.get(`${this.base_url}/booking/${asset.id}`)
-                    .map(res => res.json())
-                    .catch(this.handleError);
+    return this.get(`booking/${asset.id}`)
+               .map(res => res.json());
   }
 
   getBookingsForProject(project_id: string): Observable<any[]> {
-    return this.http.get(`${this.base_url}/project/${project_id}`)
-                    .map(res => res.json())
-                    .catch(this.handleError);
+    return this.get(`project/${project_id}`)
+               .map(res => res.json());
   }
 
   deleteBooking(booking: any): Observable<void> {
-    return this.http.delete(`${this.base_url}/booking/${booking.booking_id}`)
-                    .catch(this.handleError);
+    return this.delete(`booking/${booking.booking_id}`);
   }
 
   addBooking(asset: any, project: any, dueOutDate: string, dueInDate: string): Observable<any> {
-    let headers: Headers = new Headers({'Content-Type': 'application/json'});
     let params: URLSearchParams = new URLSearchParams();
     params.set('project', project);
     params.set('dueOutDate', dueOutDate);
     params.set('dueInDate', dueInDate);
-    return this.http.post(`${this.base_url}/booking/${asset.id}`, "", {search:params, headers: headers})
-                    .map(res => res.json())
-                    .catch(this.handleError);
+    return this.post(`booking/${asset.id}`, null, {search:params})
+               .map(res => res.json());
   }
 
   book(asset: any, out: boolean): Observable<void> {
     if (out) {
-      return this.http.put(`${this.base_url}/book/${asset.id}`, '')
-                      .catch(this.handleError);
+      return this.put(`book/${asset.id}`, null);
     } else {
-      return this.http.delete(`${this.base_url}/book/${asset.id}`)
-                      .catch(this.handleError);
+      return this.delete(`book/${asset.id}`);
     }
   }
 
