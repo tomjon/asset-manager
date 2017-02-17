@@ -161,7 +161,7 @@ export class BookingComponent {
   // analyse bookings to determine the in/out status of the asset (must be correct user)
   getStatus(bookings: any[]): any {
     for (let booking of bookings) {
-      if (booking.user_id != this.user.user_id) {
+      if (booking.user_id != this.user.user_id && this.user.role != ADMIN_ROLE) {
         continue;
       }
       if (this.overdueIn(booking)) {

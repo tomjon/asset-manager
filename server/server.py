@@ -63,7 +63,7 @@ CHECK_BOOKING_SQL = """
   SELECT booking_id, booking.user_id AS user_id, enum_entry.label AS user_label
     FROM booking, user, enum, enum_entry
    WHERE asset_id=:asset_id AND booking.user_id=user.user_id
-         AND :dueInDate >= due_out_date AND :dueOutDate <= IFNULL(in_date, due_in_date)
+         AND :dueInDate > due_out_date AND :dueOutDate < IFNULL(in_date, due_in_date)
          AND field='user' AND enum_entry.enum_id=enum.enum_id AND enum_entry.value=user.user_id
 """
 
@@ -78,10 +78,11 @@ CHECK_OUT_SQL = """
 CHECK_IN_SQL = """
   UPDATE booking
      SET in_date=date('now')
-   WHERE asset_id=:asset_id AND user_id=:user_id
+   WHERE asset_id=:asset_id
+         AND (user_id=:user_id OR (SELECT COUNT(*) FROM user WHERE user_id=:user_id AND role={0})=1)
          AND date('now') >= due_out_date
          AND out_date IS NOT NULL AND in_date IS NULL
-"""
+""".format(ADMIN_ROLE)
 
 GET_ATTACHMENT_SQL = """
   SELECT name, data
