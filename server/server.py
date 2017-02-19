@@ -14,6 +14,7 @@ from werkzeug.local import LocalProxy
 from flask import Flask, redirect, request, Response, send_file, g
 from flask_login import LoginManager, login_required, current_user, login_user, logout_user
 from user_app import UserApplication, ADMIN_ROLE, BOOK_ROLE, VIEW_ROLE
+from solr import SolrError, AssetIndex
 from config import SOLR_COLLECTION
 
 if __name__ == '__main__':
@@ -22,9 +23,7 @@ if __name__ == '__main__':
 else:
     # production environment (run by Apache mod_wsgi at URL http://server/)
     application = UserApplication(__name__, static_folder=None) # pylint: disable=invalid-name
-
-SOLR_QUERY_URL = "http://localhost:8983/solr/{0}/query".format(SOLR_COLLECTION)
-SOLR_UPDATE_URL = "http://localhost:8983/solr/{0}/update".format(SOLR_COLLECTION)
+application.solr = AssetIndex(SOLR_COLLECTION)
 
 XJOIN_PREFIX = 'xjoin_'
 
@@ -177,26 +176,13 @@ def user_admin_endpoint():
         except KeyError:
             return "Bad user details", 400
         return json.dumps({})
-    
 
-class SolrError(Exception):
-    """ Exception raised when SOLR returns an error status.
-    """
-    def __init__(self, status_code):
-        super(SolrError, self).__init__()
-        self.status_code = status_code
 
 @application.errorhandler(SolrError)
 def handle_solr_error(error):
     """ Error handler for SolrError - just pass forward the status code.
     """
     return "SOLR Error", error.status_code
-
-def assert_status_code(r, status_code):
-    """ Raise a SolrError if the status code of the response is not as specified.
-    """
-    if r.status_code != status_code:
-        raise SolrError(r.status_code)
 
 @application.route('/enum/<field>', methods=['POST'])
 def enums_endpoint(field=None):
@@ -229,7 +215,7 @@ def search_endpoint(path=None):
 
     # want to force the Enum SOLR component to reload if this is true, by adding
     # the reload prefix ('__') to the field name in an enum(..) call. The call is
-    # either in a sort spec or will have to a dummy call.
+    # either in a sort spec or will have to be a dummy call.
     reload_enums = request.args.get('reload_enums', False)
 
     sort = ['id asc']
@@ -296,10 +282,6 @@ def search_endpoint(path=None):
         for field in request.args.get('facets', '').split(','):
             params.append(('facet.field', field))
 
-    # do the SOLR request
-    r = requests.get(SOLR_QUERY_URL, params=params)
-    assert_status_code(r, httplib.OK)
-
     # get enum definitions
     with application.db.cursor() as sql:
         enums = {}
@@ -307,7 +289,7 @@ def search_endpoint(path=None):
             stmt = "SELECT value, label, `order` FROM enum_entry WHERE enum_id=:enum_id"
             enums[field] = sql.selectAllDict(stmt, enum_id=enum_id)
 
-    return Response('{{"solr": {0}, "enums": {1}}}'.format(r.text, json.dumps(enums)), mimetype='application/json')
+    return Response('{{"solr": {0}, "enums": {1}}}'.format(application.solr.search(params), json.dumps(enums)), mimetype='application/json')
 
 
 @application.route('/asset', methods=['POST'])
@@ -317,32 +299,20 @@ def asset_endpoint(asset_id=None):
     """ Asset add, delete, update endpoint.
     """
     if asset_id is None:
-        # do a SOLR search so we can generate a new asset id
-        r = requests.get(SOLR_QUERY_URL, params={'q': '*', 'rows': 1, 'fl': 'id', 'sort': 'id desc'})
-        assert_status_code(r, httplib.OK)
-        rsp = json.loads(r.text)
-        docs = rsp['response']['docs']
-        asset_id = str(int(docs[0]['id']) + 1) if len(docs) > 0 else 1
+        asset_id = application.solr.new_id()
     if request.method == 'DELETE':
         # delete an existing asset
-        data = {'delete': asset_id}
+        application.solr.delete(asset_id)
     else:
         # add a new asset or update an existing asset
-        doc = request.get_json()
+        asset = request.get_json()
 
         # validate doc - not much to do at present, but FIXME should validate enum values are in range
-        if 'calibration_date' in doc and 'calibration_due' in doc:
-            if doc['calibration_date'] > doc['calibration_due']:
+        if 'calibration_date' in asset and 'calibration_due' in asset:
+            if asset['calibration_date'] > asset['calibration_due']:
                 return "Invalid asset data", 400
 
-        data = {'add': {'doc': doc}}
-        data['add']['doc']['id'] = asset_id
-        if '_version_' in data['add']['doc']:
-            del data['add']['doc']['_version_']
-
-    headers = {'Content-Type': 'application/json'}
-    r = requests.post(SOLR_UPDATE_URL, headers=headers, params={'commit': 'true'}, data=json.dumps(data))
-    assert_status_code(r, httplib.OK)
+        application.solr.update(asset_id, asset)
     return Response(json.dumps({'id': asset_id}), mimetype='application/json')
 
 
@@ -350,13 +320,10 @@ def asset_endpoint(asset_id=None):
 def asset_endpoint_GET(asset_id):
     """ Asset endpoint to get an existing asset.
     """
-    r = requests.get(SOLR_QUERY_URL, params={'q': 'id:{0}'.format(asset_id)})
-    assert_status_code(r, httplib.OK)
-    rsp = json.loads(r.text)
-    docs = rsp['response']['docs']
-    if len(docs) == 0:
+    asset = applications.solr.get(asset_id)
+    if asset is None:
         return "Asset not found", 404
-    return Response(r.text, mimetype=r.headers['content-type'])
+    return Response(json.dumps(asset), mimetype=r.headers['content-type'])
 
 
 @application.route('/file', methods=['GET', 'POST'])
