@@ -28,7 +28,7 @@ class AssetIndex(object):
         """
         r = requests.get(self.query_url, params=params)
         assert_status_code(r, httplib.OK)
-        return r.text
+        return json.loads(r.text)
 
     def new_id(self):
         r = requests.get(self.query_url, params={'q': '*', 'rows': 1, 'fl': 'id', 'sort': 'id desc'})

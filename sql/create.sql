@@ -60,6 +60,22 @@ CREATE TABLE booking(
 	project INTEGER
 );
 
+CREATE TABLE notification(
+    notification_id INTEGER PRIMARY KEY,
+    trigger_column VARCHAR(64),
+    trigger_field VARCHAR(64),
+    trigger_time INTEGER,
+    title_template TEXT,
+    body_template TEXT,
+    last_triggered INTEGER
+);
+
+CREATE TABLE notification_role_pivot(
+	pivot_id INTEGER PRIMARY KEY,
+    notification_id INTEGER,
+    role INTEGER
+);
+
 /**
  * Create and populate the 'role' enum, and create the 'project' and 'user' enums, which are
  * all required for the system to run. The labels for roles can be edited later, but the

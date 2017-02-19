@@ -289,7 +289,8 @@ def search_endpoint(path=None):
             stmt = "SELECT value, label, `order` FROM enum_entry WHERE enum_id=:enum_id"
             enums[field] = sql.selectAllDict(stmt, enum_id=enum_id)
 
-    return Response('{{"solr": {0}, "enums": {1}}}'.format(application.solr.search(params), json.dumps(enums)), mimetype='application/json')
+    data = {'solr': application.solr.search(params), 'enums': enums}
+    return Response(json.dumps(data), mimetype='application/json')
 
 
 @application.route('/asset', methods=['POST'])

@@ -77,3 +77,10 @@ class SqlCursor(object):
         self._commit = True
         return self.cursor.rowcount
 
+    def executeScript(self, sql):
+        self.cursor.executescript(sql)
+
+    def executePath(self, path):
+        with open(path) as f:
+            self.cursor.executescript(f.read())
+
