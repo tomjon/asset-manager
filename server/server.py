@@ -28,7 +28,7 @@ application.solr = AssetIndex(SOLR_COLLECTION)
 XJOIN_PREFIX = 'xjoin_'
 
 USER_BOOKING_SUMMARY_SQL = """
-  SELECT user.user_id, username, label, role, email,
+  SELECT user.user_id, username, label, role, email, last_login,
          COUNT(CASE WHEN IFNULL(in_date, due_in_date) >= date('now') OR (out_date IS NOT NULL AND in_date IS NULL) THEN 1 ELSE NULL END) AS booked,
          COUNT(CASE WHEN out_date IS NOT NULL AND in_date IS NULL THEN 1 ELSE NULL END) AS out,
          COUNT(CASE WHEN out_date IS NOT NULL AND in_date IS NULL AND due_in_date < date('now') THEN 1 ELSE NULL END) AS overdue

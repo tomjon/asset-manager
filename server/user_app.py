@@ -123,6 +123,7 @@ class UserApplication(SqlApplication):
                     login_user(user)
                     self.request_times[user.user_id] = time()
                     self.logged_in_users.append(user.user_id)
+                    sql.update("UPDATE user SET last_login=date('now') WHERE user_id=:user_id", user_id=user.user_id)
                     return user
         except NoResult:
             pass
@@ -166,7 +167,7 @@ class UserApplication(SqlApplication):
             user = User(None, user_dict['role'], user_dict['username'], user_dict['email'], user_dict['label'], None, None)
             user.set_password(user_dict['new_password'])
             user_dict = user.to_dict(self.db)
-            user_id = sql.insert("INSERT INTO user VALUES (NULL, :role, :username, :email, :salt, :hash)", user_dict, salt=buffer(user.password_salt), hash=buffer(user.password_hash))
+            user_id = sql.insert("INSERT INTO user VALUES (NULL, :role, :username, :email, NULL, :salt, :hash)", user_dict, salt=buffer(user.password_salt), hash=buffer(user.password_hash))
             sql.insert("INSERT INTO enum_entry VALUES (NULL, (SELECT enum_id FROM enum WHERE field='user'), :value, :value, :label)", user_dict, value=user_id)
         return True
 
@@ -181,6 +182,6 @@ if __name__ == '__main__':
     db = SqlDatabase(DATABASE)
     with db.cursor() as sql:
         user_dict = user.to_dict(db)
-        user_id = sql.insert("INSERT INTO user VALUES (NULL, :role, :username, :email, :salt, :hash)", user_dict, salt=buffer(user.password_salt), hash=buffer(user.password_hash))
+        user_id = sql.insert("INSERT INTO user VALUES (NULL, :role, :username, :email, NULL, :salt, :hash)", user_dict, salt=buffer(user.password_salt), hash=buffer(user.password_hash))
         sql.insert("INSERT INTO enum_entry VALUES (NULL, (SELECT enum_id FROM enum WHERE field='user'), :value, :value, :label)", user_dict, value=user_id)
 

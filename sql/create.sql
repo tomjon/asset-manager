@@ -17,7 +17,8 @@ CREATE TABLE user(
 	user_id INTEGER PRIMARY KEY,
 	role INTEGER,
 	username VARCHAR(256),
-    email VARCHAR(256),
+	email VARCHAR(256),
+	last_login DATE,
 	password_salt BLOB,
 	password_hash BLOB
 );
@@ -61,19 +62,19 @@ CREATE TABLE booking(
 );
 
 CREATE TABLE notification(
-    notification_id INTEGER PRIMARY KEY,
-    trigger_column VARCHAR(64),
-    trigger_field VARCHAR(64),
-    trigger_time INTEGER,
-    title_template TEXT,
-    body_template TEXT,
-    last_run DATE
+	notification_id INTEGER PRIMARY KEY,
+	trigger_column VARCHAR(64),
+	trigger_field VARCHAR(64),
+	trigger_time INTEGER,
+	title_template TEXT,
+	body_template TEXT,
+	last_run DATE
 );
 
 CREATE TABLE notification_role_pivot(
 	pivot_id INTEGER PRIMARY KEY,
-    notification_id INTEGER,
-    role INTEGER
+	notification_id INTEGER,
+	role INTEGER
 );
 
 /**

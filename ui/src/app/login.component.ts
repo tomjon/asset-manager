@@ -109,7 +109,7 @@ declare var $;
                          </thead>
                          <tbody>
                            <tr *ngFor="let user of users">
-                             <td><a href="mailto:{{user.email}}">{{user.label}}</a></td>
+                             <td><a href="mailto:{{user.email}}" title="Last log in {{user.last_login}}">{{user.label}}</a></td>
                              <td>{{user.role | enum:'role'}}</td>
                              <td>{{user.role >= book_role ? user.out : ''}}</td>
                              <td>{{user.role >= book_role ? user.booked : ''}}</td>

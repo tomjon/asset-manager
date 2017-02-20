@@ -10,7 +10,7 @@ export class User {
   public username: string;
   public email: string;
   public label: string;
-  public data: any;
+  public last_login: string;
 
   // only set when changing details
   public password: string;
@@ -18,6 +18,5 @@ export class User {
 
   constructor(role: number = ANONYMOUS) {
     this.role = role;
-    this.data = {};
   }
 }
