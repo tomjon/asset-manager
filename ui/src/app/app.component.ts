@@ -25,8 +25,10 @@ import { User } from './user';
                </div>
              </div>
              <div id="blocker"></div>`,
-  styles: ['badass-asset { display: block; margin: 20px 0 20px 0 }',
-           'badass-login { display: block; position: absolute; right: 10px; top: 10px }',
+  styles: ['div.container-fluid { margin-top: 10px }',
+           'badass-asset { display: block; margin: 20px 0 20px 0 }',
+           'h1 { display: inline }',
+           'badass-login { float: right }',
            '#blocker { position: fixed; left: 0; top: 0; width: 100%; height: 100%; background: black; opacity: 0.1 }']
 })
 export class AppComponent {
