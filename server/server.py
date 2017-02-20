@@ -186,6 +186,7 @@ def handle_solr_error(error):
     return "SOLR Error", error.status_code
 
 @application.route('/enum/<field>', methods=['POST'])
+@application.role_required([ADMIN_ROLE])
 def enums_endpoint(field=None):
     """ Endpoint for getting and updating enumerations.
     """

@@ -283,10 +283,10 @@ export class TableComponent {
 
   options(input: any, useCounts:boolean = true): any[] {
     if (! useCounts) {
-      return this.enumService.get(input.field).options(false);
+      return this.enumService.get(input.field).options(false, false);
     }
     let options = [];
-    for (let option of this.enumService.get(input.field).options(false)) {
+    for (let option of this.enumService.get(input.field).options(false, false)) {
       let counts = this.results.facets[input.field];
       option.count = counts && counts[option.value] ? counts[option.value] : 0;
       if (option.count > 0) options.push(option);

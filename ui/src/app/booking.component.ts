@@ -202,7 +202,7 @@ export class BookingComponent {
 
   //FIXME the following three methods are similar as those in asset.component.ts
   options(field: string) {
-    return this.enumService.get(field).options().splice(1);
+    return this.enumService.get(field).options(false, true);
   }
 
   onEnumChange(input) {
