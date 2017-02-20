@@ -67,7 +67,7 @@ CREATE TABLE notification(
     trigger_time INTEGER,
     title_template TEXT,
     body_template TEXT,
-    last_triggered INTEGER
+    last_run DATE
 );
 
 CREATE TABLE notification_role_pivot(
