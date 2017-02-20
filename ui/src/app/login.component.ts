@@ -159,6 +159,13 @@ declare var $;
                          </div>
                        </div>
                        <div class="form-group">
+                         <label for="email">Email Address</label>
+                         <input type="text" required class="form-control" [(ngModel)]="newUser.email" name="email" #g_email="ngModel">
+                         <div [hidden]="g_email.valid" class="alert alert-danger">
+                           Email Address is required
+                         </div>
+                       </div>
+                       <div class="form-group">
                          <label for="new_password">Initial Password</label>
                          <input type="text" required class="form-control" [(ngModel)]="newUser.new_password" name="new_password" #g_new_password="ngModel">
                          <div [hidden]="g_new_password.valid" class="alert alert-danger">

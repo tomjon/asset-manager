@@ -35,6 +35,7 @@ USER_BOOKING_SUMMARY_SQL = """
     FROM enum, enum_entry, user LEFT JOIN booking ON booking.user_id=user.user_id
    WHERE field='user' AND enum.enum_id=enum_entry.enum_id AND enum_entry.value=user.user_id
 GROUP BY user.user_id
+ORDER BY `order`
 """
 
 ASSET_BOOKINGS_SQL = """

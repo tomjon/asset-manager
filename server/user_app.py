@@ -172,14 +172,15 @@ class UserApplication(SqlApplication):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 4:
-        print >>sys.stderr, "Usage: {0} <username> <password> <label>".format(sys.argv[0])
+    if len(sys.argv) != 5:
+        print >>sys.stderr, "Usage: {0} <username> <password> <email> <label>".format(sys.argv[0])
         sys.exit(1)
-    user = User(None, ADMIN_ROLE, unicode(sys.argv[1]), unicode(sys.argv[3]), None, None)
+    user = User(None, ADMIN_ROLE, unicode(sys.argv[1]), unicode(sys.argv[3]), unicode(sys.argv[4]), None, None)
     #FIXME clearly some consolidation to do here- move all the SQL into the User class? or a new class / set of functions
     user.set_password(unicode(sys.argv[2]))
-    with SqlDatabase(DATABASE).cursor() as sql:
-        user_dict = user.to_dict(self.db)
-        user_id = sql.insert("INSERT INTO user VALUES (NULL, :role, :username, :salt, :hash)", user_dict, salt=buffer(user.password_salt), hash=buffer(user.password_hash))
+    db = SqlDatabase(DATABASE)
+    with db.cursor() as sql:
+        user_dict = user.to_dict(db)
+        user_id = sql.insert("INSERT INTO user VALUES (NULL, :role, :username, :email, :salt, :hash)", user_dict, salt=buffer(user.password_salt), hash=buffer(user.password_hash))
         sql.insert("INSERT INTO enum_entry VALUES (NULL, (SELECT enum_id FROM enum WHERE field='user'), :value, :value, :label)", user_dict, value=user_id)
 

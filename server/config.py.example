@@ -1,3 +1,4 @@
+BASE_SOLR_URL = "http://localhost:8983/solr"
 SOLR_COLLECTION = "assets"
 DATABASE = "sql/assets.db"
 ROUNDS = 10^6
