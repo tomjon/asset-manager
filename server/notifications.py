@@ -7,9 +7,10 @@
 import sys
 import time
 import re
+import subprocess
 from sql import SqlDatabase, NoResult
 from solr import AssetIndex
-from config import DATABASE, SOLR_COLLECTION
+from config import DATABASE, SOLR_COLLECTION, MAIL_COMMAND, MAIL_FROM
 
 
 class Email(object):
@@ -25,7 +26,12 @@ class Email(object):
         self.cc.append(cc) # expects (name, email)
 
     def send(self):
-        pass
+        args = [MAIL_COMMAND, '-s', self.title, '-r', '{0} <{1}>'.format(MAIL_FROM)]
+        if len(self.cc) > 0:
+            args += ['-c', ','.join(self.cc)]
+        args += ['{0} <{1}>'.format(self.to)]
+        p = subprocess.Popen(args, stdin=subprocess.PIPE)
+        p.communicate(self.body)
 
 
 BRACKETS_RE = re.compile(r'\[(.+?)\]|<(.+?)>')
