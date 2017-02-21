@@ -23,7 +23,8 @@ TEST_BOOKINGS = [
 
 TEST_NOTIFICATIONS = [
     {'notification_id': 1, 'trigger_column': 'due_out_date', 'trigger_field': None, 'trigger_days': 1, 'title_template': 'Asset <SERIAL>', 'body_template': 'Asset <SERIAL> due out on [DUE_OUT_DATE]!', 'roles': [ADMIN_ROLE]}, # 'due out' notification triggered by passing of due_out_date
-    {'notification_id': 2, 'trigger_column': None, 'trigger_field': 'calibration_due', 'trigger_days': -2, 'title_template': '<MANUFACTURER> <MODEL>', 'body_template': 'Asset <SERIAL> was due for calibration on <CALIBRATION_DUE>', 'roles': [BOOK_ROLE, ADMIN_ROLE]} # 'calibration due' notification triggered by calibration_due date approaching
+    {'notification_id': 2, 'trigger_column': None, 'trigger_field': 'calibration_due', 'trigger_days': -2, 'title_template': '<MANUFACTURER> <MODEL>', 'body_template': 'Asset <SERIAL> was due for calibration on <CALIBRATION_DUE>', 'roles': [BOOK_ROLE, ADMIN_ROLE]}, # 'calibration due' notification triggered by calibration_due date approaching
+    {'notification_id': 3, 'trigger_column': 'due_in_date', 'trigger_field': None, 'trigger_days': 1, 'title_template': '<SERIAL>', 'body_template': 'Asset <SERIAL> due in on [DUE_IN_DATE]', 'roles': [ADMIN_ROLE]} # 'due in' (overdue) notification triggered by passing of due_in_date
 ]
 
 class AssetIndex(object):
@@ -71,12 +72,12 @@ def test_not_triggered(db, index):
         assert len(mails) == count
 
 def test_notifications(db, index):
-    """ Check triggered notifications generate mail, but not the second time we run them.
+    """ Check triggered notifications generate mail, but not the second time we run them shortly after.
     """
-    for now, count in [('2017-02-16T10:21:43Z', 2), ('2017-02-16T10:21:52Z', 0)]:
+    for now, count in [('2017-02-16T10:21:43Z', 2), ('2017-02-16T10:21:52Z', 0), ('2017-02-26T00:00:00Z', 1)]:
         mails = list(run_notifications(now, db, index))
         assert len(mails) == count
-        if count > 0:
+        if count == 2: # first run; second run has no mails to verify
             assert mails[0].to == (TEST_USERS[0]['label'], TEST_USERS[0]['email'])
             assert mails[0].title == 'Asset {0}'.format(TEST_ASSETS[0]['serial'])
             assert mails[0].body == 'Asset {0} due out on {1}!'.format(TEST_ASSETS[0]['serial'], TEST_BOOKINGS[0]['due_out_date'])
@@ -85,4 +86,9 @@ def test_notifications(db, index):
             assert mails[1].title == '{0} {1}'.format(TEST_ASSETS[1]['manufacturer'], TEST_ASSETS[1]['model'])
             assert mails[1].body == 'Asset {0} was due for calibration on {1}'.format(TEST_ASSETS[1]['serial'], TEST_ASSETS[1]['calibration_due'])
             assert mails[1].cc == [(TEST_USERS[0]['label'], TEST_USERS[0]['email']), (TEST_USERS[1]['label'], TEST_USERS[1]['email'])]
+        elif count == 1: # third run
+            assert mails[0].to == (TEST_USERS[0]['label'], TEST_USERS[0]['email'])
+            assert mails[0].title == TEST_ASSETS[0]['serial']
+            assert mails[0].body == 'Asset {0} due in on {1}'.format(TEST_ASSETS[0]['serial'], TEST_BOOKINGS[0]['due_in_date'])
+            assert mails[0].cc == [(TEST_USERS[1]['label'], TEST_USERS[1]['email'])]
 
