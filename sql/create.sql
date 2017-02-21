@@ -65,16 +65,22 @@ CREATE TABLE notification(
 	notification_id INTEGER PRIMARY KEY,
 	trigger_column VARCHAR(64),
 	trigger_field VARCHAR(64),
-	trigger_time INTEGER,
+	trigger_days INTEGER,
 	title_template TEXT,
-	body_template TEXT,
-	last_run DATE
+	body_template TEXT
 );
 
 CREATE TABLE notification_role_pivot(
 	pivot_id INTEGER PRIMARY KEY,
 	notification_id INTEGER,
 	role INTEGER
+);
+
+CREATE TABLE notification_sent(
+    sent_id INTEGER PRIMARY KEY,
+    notification_id INTEGER,
+    asset_id INTEGER,
+    sent DATE
 );
 
 /**

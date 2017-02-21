@@ -1,13 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-""" Script for sending email notifications. Should be run periodically.
+""" Script for sending email notifications. Should be run periodically, once per day.
 """
 
 import sys
 import time
 import re
-from sql import SqlDatabase
+from sql import SqlDatabase, NoResult
 from solr import AssetIndex
 from config import DATABASE, SOLR_COLLECTION
 
@@ -51,14 +51,25 @@ def _eval_template(template, values, asset):
 class Notification(object):
     """ Class representing a notification specification.
     """
-    def __init__(self, notification_id, trigger_column, trigger_field, trigger_time, title_template, body_template, roles, **_):
+    def __init__(self, notification_id, trigger_column, trigger_field, trigger_days, title_template, body_template, roles, **_):
         self.id = notification_id
         self.trigger_column = trigger_column # trigger can have a column OR a field - column is a booking table column,
         self.trigger_field = trigger_field # field is a SOLR asset field
-        self.trigger_time = trigger_time # amount of time away from now to trigger (trigger delay)
+        self.trigger_days = '{0}{1}'.format('+' if trigger_days >= 0 else '', str(trigger_days)) # number of days away from now to trigger (trigger delay)
         self.title_template = title_template # title_template can refer to booking or user table column values like [column] and asset field values like <field>
         self.body_template = body_template # as title_template
         self.roles = roles # the roles associated with this notification (all users with any of these roles are cc'd in the mail, if triggered)
+
+    def _last_sent(self, sql, asset_id, now, trigger_date):
+        values = {'notification_id': self.id, 'asset_id': asset_id, 'now': now}
+        try:
+            sent, trigger = sql.selectOne("SELECT max(sent), CASE WHEN sent >= date('{0}', '{1} DAYS') THEN 1 ELSE 0 END FROM notification_sent WHERE notification_id=:notification_id AND asset_id=:asset_id".format(trigger_date, self.trigger_days), values)
+            if trigger == 1:
+                return False
+        except NoResult:
+            pass
+        sql.insert("INSERT INTO notification_sent VALUES (NULL, :notification_id, :asset_id, :now)", values)
+        return True
 
     def _mail(self, sql, values, asset):
         title = _eval_template(self.title_template, values, asset)
@@ -69,13 +80,14 @@ class Notification(object):
         return mail
 
     def run(self, now, sql, index):
-        sql.update("UPDATE notification SET last_run=:now WHERE notification_id=:notification_id", notification_id=self.id, now=now)
         if self.trigger_column is not None:
-            for values in sql.selectAllDict("SELECT booking.*, user.*, enum_entry.* FROM booking, user, enum, enum_entry WHERE datetime(:now) >= datetime({0}, '+{1} SECONDS') AND booking.user_id=user.user_id AND enum.field=:user_field AND enum.enum_id=enum_entry.enum_id AND enum_entry.value=user.user_id".format(self.trigger_column, self.trigger_time), now=now, user_field='user'):
-                yield self._mail(sql, values, index.get(values['asset_id']))
-        if self.trigger_field is not None:
-            for asset in index.search({'q': '{0}:[* TO {1}+{2}SECONDS]'.format(self.trigger_field, now.upper(), self.trigger_time)})['response']['docs']:
-                yield self._mail(sql, None, asset)
+            for values in sql.selectAllDict("SELECT * FROM booking, user, enum, enum_entry WHERE date(:now) >= date(booking.{0}, '{1} DAYS') AND booking.user_id=user.user_id AND enum.field=:user_field AND enum.enum_id=enum_entry.enum_id AND enum_entry.value=user.user_id".format(self.trigger_column, self.trigger_days), now=now, user_field='user'):
+                if self._last_sent(sql, values['asset_id'], now, values[self.trigger_column]):
+                    yield self._mail(sql, values, index.get(values['asset_id']))
+        elif self.trigger_field is not None:
+            for asset in index.search({'q': '{0}:[* TO {1}{2}DAYS]'.format(self.trigger_field, now.upper(), self.trigger_days)})['response']['docs']:
+                if self._last_sent(sql, asset['id'], now, asset[self.trigger_field]):
+                    yield self._mail(sql, None, asset)
 
 
 def run_notifications(now, db, index):
