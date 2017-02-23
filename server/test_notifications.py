@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """ Unit tests for the notifications module.
 """
 import pytest
@@ -22,9 +24,27 @@ TEST_BOOKINGS = [
 ]
 
 TEST_NOTIFICATIONS = [
-    {'notification_id': 1, 'trigger_column': 'due_out_date', 'trigger_field': None, 'trigger_days': 1, 'title_template': 'Asset <SERIAL>', 'body_template': 'Asset <SERIAL> due out on [DUE_OUT_DATE]!', 'roles': [ADMIN_ROLE]}, # 'due out' notification triggered by passing of due_out_date
-    {'notification_id': 2, 'trigger_column': None, 'trigger_field': 'calibration_due', 'trigger_days': -2, 'title_template': '<MANUFACTURER> <MODEL>', 'body_template': 'Asset <SERIAL> was due for calibration on <CALIBRATION_DUE>', 'roles': [BOOK_ROLE, ADMIN_ROLE]}, # 'calibration due' notification triggered by calibration_due date approaching
-    {'notification_id': 3, 'trigger_column': 'due_in_date', 'trigger_field': None, 'trigger_days': 1, 'title_template': '<SERIAL>', 'body_template': 'Asset <SERIAL> due in on [DUE_IN_DATE]', 'roles': [ADMIN_ROLE]} # 'due in' (overdue) notification triggered by passing of due_in_date
+    {'notification_id': 1, 'name': '', 'title_template': 'Asset <SERIAL>', 'body_template': 'Asset <SERIAL> due out on [DUE_OUT_DATE]!'},
+    {'notification_id': 2, 'name': '', 'title_template': '<MANUFACTURER> <MODEL>', 'body_template': 'Asset <SERIAL> was due for calibration on <CALIBRATION_DUE>'},
+    {'notification_id': 3, 'name': '', 'title_template': '<SERIAL>', 'body_template': 'Asset <SERIAL> became overdue on [DUE_IN_DATE]'}
+]
+
+TEST_ROLES = [
+    {'notification_id': 1, 'role': ADMIN_ROLE},
+    {'notification_id': 2, 'role': ADMIN_ROLE}, {'notification_id': 2, 'role': BOOK_ROLE},
+    {'notification_id': 3, 'role': ADMIN_ROLE}
+]
+
+TEST_TRIGGERS = [
+    {'notification_id': 1, 'column': 'due_out_date', 'field': None, 'days': 1},
+    {'notification_id': 2, 'column': None, 'field': 'calibration_due', 'days': -2},
+    {'notification_id': 3, 'column': 'due_in_date', 'field': None, 'days': 1}
+]
+
+TEST_FILTERS = [
+    {'trigger_id': 1, 'column': 'out_date', 'field': None, 'operator': '==', 'value': None},
+    {'trigger_id': 3, 'column': 'out_date', 'field': None, 'operator': '!=', 'value': None},
+    {'trigger_id': 3, 'column': 'in_date', 'field': None, 'operator': '==', 'value': None}
 ]
 
 class AssetIndex(object):
@@ -56,8 +76,10 @@ def db():
         enum_id = sql.insert("INSERT INTO enum VALUES (NULL, :field)", field='user')
         sql.cursor.executemany("INSERT INTO enum_entry VALUES (NULL, :enum_id, :value, :value, :label)", [{'enum_id': enum_id, 'value': x['user_id'], 'label': x['label']} for x in TEST_USERS])
         sql.cursor.executemany("INSERT INTO booking VALUES (NULL, :asset_id, :user_id, :booked_date, :due_out_date, :due_in_date, :out_date, :in_date, :project)", TEST_BOOKINGS)
-        sql.cursor.executemany("INSERT INTO notification VALUES (:notification_id, :trigger_column, :trigger_field, :trigger_days, :title_template, :body_template)", TEST_NOTIFICATIONS)
-        sql.cursor.executemany("INSERT INTO notification_role_pivot VALUES (NULL, :notification_id, :role_id)", [(x['notification_id'], role_id) for x in TEST_NOTIFICATIONS for role_id in x['roles']])
+        sql.cursor.executemany("INSERT INTO notification VALUES (:notification_id, :name, :title_template, :body_template)", TEST_NOTIFICATIONS)
+        sql.cursor.executemany("INSERT INTO notification_role_pivot VALUES (NULL, :notification_id, :role)", TEST_ROLES)
+        sql.cursor.executemany("INSERT INTO trigger VALUES (NULL, :notification_id, :column, :field, :days)", TEST_TRIGGERS)
+        sql.cursor.executemany("INSERT INTO trigger_filter VALUES (NULL, :trigger_id, :column, :field, :operator, :value)", TEST_FILTERS)
     return db
 
 @pytest.fixture()
@@ -74,7 +96,7 @@ def test_not_triggered(db, index):
 def test_notifications(db, index):
     """ Check triggered notifications generate mail, but not the second time we run them shortly after.
     """
-    for now, count in [('2017-02-16T10:21:43Z', 2), ('2017-02-16T10:21:52Z', 0), ('2017-02-26T00:00:00Z', 1)]:
+    for now, count in [('2017-02-16T10:21:43Z', 2), ('2017-02-16T10:21:52Z', 0), ('2017-02-26T00:00:00Z', 0)]:
         mails = list(run_notifications(now, db, index))
         assert len(mails) == count
         if count == 2: # first run; second run has no mails to verify
@@ -89,6 +111,35 @@ def test_notifications(db, index):
         elif count == 1: # third run
             assert mails[0].to == (TEST_USERS[0]['label'], TEST_USERS[0]['email'])
             assert mails[0].title == TEST_ASSETS[0]['serial']
-            assert mails[0].body == 'Asset {0} due in on {1}'.format(TEST_ASSETS[0]['serial'], TEST_BOOKINGS[0]['due_in_date'])
+            assert mails[0].body == 'Asset {0} became overdue on {1}'.format(TEST_ASSETS[0]['serial'], TEST_BOOKINGS[0]['due_in_date'])
             assert mails[0].cc == [(TEST_USERS[1]['label'], TEST_USERS[1]['email'])]
 
+def test_check_out(db, index):
+    """ Test that the 'due out' notification isn't sent if the asset has been taken out.
+    """
+    mails = list(run_notifications('2017-02-16T00:00:00Z', db, index))
+    assert len(mails) == 2 # due out and calibration due notifications
+    db.cursor().delete("DELETE FROM notification_sent") # clear sent notifications (reset)
+    db.cursor().update("UPDATE booking SET out_date='2017-02-15' WHERE booking_id=1")
+    mails = list(run_notifications('2017-02-16T00:00:00Z', db, index))
+    assert len(mails) == 1 # just the calibration due notification
+
+def test_overdue(db, index):
+    """ Test that the 'overdue' notification isn't sent if the asset has been returned.
+        Also tests that the 'overdue' notification isn't sent if the asset isn't actually out (but is when it is).
+    """
+    mails = list(run_notifications('2017-02-26T00:00:00Z', db, index))
+    assert len(mails) == 2 # due out and calibration due notifications
+    db.cursor().delete("DELETE FROM notification_sent") # clear sent notifications (reset)
+    db.cursor().update("UPDATE booking SET out_date='2017-02-15', in_date='2017-02-25' WHERE booking_id=1")
+    mails = list(run_notifications('2017-02-26T00:00:00Z', db, index))
+    assert len(mails) == 1 # just the calibration due notification
+
+def test_change_asset(db, index):
+    """ Test that changing an asset (e.g. after recalibration) doesn't stop a notification being sent when the time comes.
+    """
+    mails = list(run_notifications('2013-04-01T00:00:00Z', db, index))
+    assert len(mails) == 1 # first calibration due notifications
+    TEST_ASSETS[1]['calibration_due'] = '2015-02-02T00:00:00Z'
+    mails = list(run_notifications('2015-02-26T00:00:00Z', db, index))
+    assert len(mails) == 1 # just the calibration due notification
