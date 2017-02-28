@@ -222,6 +222,7 @@ export class LoginComponent {
 
   constructor(private dataService: DataService, private enumService: EnumService) {}
 
+  //FIXME these very similar - method on User, or make a user.service?
   loggedIn(): boolean {
     return this.user != undefined && this.user.role != ANONYMOUS;
   }

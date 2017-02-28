@@ -18,7 +18,7 @@ from solr import SolrError, AssetIndex
 from config import SOLR_COLLECTION
 
 if __name__ == '__main__':
-    # development environment (run locally with "python server.py debug" at URL http://localhost:8080/static/index.html)
+    # development environment (run locally with "python server.py debug" at URL http://localhost:3389/static/index.html)
     application = UserApplication(__name__, static_folder="../ui/dist", static_path="/dev") # pylint: disable=invalid-name
 else:
     # production environment (run by Apache mod_wsgi at URL http://server/)
@@ -443,7 +443,81 @@ def book_endpoint(asset_id):
         return json.dumps({})
 
 
+def _delete_triggers(sql, notification_id):
+    for trigger_id in sql.selectAllSingle("SELECT trigger_id FROM trigger WHERE notification_id=:notification_id", notification_id=notification_id):
+        sql.delete("DELETE FROM trigger_filter WHERE trigger_id=:trigger_id", trigger_id=trigger_id)
+    sql.delete("DELETE FROM trigger WHERE notification_id=:notification_id", notification_id=notification_id)
+
+def _default(d, *keys):
+    for key in keys:
+        if key not in d:
+            d[key] = None
+
+def _insert_triggers(sql, notification):
+    for trigger in notification['triggers']:
+        _default(trigger, 'column', 'field')
+        trigger['trigger_id'] = sql.insert("INSERT INTO trigger VALUES (NULL, :notification_id, :column, :field, :days)", trigger, notification_id=notification['notification_id'])
+        for filter in trigger['filters']:
+            filter['trigger_id'] = trigger['trigger_id']
+            _default(filter, 'column', 'field')
+            filter['filter_id'] = sql.insert("INSERT INTO trigger_filter VALUES (NULL, :trigger_id, :column, :field, :operator, :value)", filter, trigger_id=trigger['trigger_id'])
+
+def _insert_notification(sql, notification, notification_id=None):
+    notification['notification_id'] = sql.insert("INSERT INTO notification VALUES (:notification_id, :name, :title_template, :body_template)", notification, notification_id=notification_id)
+    _delete_triggers(sql, notification_id)
+    _insert_triggers(sql, notification)
+
+def _update_notification(sql, notification, notification_id):
+    notification['notification_id'] = notification_id
+    sql.update("UPDATE notification SET name=:name, title_template=:title_template, body_template=:body_template WHERE notification_id=:notification_id", notification, notification_id=notification_id)
+    _delete_triggers(sql, notification_id)
+    _insert_triggers(sql, notification)
+
+@application.route('/notification', methods=['GET', 'POST'])
+@application.route('/notification/<notification_id>', methods=['GET', 'PUT', 'DELETE'])
+@application.role_required([ADMIN_ROLE])
+def notification_endpoint(notification_id=None):
+    """ Endpoint for notifications. From the server API standpoint, these are hierarchal objects - notifications contains triggers,
+        triggers contain filters. This makes updating complicated, because we have to check for contained triggers, and within those,
+        contained filters - simplify by deleting the inserting. Notifications cannot share triggers, and triggers cannot share filters,
+        so that makes things a bit easier.
+    """
+    with application.db.cursor() as sql:
+        if request.method == 'GET':
+            if notification_id is not None:
+                try:
+                    notifications = [sql.selectAllDict("SELECT * FROM notification WHERE notification_id=:notification_id", notification_id=notification_id)]
+                except NoResult:
+                    return "No such notification", 404
+            else:
+                notifications = sql.selectAllDict("SELECT * FROM notification")
+            for notification in notifications:
+                notification['triggers'] = sql.selectAllDict("SELECT * FROM trigger WHERE notification_id=:notification_id", notification_id=notification['notification_id'])
+                for trigger in notification['triggers']:
+                    trigger['filters'] = sql.selectAllDict("SELECT * FROM trigger_filter WHERE trigger_id=:trigger_id", trigger_id=trigger['trigger_id'])
+            if notification_id is not None:
+                notifications = notifications[0]
+            return json.dumps(notifications)
+        if request.method == 'PUT':
+            notification = request.get_json()
+            try:
+                sql.selectOneDict("SELECT * FROM notification WHERE notification_id=:notification_id", notification_id=notification_id)
+                _update_notification(sql, notification, notification_id)
+            except NoResult:
+                _insert_notification(sql, notification, notification_id)
+            return json.dumps(notification)
+        if request.method == 'DELETE':
+            if sql.delete("DELETE FROM notification WHERE notification_id=:notification_id", notification_id=notification_id) == 0:
+                return "No such notification", 404
+            _delete_triggers(sql, notification_id)
+            return json.dumps({})
+        if request.method == 'POST':
+            notification = request.get_json()
+            _insert_notification(sql, notification)
+            return json.dumps(notification)
+
+
 if __name__ == '__main__':
     if 'debug' in sys.argv:
         application.debug = True
-    application.run('0.0.0.0', port=8080)
+    application.run('0.0.0.0', port=3389)

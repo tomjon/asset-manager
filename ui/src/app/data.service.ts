@@ -5,6 +5,7 @@ import { Search } from './search';
 import { Results } from './results';
 import { Frequency } from './frequency';
 import { User } from './user';
+import { Notification } from './notification';
 
 export var DATETIME_RE = /^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\dZ$/;
 export var DATE_RE = /^\d\d\d\d-\d\d-\d\d$/;
@@ -16,7 +17,7 @@ export class DataService {
   private base_url: string;
 
   constructor(private http: Http) {
-    this.base_url = window.location.protocol + '//' + window.location.hostname + ":8080";
+    this.base_url = window.location.protocol + '//' + window.location.hostname + ":3389";
     $("#blocker").hide();
   }
 
@@ -238,13 +239,11 @@ export class DataService {
   }
 
   updateDetails(user: User): Observable<void> {
-    let body = JSON.stringify(user);
-    return this.put(`user`, body);
+    return this.put(`user`, JSON.stringify(user));
   }
 
   addUser(user: User): Observable<void> {
-    let body = JSON.stringify(user);
-    return this.post(`user/admin`, body);
+    return this.post(`user/admin`, JSON.stringify(user));
   }
 
   login(username: string, password: string): Observable<User> {
@@ -288,6 +287,22 @@ export class DataService {
     } else {
       return this.delete(`book/${asset.id}`);
     }
+  }
+
+  getNotifications(): Observable<Notification[]> {
+    return this.get(`notification`).map(res => res.json());
+  }
+
+  addNotification(notification: Notification): Observable<Notification> {
+    return this.post(`notification`, JSON.stringify(notification));
+  }
+
+  updateNotification(notification: Notification): Observable<Notification> {
+    return this.put(`notification/${notification.notification_id}`, JSON.stringify(notification));
+  }
+
+  deleteNotification(notification_id: string): Observable<void> {
+    return this.delete(`notification/${notification_id}`);
   }
 
   private handleError(error: Response | any) {
