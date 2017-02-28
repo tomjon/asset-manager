@@ -78,7 +78,7 @@ declare var $;
                      </div>
                      <div class="modal-footer">
                        <button type="button" class="btn btn-default" [disabled]="detailsForm.pristine" (click)="onSubmitDetails()" [disabled]="! detailsForm.form.valid">Submit</button>
-                       <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
+                       <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                      </div>
                    </div>
                  </div>
@@ -120,7 +120,7 @@ declare var $;
                      </div>
                      <div class="modal-footer">
                        <button type="button" class="btn btn-default" data-toggle="modal" data-target="#addUserModal" (click)="clearAddUser()">Add New User</button>
-                       <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
+                       <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                      </div>
                    </div>
                  </div>
@@ -185,7 +185,7 @@ declare var $;
                      </div>
                      <div class="modal-footer">
                        <button type="button" class="btn btn-default" [disabled]="addUserForm.pristine" (click)="onAddUser()" [disabled]="! detailsForm.form.valid">Submit</button>
-                       <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
+                       <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                      </div>
                    </div>
                  </div>

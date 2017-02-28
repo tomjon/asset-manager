@@ -40,7 +40,7 @@ declare var $;
                    <div class="modal-footer">
                      <input #upload type="file" (change)="setFileCount()"/>
                      <button type="button" class="btn btn-default" [ngClass]="{disabled: ! canAddNew()}" (click)="onAddNew()">Add New</button>
-                     <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
+                     <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                    </div>
                  </div>
                </div>

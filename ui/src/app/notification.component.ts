@@ -106,7 +106,7 @@ declare var $;
                        <button type="button" class="btn btn-default" (click)="onSave()" [disabled]="! form.form.valid || form.form.pristine">Save</button>
                        <button type="button" class="btn btn-default" (click)="onAddNew()" [disabled]="! canAddNew()">Add New</button>
                        <button type="button" class="btn btn-default" (click)="onDelete()">Delete</button>
-                       <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
+                       <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                      </div>
                    </div>
                  </div>
