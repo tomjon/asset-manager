@@ -37,6 +37,12 @@ class AssetIndex(object):
         docs = rsp['response']['docs']
         return str(int(docs[0]['id']) + 1) if len(docs) > 0 else 1
 
+    def id_exists(self, id):
+        r = requests.get(self.query_url, params={'q': 'id:"{0}"'.format(id), 'rows': 0})
+        assert_status_code(r, httplib.OK)
+        rsp = json.loads(r.text)
+        return int(rsp['response']['numFound']) > 0
+
     def _update(self, data):
         headers = {'Content-Type': 'application/json'}
         r = requests.post(self.update_url, headers=headers, params={'commit': 'true'}, data=json.dumps(data))

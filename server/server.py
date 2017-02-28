@@ -302,13 +302,21 @@ def asset_endpoint(asset_id=None):
     """ Asset add, delete, update endpoint.
     """
     if asset_id is None:
+        if not application.user_has_role([ADMIN_ROLE]):
+            return "Not authorized", 403
         asset_id = application.solr.new_id()
     if request.method == 'DELETE':
         # delete an existing asset
+        if not application.user_has_role([ADMIN_ROLE]):
+            return "Not authorized", 403
         application.solr.delete(asset_id)
     else:
         # add a new asset or update an existing asset
         asset = request.get_json()
+        asset['id'] = asset_id
+
+        if request.method == 'PUT' and not application.solr.id_exists(asset_id) and not application.user_has_role([ADMIN_ROLE]):
+            return "Not authorized", 403
 
         # validate doc - not much to do at present, but FIXME should validate enum values are in range
         if 'calibration_date' in asset and 'calibration_due' in asset:

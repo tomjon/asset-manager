@@ -33,8 +33,8 @@ import { LAST_OPTION } from './enum';
                        Asset
                        <span class="glyphicon glyphicon-arrow-left" (click)="onReset()" [ngClass]="{disabled: form.pristine}"></span>
                        <span class="glyphicon glyphicon-floppy-disk" (click)="onSave()" [ngClass]="{disabled: ! hasRole() || form.pristine || original == undefined}"></span>
-                       <span class="glyphicon glyphicon-trash" (click)="onDelete()" [ngClass]="{disabled: ! hasRole() || original == undefined}"></span>
-                       <span class="glyphicon glyphicon-plus-sign" (click)="onAdd()" [ngClass]="{disabled: ! hasRole()}"></span>
+                       <span class="glyphicon glyphicon-trash" (click)="onDelete()" [ngClass]="{disabled: ! hasRole(true) || original == undefined}"></span>
+                       <span class="glyphicon glyphicon-plus-sign" (click)="onAdd()" [ngClass]="{disabled: ! hasRole(true)}"></span>
                        <span class="glyphicon glyphicon-book" [ngClass]="{disabled: bookDisabled()}" data-toggle="modal" data-target="#bookingModal"></span>
                        <span class="glyphicon glyphicon-export bookOut" (click)="status.book(true)" [ngClass]="{disabled: status.out || ! status.overdue}"></span>
                        <span class="glyphicon glyphicon-import bookIn" (click)="status.book(false)" [ngClass]="{disabled: ! status.out, overdue: status.out && status.overdue}"></span>
@@ -140,8 +140,9 @@ export class AssetComponent {
     return this.enumService.get(field).options(true, this.user != undefined && this.user.role >= ADMIN_ROLE);
   }
 
-  hasRole() {
-    return this.user != undefined && this.user.role >= VIEW_ROLE;
+  hasRole(admin: boolean=false) {
+    let role = admin ? ADMIN_ROLE : VIEW_ROLE;
+    return this.user != undefined && this.user.role >= role;
   }
 
   bookDisabled() {
