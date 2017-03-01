@@ -150,7 +150,11 @@
     <field name="stop_freq" type="float" indexed="true" stored="true" required="false" multiValued="false" />
 
     <field name="owner" type="string" indexed="true" stored="true" required="false" multiValued="false" />
+
     <field name="barcode" type="string" indexed="true" stored="true" required="false" multiValued="false" />
+    <field name="__barcode" type="ngram" indexed="true" stored="false" required="false" multiValued="true" />
+    <copyField source="barcode" dest="__barcode" />
+
     <field name="value" type="float" indexed="true" stored="true" required="false" multiValued="false" />
     <field name="price" type="float" indexed="true" stored="true" required="false" multiValued="false" />
 
