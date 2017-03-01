@@ -6,6 +6,7 @@ import { Results } from './results';
 import { Frequency } from './frequency';
 import { User } from './user';
 import { Notification } from './notification';
+import { Booking } from './booking';
 
 export var DATETIME_RE = /^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\dZ$/;
 export var DATE_RE = /^\d\d\d\d-\d\d-\d\d$/;
@@ -258,27 +259,40 @@ export class DataService {
     return this.get(`logout`);
   }
 
-  getBookings(asset: any): Observable<any[]> {
-    return this.get(`booking/${asset.id}`)
+  getBookings(asset: any): Observable<Booking[]> {
+    let params: URLSearchParams = new URLSearchParams();
+    params.set('asset_id', asset.id);
+    return this.get(`booking`, {search: params})
                .map(res => res.json());
   }
 
-  getBookingsForProject(project_id: string): Observable<any[]> {
+  getBookingsForProject(project_id: string): Observable<Booking[]> {
     return this.get(`project/${project_id}`)
                .map(res => res.json());
   }
 
-  deleteBooking(booking: any): Observable<void> {
+  deleteBooking(booking: Booking): Observable<void> {
     return this.delete(`booking/${booking.booking_id}`);
   }
 
-  addBooking(asset: any, project: any, dueOutDate: string, dueInDate: string): Observable<any> {
+  // add or update a booking (if editFields is undefined, we are adding)
+  updateBooking(asset: any, booking: Booking, editFields: any): Observable<any> {
     let params: URLSearchParams = new URLSearchParams();
-    params.set('project', project);
-    params.set('dueOutDate', dueOutDate);
-    params.set('dueInDate', dueInDate);
-    return this.post(`booking/${asset.id}`, null, {search:params})
-               .map(res => res.json());
+    if (! editFields) {
+      params.set('asset_id', asset.id);
+    }
+    if (! editFields || editFields.project) {
+      params.set('project', booking.project);
+    }
+    if (! editFields || editFields.dueOutDate) {
+      params.set('due_out_date', booking.due_out_date);
+    }
+    if (! editFields || editFields.dueInDate) {
+      params.set('due_in_date', booking.due_in_date);
+    }
+    let obs: Observable<any> = editFields ? this.put(`booking/${booking.booking_id}`, null, {search: params})
+                                          : this.post(`booking`, null, {search: params});
+    return obs.map(res => res.json());
   }
 
   book(asset: any, out: boolean): Observable<void> {

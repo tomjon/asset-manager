@@ -67,6 +67,16 @@ CHECK_BOOKING_SQL = """
          AND field='user' AND enum_entry.enum_id=enum.enum_id AND enum_entry.value=user.user_id
 """
 
+# similar to above but check for clash when updating
+CHECK_CLASH_SQL = """
+  SELECT other.booking_id, other.user_id AS user_id, enum_entry.label AS user_label
+    FROM booking, booking AS other, user, enum, enum_entry
+   WHERE booking.booking_id=:booking_id AND other.booking_id!=booking.booking_id
+         AND other.asset_id=booking.asset_id AND other.user_id=user.user_id
+         AND IFNULL(other.in_date, other.due_in_date) > {0} AND other.due_out_date < {1}
+         AND field='user' AND enum_entry.enum_id=enum.enum_id AND enum_entry.value=user.user_id
+"""
+
 CHECK_OUT_SQL = """
   UPDATE booking
      SET out_date=date('now')
@@ -406,28 +416,58 @@ def attachment_endpoint(**values):
             return json.dumps({})
 
 
-@application.route('/booking/<asset_id>', methods=['GET', 'POST'])
-@application.route('/booking/<booking_id>', methods=['DELETE'])
+@application.route('/booking', methods=['GET', 'POST'])
+@application.route('/booking/<booking_id>', methods=['PUT', 'DELETE'])
 @application.role_required([ADMIN_ROLE, BOOK_ROLE, VIEW_ROLE])
-def booking_endpoint(asset_id=None, booking_id=None):
+def booking_endpoint(booking_id=None):
     """ Add or interact with bookings.
     """
     with application.db.cursor() as sql:
         if request.method == 'GET':
-            return json.dumps(sql.selectAllDict(ASSET_BOOKINGS_SQL, asset_id=asset_id))
-        elif request.method == 'POST':
+            # get bookings for an asset
+            return json.dumps(sql.selectAllDict(ASSET_BOOKINGS_SQL, asset_id=request.args['asset_id']))
+        if request.method == 'POST':
+            # add a booking for an asset for the current user - returns a clashing booking if one exists (and doesn't add the submitted booking)
             if not application.user_has_role([ADMIN_ROLE, BOOK_ROLE]):
                 return "Role required", 403
-            # add a booking for the current user - returns a clashing booking if one exists (and doesn't add the submitted booking)
             args = request.args.to_dict()
             try:
-                booking = sql.selectOneDict(CHECK_BOOKING_SQL, args, asset_id=asset_id)
+                booking = sql.selectOneDict(CHECK_BOOKING_SQL, args)
                 return json.dumps(booking)
             except NoResult:
                 pass
-            sql.insert("INSERT INTO booking VALUES (NULL, :asset_id, :user_id, datetime('now'), :dueOutDate, :dueInDate, NULL, NULL, :project)", args, asset_id=asset_id, user_id=current_user.user_id)
+            sql.insert("INSERT INTO booking VALUES (NULL, :asset_id, :user_id, datetime('now'), :dueOutDate, :dueInDate, NULL, NULL, :project)", args, user_id=current_user.user_id)
             return json.dumps({})
-        elif request.method == 'DELETE':
+        if request.method == 'PUT':
+            # update an existing booking by id
+            if not application.user_has_role([ADMIN_ROLE, BOOK_ROLE]):
+                return "Role required", 403
+
+            # check for clashing bookings - need to use newly supplied dates over existing ones
+            due_out_date = '"{0}"'.format(request.args['due_out_date']) if 'due_out_date' in request.args else "booking.due_out_date"
+            due_in_date = '"{0}"'.format(request.args['due_in_date']) if 'due_in_date' in request.args else "booking.due_in_date"
+            try:
+                booking = sql.selectOneDict(CHECK_CLASH_SQL.format(due_out_date, due_in_date), booking_id=booking_id)
+                return json.dumps(booking)
+            except NoResult:
+                pass
+
+            fields = [field for field in ['project', 'due_out_date', 'due_in_date'] if field in request.args]
+            if len(fields) == 0:
+                return "No update arguments", 400
+            set_fields = ', '.join(["{0}=:{0}".format(field) for field in fields])
+            clauses = ["booking_id=:booking_id"]
+            if 'project' in fields or 'due_out_date' in fields:
+                clauses.append("out_date IS NULL")
+            if 'project' in fields or 'due_out_date' in fields or 'due_in_date' in fields:
+                clauses.append("in_date IS NULL")
+            if not application.user_has_role([ADMIN_ROLE]):
+                clauses.append("user_id=:user_id")
+            if sql.update("UPDATE booking SET {0} WHERE {1}".format(set_fields, ' AND '.join(clauses)), request.args.to_dict(), booking_id=booking_id, user_id=current_user.user_id) < 1:
+                return "No updatable booking", 400
+            return json.dumps({})
+        if request.method == 'DELETE':
+            # delete a particular booking by id
             if not application.user_has_role([ADMIN_ROLE, BOOK_ROLE]):
                 return "Role required", 403
             user_clause = " AND user_id=:user_id" if not application.user_has_role([ADMIN_ROLE]) else ""

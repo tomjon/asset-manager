@@ -3,6 +3,7 @@ import { EnumService } from './enum.service';
 import { DataService } from './data.service';
 import { EnumPipe } from './enum.pipe';
 import { User, ADMIN_ROLE } from './user';
+import { Booking } from './booking';
 import { LAST_OPTION } from './enum';
 import { BOOKING_PROJECT } from './field-map';
 
@@ -18,6 +19,7 @@ declare var $;
                      <th>Project</th>
                      <th>Due Out</th>
                      <th>Due In</th>
+                     <th></th>
                    </tr>
                  </thead>
                  <tbody>
@@ -29,7 +31,10 @@ declare var $;
                      <td class="row">{{booking.project_label}}</td>
                      <td class="row" [ngClass]="{good: isOut(booking) || backIn(booking), overdue: overdueOut(booking)}">{{booking.due_out_date}}</td>
                      <td class="row" [ngClass]="{good: backIn(booking), overdue: overdueIn(booking)}">{{booking.due_in_date}}</td>
-                     <td><span *ngIf="canDelete(booking)" class="glyphicon glyphicon-trash" (click)="onDelete(booking)"></span></td>
+                     <td>
+                       <span *ngIf="canEdit(booking)" class="glyphicon glyphicon-pencil" (click)="onEdit(booking)" data-toggle="modal" data-target="#bookingModal"></span>
+                       <span *ngIf="canDelete(booking)" class="glyphicon glyphicon-trash" (click)="onDelete(booking)"></span>
+                     </td>
                    </tr>
                  </tbody>
                </table>
@@ -39,28 +44,28 @@ declare var $;
                  <div class="modal-dialog">
                    <div class="modal-content">
                      <div class="modal-header">
-                       <button type="button" class="close" data-dismiss="modal">&times;</button>
-                       <h4 class="modal-title">New Booking for <b *ngIf="asset.id_number != undefined">{{asset.id_number}}</b> <i *ngIf="asset.manufacturer != undefined">{{asset.manufacturer | enum:'manufacturer'}} </i>{{asset.model}}</h4>
+                       <button type="button" class="close" data-dismiss="modal" (click)="editing = false">&times;</button>
+                       <h4 class="modal-title"><span *ngIf="editing">Editing Booking</span><span *ngIf="! editing">New Booking</span> for <b *ngIf="asset.id_number != undefined">{{asset.id_number}}</b> <i *ngIf="asset.manufacturer != undefined">{{asset.manufacturer | enum:'manufacturer'}} </i>{{asset.model}}</h4>
                      </div>
                      <div class="modal-body">
                        <div class="form-group">
-                         <label for="project">{{project.label}}</label>
-                         <select *ngIf="addNew.field != project.field" class="form-control" [(ngModel)]="project.value" [name]="project.field" (ngModelChange)="onEnumChange(project)">
-                           <option *ngFor="let o of options(project.field)" [value]="o.value">{{o.label}}</option>
+                         <label for="project">{{projectInput.label}}</label>
+                         <select *ngIf="addNew.field != projectInput.field" [disabled]="! canEditProject(booking)" class="form-control" [(ngModel)]="booking.project" [name]="projectInput.field" (ngModelChange)="onEnumChange(projectInput)">
+                           <option *ngFor="let o of options(projectInput.field)" [value]="o.value">{{o.label}}</option>
                          </select>
-                         <input #addNew type="text" *ngIf="addNew.field == project.field" class="form-control" [(ngModel)]="addNew.label" [name]="project.field" (blur)="onAddNew(project, addNew.label)" (change)="onAddNew(project, addNew.label)"/>
+                         <input #addNew type="text" *ngIf="addNew.field == projectInput.field" class="form-control" [(ngModel)]="addNew.label" [name]="projectInput.field" (blur)="onAddNew(projectInput, addNew.label)" (change)="onAddNew(projectInput, addNew.label)"/>
                        </div>
                        <div class="form-group">
                          <label for="dueOutDate">Due Out Date</label>
-                         <input type="date" required min="{{today}}" class="form-control" [(ngModel)]="dueOutDate" name="dueOutDate" #f_dueOutDate="ngModel">
-                         <div [hidden]="f_dueOutDate.valid" class="alert alert-danger">
+                         <input type="date" required min="{{today}}" [disabled]="! canEditDueOutDate(booking)" class="form-control" [(ngModel)]="booking.due_out_date" name="dueOutDate" #f_dueOutDate="ngModel">
+                         <div [hidden]="! canEditDueOutDate(booking) || f_dueOutDate.valid" class="alert alert-danger">
                            Due out date is required
                          </div>
                        </div>
                        <div class="form-group">
                          <label for="dueInDate">Due In Date</label>
-                         <input type="date" required min="{{dueOutDate}}" class="form-control" [(ngModel)]="dueInDate" name="dueInDate" #f_dueInDate="ngModel">
-                         <div [hidden]="f_dueInDate.valid && dueInDate >= dueOutDate" class="alert alert-danger">
+                         <input type="date" required min="{{booking.due_out_date}}" [disabled]="! canEditDueInDate(booking)" class="form-control" [(ngModel)]="booking.due_in_date" name="dueInDate" #f_dueInDate="ngModel">
+                         <div [hidden]="! canEditDueInDate(booking) || (f_dueInDate.valid && booking.due_in_date >= booking.due_out_date)" class="alert alert-danger">
                            Due in date is required, and should be the same or after the due out date
                          </div>
                        </div>
@@ -70,7 +75,7 @@ declare var $;
                      </div>
                      <div class="modal-footer">
                        <button type="button" class="btn btn-default" (click)="onSubmit()" [disabled]="! form.form.valid">Submit</button>
-                       <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                       <button type="button" class="btn btn-default" data-dismiss="modal" (click)="editing = false">Close</button>
                      </div>
                    </div>
                  </div>
@@ -80,8 +85,7 @@ declare var $;
            '.good { color: green }',
            '.overdue { color: red }',
            '.current .row { background: lightgrey }',
-           '.glyphicon { cursor: pointer }']//,
-  //pipes: [EnumPipe]
+           '.glyphicon { cursor: pointer }']
 })
 export class BookingComponent {
   bookings: any[];
@@ -109,10 +113,11 @@ export class BookingComponent {
     }
   }
 
-  // values from form inputs
-  project: any = Object.assign({}, BOOKING_PROJECT);
-  dueOutDate: string;
-  dueInDate: string;
+  projectInput: any = BOOKING_PROJECT;
+
+  // collects form input values
+  booking: Booking = new Booking();
+  editing: boolean = false;
 
   addNew: any = {};
   @ViewChildren('addNew') addNewInput: QueryList<ElementRef>;
@@ -121,9 +126,7 @@ export class BookingComponent {
     return new Date().toISOString().substring(0, 10);
   }
 
-  constructor(private enumService: EnumService, private dataService: DataService) {
-    this.project.value = 0;
-  }
+  constructor(private enumService: EnumService, private dataService: DataService) {}
 
   getBookings() {
     this.dataService.getBookings(this.asset)
@@ -177,9 +180,31 @@ export class BookingComponent {
     return {book: () => {}};
   }
 
+  canEditProject(booking: any): boolean {
+    return ! this.editing || this.canDelete(booking);
+  }
+
+  canEditDueOutDate(booking: any): boolean {
+    return ! this.editing || this.canDelete(booking);
+  }
+
+  canEditDueInDate(booking: any): boolean {
+    return ! this.editing || this.canEdit(booking);
+  }
+
+  canEdit(booking: any): boolean {
+    let role: boolean = this.user.role == ADMIN_ROLE || this.user.user_id == booking.user_id;
+    return booking.in_date == undefined && role;
+  }
+
   canDelete(booking: any): boolean {
     let role: boolean = this.user.role == ADMIN_ROLE || this.user.user_id == booking.user_id;
-    return booking.in_date == undefined && booking.out_date == undefined && role;
+    return booking.out_date == undefined && booking.in_date == undefined && role;
+  }
+
+  onEdit(booking: any) {
+    this.booking = Object.assign({}, booking);
+    this.editing = true;
   }
 
   onDelete(booking: any) {
@@ -190,11 +215,19 @@ export class BookingComponent {
   }
 
   onSubmit() {
-    this.dataService.addBooking(this.asset, this.project.value, this.dueOutDate, this.dueInDate)
+    let editFields = undefined;
+    if (this.editing) {
+      editFields = {};
+      if (this.canEditProject(this.booking)) editFields.project = true;
+      if (this.canEditDueOutDate(this.booking)) editFields.dueOutDate = true;
+      if (this.canEditDueInDate(this.booking)) editFields.dueInDate = true;
+    }
+    this.dataService.updateBooking(this.asset, this.booking, editFields)
                     .subscribe(booking => {
                       this.clash = booking.booking_id ? booking : undefined;
                       if (! this.clash) {
                         $('#bookingModal').modal('hide');
+                        this.editing = false;
                         this._asset = this.asset; // this to just force a reload of the table
                       }
                     });
@@ -206,7 +239,7 @@ export class BookingComponent {
   }
 
   onEnumChange(input) {
-    if (input.value == LAST_OPTION.value) {
+    if (this.booking.project == LAST_OPTION.value) {
       this.addNew.field = input.field;
       this.addNew.label = undefined;
       setTimeout(() => this.addNewInput.first.nativeElement.focus());
@@ -217,11 +250,11 @@ export class BookingComponent {
     if (label) {
       this.enumService.addNewLabel(input.field, label)
                       .subscribe(enumValue => {
-                        input.value = enumValue.value;
+                        this.booking.project = enumValue.value;
                         delete this.addNew.field;
                       });
     } else {
-      input.value = undefined;
+      this.booking.project = undefined;
       delete this.addNew.field;
     }
   }
