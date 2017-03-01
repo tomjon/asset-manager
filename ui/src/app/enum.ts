@@ -26,13 +26,13 @@ export class Enum {
     return undefined;
   }
 
-  public options(add_extra: boolean=true): any[] {
+  public options(add_first: boolean, add_last: boolean): any[] {
     let ordered = [];
     for (let e of this.values) {
       ordered[e.order] = {value: e.value, label: e.label};
     }
     let options = [];
-    if (add_extra) {
+    if (add_first) {
       options.push(FIRST_OPTION);
     }
     for (let o of ordered) {
@@ -40,7 +40,7 @@ export class Enum {
         options.push(o);
       }
     }
-    if (add_extra) {
+    if (add_last) {
       options.push(LAST_OPTION);
     }
     return options;

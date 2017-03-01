@@ -17,9 +17,10 @@ CREATE TABLE user(
 	user_id INTEGER PRIMARY KEY,
 	role INTEGER,
 	username VARCHAR(256),
-    email VARCHAR(256),
+	email VARCHAR(256),
 	password_salt BLOB,
-	password_hash BLOB
+	password_hash BLOB,
+	last_login DATE
 );
 
 CREATE TABLE enum(
@@ -61,19 +62,40 @@ CREATE TABLE booking(
 );
 
 CREATE TABLE notification(
-    notification_id INTEGER PRIMARY KEY,
-    trigger_column VARCHAR(64),
-    trigger_field VARCHAR(64),
-    trigger_time INTEGER,
-    title_template TEXT,
-    body_template TEXT,
-    last_run DATE
+	notification_id INTEGER PRIMARY KEY,
+	name TEXT,
+	title_template TEXT,
+	body_template TEXT
 );
 
 CREATE TABLE notification_role_pivot(
 	pivot_id INTEGER PRIMARY KEY,
-    notification_id INTEGER,
-    role INTEGER
+	notification_id INTEGER,
+	role INTEGER
+);
+
+CREATE TABLE trigger(
+	trigger_id INTEGER PRIMARY KEY,
+	notification_id INTEGER,
+	column VARCHAR(64),
+	field VARCHAR(64),
+	days INTEGER
+);
+
+CREATE TABLE trigger_filter(
+	filter_id INTEGER PRIMARY KEY,
+	trigger_id INTEGER,
+	column VARCHAR(64),
+	field VARCHAR(64),
+	operator VARCHAR(2),
+	value VARCHAR(64)
+);
+
+CREATE TABLE notification_sent(
+	sent_id INTEGER PRIMARY KEY,
+	notification_id INTEGER,
+	asset_id INTEGER,
+	sent DATE
 );
 
 /**

@@ -78,7 +78,7 @@ declare var $;
                      </div>
                      <div class="modal-footer">
                        <button type="button" class="btn btn-default" [disabled]="detailsForm.pristine" (click)="onSubmitDetails()" [disabled]="! detailsForm.form.valid">Submit</button>
-                       <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
+                       <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                      </div>
                    </div>
                  </div>
@@ -109,7 +109,7 @@ declare var $;
                          </thead>
                          <tbody>
                            <tr *ngFor="let user of users">
-                             <td><a href="mailto:{{user.email}}">{{user.label}}</a></td>
+                             <td><a href="mailto:{{user.email}}" title="Last log in {{user.last_login}}">{{user.label}}</a></td>
                              <td>{{user.role | enum:'role'}}</td>
                              <td>{{user.role >= book_role ? user.out : ''}}</td>
                              <td>{{user.role >= book_role ? user.booked : ''}}</td>
@@ -120,7 +120,7 @@ declare var $;
                      </div>
                      <div class="modal-footer">
                        <button type="button" class="btn btn-default" data-toggle="modal" data-target="#addUserModal" (click)="clearAddUser()">Add New User</button>
-                       <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
+                       <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                      </div>
                    </div>
                  </div>
@@ -185,7 +185,7 @@ declare var $;
                      </div>
                      <div class="modal-footer">
                        <button type="button" class="btn btn-default" [disabled]="addUserForm.pristine" (click)="onAddUser()" [disabled]="! detailsForm.form.valid">Submit</button>
-                       <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
+                       <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                      </div>
                    </div>
                  </div>
@@ -222,6 +222,7 @@ export class LoginComponent {
 
   constructor(private dataService: DataService, private enumService: EnumService) {}
 
+  //FIXME these very similar - method on User, or make a user.service?
   loggedIn(): boolean {
     return this.user != undefined && this.user.role != ANONYMOUS;
   }

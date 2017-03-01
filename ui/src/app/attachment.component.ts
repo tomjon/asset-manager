@@ -40,7 +40,7 @@ declare var $;
                    <div class="modal-footer">
                      <input #upload type="file" (change)="setFileCount()"/>
                      <button type="button" class="btn btn-default" [ngClass]="{disabled: ! canAddNew()}" (click)="onAddNew()">Add New</button>
-                     <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
+                     <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                    </div>
                  </div>
                </div>
@@ -69,7 +69,7 @@ export class AttachmentComponent {
   private fileCount: number = 0;
 
   // base URL for file links
-  private base_url: string = window.location.protocol + '//' + window.location.hostname + ":8080";
+  private base_url: string = window.location.protocol + '//' + window.location.hostname + ":3389";
 
   asset: any;
   @Input('asset') set _asset(asset: any) {

@@ -106,3 +106,9 @@ solr/java/bams-enum.jar
 solr/java/bin/
 sql/assets.db
 config.py
+._dist
+latest.csv
+ui/node_modules/
+ui/typings.json
+ui/typings/
+assets.db

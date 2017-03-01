@@ -9,6 +9,7 @@ import { AssetComponent } from './asset.component';
 import { TableComponent } from './table.component';
 import { BookingComponent} from './booking.component';
 import { AttachmentComponent } from './attachment.component';
+import { NotificationComponent } from './notification.component';
 import { EnumPipe } from './enum.pipe';
 import { FieldMap } from './field-map';
 import { DataService } from './data.service';
@@ -25,6 +26,7 @@ import './rxjs-operators';
     TableComponent,
     BookingComponent,
     AttachmentComponent,
+    NotificationComponent,
     EnumPipe
   ],
   imports: [

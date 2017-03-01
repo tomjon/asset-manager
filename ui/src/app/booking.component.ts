@@ -70,7 +70,7 @@ declare var $;
                      </div>
                      <div class="modal-footer">
                        <button type="button" class="btn btn-default" (click)="onSubmit()" [disabled]="! form.form.valid">Submit</button>
-                       <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
+                       <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                      </div>
                    </div>
                  </div>
@@ -202,7 +202,7 @@ export class BookingComponent {
 
   //FIXME the following three methods are similar as those in asset.component.ts
   options(field: string) {
-    return this.enumService.get(field).options().splice(1);
+    return this.enumService.get(field).options(false, true);
   }
 
   onEnumChange(input) {

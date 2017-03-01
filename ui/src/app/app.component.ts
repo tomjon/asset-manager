@@ -7,7 +7,7 @@ import { LoginComponent } from './login.component';
 import { Search } from './search';
 import { Results } from './results';
 import { FieldMap } from './field-map';
-import { User } from './user';
+import { User, ADMIN_ROLE } from './user';
 
 //FIXME instance of Search to live in DataService? tidies up some dependencies
 
@@ -18,15 +18,20 @@ import { User } from './user';
                  <div class="col-lg-12">
                    <h1><img src="assets/ofcom.gif"/> Baldock Asset Database and Scheduling System</h1>
                    <badass-login [user]="user" (login)="onLogin($event)"></badass-login>
+                   <button *ngIf="showNotifications()" class="btn" data-toggle="modal" data-target="#notificationsModal" (click)="loadNotifications()">Notifications</button>
                    <badass-asset [user]="user" [asset]="asset" [search]="search" (event)="onAssetEvent($event)"></badass-asset>
                    <div *ngIf="error" class="alert alert-danger">{{error.message}}</div>
                    <badass-table [user]="user" [assets]="results" [search]="search" [selected]="asset" (event)="onTableEvent($event)"></badass-table>
                  </div>
                </div>
              </div>
+             <badass-notification [notifications]="notifications"></badass-notification>
              <div id="blocker"></div>`,
-  styles: ['badass-asset { display: block; margin: 20px 0 20px 0 }',
-           'badass-login { display: block; position: absolute; right: 10px; top: 10px }',
+  styles: ['div.container-fluid { margin-top: 10px }',
+           'badass-asset { display: block; margin: 20px 0 20px 0 }',
+           'h1 { display: inline }',
+           'button { float: right; margin-right: 50px }',
+           'badass-login { float: right }',
            '#blocker { position: fixed; left: 0; top: 0; width: 100%; height: 100%; background: black; opacity: 0.1 }']
 })
 export class AppComponent {
@@ -35,6 +40,8 @@ export class AppComponent {
   search: Search = new Search();
   asset: any;
   error: any;
+
+  notifications: any[];
 
   constructor(private dataService: DataService, private enumService: EnumService, private fieldMap: FieldMap) { }
 
@@ -45,6 +52,15 @@ export class AppComponent {
                         this.onLogin(user);
                       }
                     });
+  }
+
+  //FIXME these very similar - method on User, or make a user.service?
+  showNotifications(): boolean {
+    return this.user != undefined && this.user.role == ADMIN_ROLE;
+  }
+
+  loadNotifications() {
+    this.dataService.getNotifications().subscribe(notifications => this.notifications = notifications);
   }
 
   onLogin(user) {

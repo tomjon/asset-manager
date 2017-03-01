@@ -5,7 +5,6 @@ var DESCRIPTION = {'field': 'description', 'label': 'Description', 'type': 'text
 var START_FREQ = {'field': 'start_freq', 'label': 'Start Frequency', 'type': 'freq'};
 var STOP_FREQ = {'field': 'stop_freq', 'label': 'Stop Frequency', 'type': 'freq'};
 var CONDITION = {'field': 'condition', 'label': 'Condition', 'type': 'enum'};
-//var ID_NUMBER = {'field': 'id_number', 'label': 'ID Number', 'type': 'text'};
 var FAR_ID = {'field': 'far_id', 'label': 'FAR ID', 'type': 'text'};
 var SAP_ID = {'field': 'sap_id', 'label': 'SAP ID', 'type': 'text'};
 //FIXME should be type: barcode and display an actual barcode
@@ -19,7 +18,7 @@ var RACK = {'field': 'rack', 'label': 'Rack', 'type': 'enum'};
 var SHELF = {'field': 'shelf', 'label': 'Shelf', 'type': 'enum'};
 var MANUFACTURER = {'field': 'manufacturer', 'label': 'Manufacturer', 'type': 'enum'};
 var MODEL = {'field': 'model', 'label': 'Model', 'type': 'text'};
-var SERIAL_NUMBER = {'field': 'serial', 'label': 'Serial Number', 'type': 'text'};
+export var SERIAL_NUMBER = {'field': 'serial', 'label': 'Serial Number', 'type': 'text'};
 var OWNER = {'field': 'owner', 'label': 'Owner', 'type': 'enum'};
 var NOTES = {'field': 'notes', 'label': 'Notes', 'type': 'area'};
 var AUDIT_DATE = {'field': 'audit_date', 'label': 'Audit Date', 'type': 'date'};
@@ -36,6 +35,22 @@ var BOOKING_OUT = {'type': 'xjoin', 'component': 'booking', 'field': 'out', 'gly
 var BOOKING_DUE_OUT = {'type': 'xjoin', 'component': 'booking', 'field': 'due', 'glyph': 'share', 'value': 'out', 'description': 'Show only assets that are currently due to be taken out'}
 var BOOKING_OVERDUE_IN = {'type': 'xjoin', 'component': 'booking', 'field': 'due', 'glyph': 'warning-sign', 'value': 'in', 'description': 'Show only assets that are currently overdue to be returned'}
 var BOOKING_AVAILABLE = {'type': 'xjoin', 'component': 'booking', 'field': 'unavailable', 'negative': true, 'glyph': 'ok-circle', 'date': true, 'value': 'now', 'description': 'Show only assets that are available to book on the specified date'}
+
+// allowed notification trigger columns
+export var BOOKED_DATE = {'column': 'booked_date', 'label': 'Booked Date'};
+var DUE_OUT_DATE = {'column': 'due_out_date', 'label': 'Due Out Date'};
+var DUE_IN_DATE = {'column': 'due_in_date', 'label': 'Due In Date'};
+var OUT_DATE = {'column': 'out_date', 'label': 'Checked Out Date'};
+var IN_DATE = {'column': 'in_date', 'label': 'Checked In Date'};
+
+export var FILTER_OPERATORS = [
+  {value: '==', label: '='},
+  {value: '!=', label: '≠'},
+  {value: '<', label: '<'},
+  {value: '>', label: '>'},
+  {value: '<=', label: '≤'},
+  {value: '>=', label: '≥'}
+];
 
 @Injectable()
 export class FieldMap {
@@ -65,10 +80,19 @@ export class FieldMap {
 
   public enumFields: string[] = [];
 
+  public triggerColumns: any[] = [
+    BOOKED_DATE, DUE_OUT_DATE, DUE_IN_DATE, OUT_DATE, IN_DATE
+  ];
+
+  public triggerInputs: any[] = [];
+
+  public operatorOptions: any[] = FILTER_OPERATORS;
+
   constructor() {
     for (let input of this.allInputs) {
       this.map[input.field] = input;
       if (input.type == 'enum') this.enumFields.push(input.field);
+      if (input.type == 'date') this.triggerInputs.push(input);
     }
   }
 
