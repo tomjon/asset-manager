@@ -63,7 +63,7 @@ CHECK_BOOKING_SQL = """
   SELECT booking_id, booking.user_id AS user_id, enum_entry.label AS user_label
     FROM booking, user, enum, enum_entry
    WHERE asset_id=:asset_id AND booking.user_id=user.user_id
-         AND :dueInDate > due_out_date AND :dueOutDate < IFNULL(in_date, due_in_date)
+         AND :due_in_date > due_out_date AND :due_out_date < IFNULL(in_date, due_in_date)
          AND field='user' AND enum_entry.enum_id=enum.enum_id AND enum_entry.value=user.user_id
 """
 
@@ -436,7 +436,7 @@ def booking_endpoint(booking_id=None):
                 return json.dumps(booking)
             except NoResult:
                 pass
-            sql.insert("INSERT INTO booking VALUES (NULL, :asset_id, :user_id, datetime('now'), :dueOutDate, :dueInDate, NULL, NULL, :project)", args, user_id=current_user.user_id)
+            sql.insert("INSERT INTO booking VALUES (NULL, :asset_id, :user_id, datetime('now'), :due_out_date, :due_in_date, NULL, NULL, :project)", args, user_id=current_user.user_id)
             return json.dumps({})
         if request.method == 'PUT':
             # update an existing booking by id
