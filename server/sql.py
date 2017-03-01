@@ -1,5 +1,5 @@
 import sqlite3
-
+from threading import Lock
 
 class NoResult(Exception):
     pass
@@ -8,9 +8,11 @@ class NoResult(Exception):
 class SqlDatabase(object):
     def __init__(self, database):
         self.db = sqlite3.connect(database, isolation_level='EXCLUSIVE')
+        self.lock = Lock()
 
     def cursor(self):
-        return SqlCursor(self.db)
+        with self.lock: #FIXME this is pretty cavalier, only one cursor will be allowed at a time. May need to revisit
+            return SqlCursor(self.db)
 
     def close(self):
         self.db.close()
