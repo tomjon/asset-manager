@@ -308,11 +308,11 @@ export class DataService {
   }
 
   addNotification(notification: Notification): Observable<Notification> {
-    return this.post(`notification`, JSON.stringify(notification));
+    return this.post(`notification`, JSON.stringify(notification)).map(res => res.json());
   }
 
   updateNotification(notification: Notification): Observable<Notification> {
-    return this.put(`notification/${notification.notification_id}`, JSON.stringify(notification));
+    return this.put(`notification/${notification.notification_id}`, JSON.stringify(notification)).map(res => res.json());
   }
 
   deleteNotification(notification_id: string): Observable<void> {

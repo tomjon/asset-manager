@@ -36,7 +36,7 @@ var BOOKING_DUE_OUT = {'type': 'xjoin', 'component': 'booking', 'field': 'due', 
 var BOOKING_OVERDUE_IN = {'type': 'xjoin', 'component': 'booking', 'field': 'due', 'glyph': 'warning-sign', 'value': 'in', 'description': 'Show only assets that are currently overdue to be returned'}
 var BOOKING_AVAILABLE = {'type': 'xjoin', 'component': 'booking', 'field': 'unavailable', 'negative': true, 'glyph': 'ok-circle', 'date': true, 'value': 'now', 'description': 'Show only assets that are available to book on the specified date'}
 
-// allowed notification trigger columns
+// allowed notification trigger and filter columns
 export var BOOKED_DATE = {'column': 'booked_date', 'label': 'Booked Date'};
 var DUE_OUT_DATE = {'column': 'due_out_date', 'label': 'Due Out Date'};
 var DUE_IN_DATE = {'column': 'due_in_date', 'label': 'Due In Date'};
@@ -84,15 +84,22 @@ export class FieldMap {
     BOOKED_DATE, DUE_OUT_DATE, DUE_IN_DATE, OUT_DATE, IN_DATE
   ];
 
-  public triggerInputs: any[] = [];
+  public triggerInputs: any[] = []; // built in constructor
 
-  public operatorOptions: any[] = FILTER_OPERATORS;
+  public filterColumns: any[] = [ //FIXME ? can add project, user here but only if you map ids to labels in the UI
+    BOOKED_DATE, DUE_OUT_DATE, DUE_IN_DATE, OUT_DATE, IN_DATE
+  ];
+
+  public filterInputs: any[] = []; // built in constructor
+
+  public filterOperators: any[] = FILTER_OPERATORS;
 
   constructor() {
     for (let input of this.allInputs) {
       this.map[input.field] = input;
       if (input.type == 'enum') this.enumFields.push(input.field);
       if (input.type == 'date') this.triggerInputs.push(input);
+      if (input.type != 'enum') this.filterInputs.push(input); // FIXME if you want enums, you have to provide labels in the UI
     }
   }
 

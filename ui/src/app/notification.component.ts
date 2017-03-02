@@ -72,13 +72,13 @@ declare var $;
                            <li>
                              <a>
                                <select [(ngModel)]="newFilter.column" name="newFilterColumn" (ngModelChange)="newFilter.field = undefined">
-                                 <option *ngFor="let o of fieldMap.triggerColumns" [value]="o.column">{{o.label}}</option>
+                                 <option *ngFor="let o of fieldMap.filterColumns" [value]="o.column">{{o.label}}</option>
                                </select>
                                <select [(ngModel)]="newFilter.field" name="newFilterField" (ngModelChange)="newFilter.column = undefined">
-                                 <option *ngFor="let o of fieldMap.triggerInputs" [value]="o.field">{{o.label}}</option>
+                                 <option *ngFor="let o of fieldMap.filterInputs" [value]="o.field">{{o.label}}</option>
                                </select>
                                <select [(ngModel)]="newFilter.operator" name="newFilterOperator">
-                                 <option *ngFor="let o of fieldMap.operatorOptions" [value]="o.value">{{o.label}}</option>
+                                 <option *ngFor="let o of fieldMap.filterOperators" [value]="o.value">{{o.label}}</option>
                                </select>
                                <input type="text" name="newFilterValue" [disabled]="newFilter.nullValue" [(ngModel)]="newFilter.value" />
                                <input type="checkbox" name="newFilterNull" [(ngModel)]="newFilter.nullValue" (ngModelChange)="newFilter.value = newFilter.nullValue ? 'NULL' : ''" />
@@ -115,7 +115,8 @@ declare var $;
   styles: ['.tab-content { padding: 10px; border: 1px solid lightgrey; border-top: 0px; margin-bottom: 10px }',
            '.nav-tabs a { cursor: pointer }',
            '.trigger-filter .filter-label { margin-right: 20px; font-weight: bold }',
-           '.trigger-filter .glyphicon { width: 100%; text-align: right; cursor: pointer }']
+           '.glyphicon { width: 100%; text-align: right; cursor: pointer }',
+           'li a { white-space: nowrap }']
 })
 export class NotificationComponent {
   @Input('notifications') notifications: Notification[];
@@ -129,8 +130,16 @@ export class NotificationComponent {
   constructor(private dataService: DataService, private enumService: EnumService, private fieldMap: FieldMap) {}
 
   ngOnChanges() {
-    this.notification_id = this.notifications ? this.notifications[0].notification_id : undefined;
-    if (this.notifications) this.onSelect();
+    if (this.notifications == undefined) {
+      this.notification_id = undefined;
+      return;
+    }
+    if (this.notifications.length > 0) {
+      this.notification_id = this.notifications[0].notification_id;
+      this.onSelect();
+    } else {
+      this.onAddNew();
+    }
   }
 
   onSelect() {
@@ -177,6 +186,7 @@ export class NotificationComponent {
   }
 
   _save(notification) {
+    console.log(this.notification, notification);
     this.notification.notification_id = notification.notification_id;
     pristine(this.form);
   }
@@ -208,11 +218,11 @@ export class NotificationComponent {
   }
 
   operatorLabel(filter: any) {
-    return this.fieldMap.operatorOptions.find(o => o.value == filter.operator).label;
+    return this.fieldMap.filterOperators.find(o => o.value == filter.operator).label;
   }
 
   canAddNew(): boolean {
-    if (! this.notifications) return false;
+    if (this.notifications == undefined) return false;
     return this.notifications.find(notification => notification.notification_id == 'new') == undefined;
   }
 }
