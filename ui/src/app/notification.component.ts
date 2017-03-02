@@ -69,7 +69,7 @@ declare var $;
                                <span class="glyphicon glyphicon-trash" (click)="onDeleteFilter(index)"></span>
                              </a>
                            </li>
-                           <li>
+                           <li class="newFilter">
                              <a>
                                <select [(ngModel)]="newFilter.column" name="newFilterColumn" (ngModelChange)="newFilter.field = undefined">
                                  <option *ngFor="let o of fieldMap.filterColumns" [value]="o.column">{{o.label}}</option>
@@ -115,8 +115,9 @@ declare var $;
   styles: ['.tab-content { padding: 10px; border: 1px solid lightgrey; border-top: 0px; margin-bottom: 10px }',
            '.nav-tabs a { cursor: pointer }',
            '.trigger-filter .filter-label { margin-right: 20px; font-weight: bold }',
-           '.glyphicon { width: 100%; text-align: right; cursor: pointer }',
-           'li a { white-space: nowrap }']
+           '.trigger-filter .glyphicon { width: 100%; text-align: right }',
+           '.glyphicon { cursor: pointer }',
+           '.newFilter a { white-space: nowrap }']
 })
 export class NotificationComponent {
   @Input('notifications') notifications: Notification[];
@@ -186,8 +187,7 @@ export class NotificationComponent {
   }
 
   _save(notification) {
-    console.log(this.notification, notification);
-    this.notification.notification_id = notification.notification_id;
+    this.notification_id = this.notification.notification_id = notification.notification_id;
     pristine(this.form);
   }
 
