@@ -266,6 +266,13 @@ export class DataService {
                .map(res => res.json());
   }
 
+  getUserBookings(user: User): Observable<Booking[]> {
+    let params: URLSearchParams = new URLSearchParams();
+    params.set('user_id', user.user_id);
+    return this.get(`booking`, {search: params})
+               .map(res => res.json());
+  }
+
   getBookingsForProject(project_id: string): Observable<Booking[]> {
     return this.get(`project/${project_id}`)
                .map(res => res.json());

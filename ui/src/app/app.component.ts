@@ -7,7 +7,8 @@ import { LoginComponent } from './login.component';
 import { Search } from './search';
 import { Results } from './results';
 import { FieldMap } from './field-map';
-import { User, ADMIN_ROLE } from './user';
+import { User, ADMIN_ROLE, BOOK_ROLE } from './user';
+import { Booking } from './booking';
 
 //FIXME instance of Search to live in DataService? tidies up some dependencies
 
@@ -19,6 +20,7 @@ import { User, ADMIN_ROLE } from './user';
                    <h1><img src="assets/ofcom.gif"/> Baldock Asset Database and Scheduling System</h1>
                    <badass-login [user]="user" (login)="onLogin($event)"></badass-login>
                    <button *ngIf="showNotifications()" class="btn" data-toggle="modal" data-target="#notificationsModal" (click)="loadNotifications()">Notifications</button>
+                   <button *ngIf="showUserBookings()" class="btn" data-toggle="modal" data-target="#userBookingsModal" (click)="loadUserBookings()">My Bookings</button>
                    <badass-asset [user]="user" [asset]="asset" [search]="search" (event)="onAssetEvent($event)"></badass-asset>
                    <div *ngIf="error" class="alert alert-danger">{{error.message}}</div>
                    <badass-table [user]="user" [assets]="results" [search]="search" [selected]="asset" (event)="onTableEvent($event)"></badass-table>
@@ -26,6 +28,7 @@ import { User, ADMIN_ROLE } from './user';
                </div>
              </div>
              <badass-notification [notifications]="notifications"></badass-notification>
+             <badass-user-bookings [bookings]="userBookings"></badass-user-bookings>
              <div id="blocker"></div>`,
   styles: ['div.container-fluid { margin-top: 10px }',
            'badass-asset { display: block; margin: 20px 0 20px 0 }',
@@ -37,6 +40,7 @@ import { User, ADMIN_ROLE } from './user';
 export class AppComponent {
   user: User = new User(); // start with an anonymous user
   notifications: any[];
+  userBookings: Booking[];
   results: Results = new Results();
   search: Search = new Search();
   asset: any;
@@ -58,8 +62,16 @@ export class AppComponent {
     return this.user != undefined && this.user.role == ADMIN_ROLE;
   }
 
+  showUserBookings(): boolean {
+    return this.user != undefined && this.user.role >= BOOK_ROLE;
+  }
+
   loadNotifications() {
     this.dataService.getNotifications().subscribe(notifications => this.notifications = notifications);
+  }
+
+  loadUserBookings() {
+    this.dataService.getUserBookings(this.user).subscribe(userBookings => this.userBookings = userBookings);
   }
 
   onLogin(user) {

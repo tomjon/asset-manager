@@ -38,8 +38,8 @@ GROUP BY user.user_id
 ORDER BY `order`
 """
 
-ASSET_BOOKINGS_SQL = """
-  SELECT booking_id,
+BOOKINGS_SQL = """
+  SELECT booking_id, asset_id,
          booking.user_id,
          user_enum_entry.label AS user_label,
          project,
@@ -48,7 +48,7 @@ ASSET_BOOKINGS_SQL = """
     FROM booking, user,
          enum AS user_enum, enum_entry AS user_enum_entry,
          enum AS project_enum, enum_entry AS project_enum_entry
-   WHERE asset_id=:asset_id
+   WHERE {0}=:{0}
          AND (date('now') <= due_in_date OR (out_date IS NOT NULL AND in_date IS NULL))
          AND booking.user_id=user.user_id
          AND user_enum.field='user' AND user_enum.enum_id=user_enum_entry.enum_id AND user_enum_entry.value=user.user_id
@@ -424,8 +424,14 @@ def booking_endpoint(booking_id=None):
     """
     with application.db.cursor() as sql:
         if request.method == 'GET':
-            # get bookings for an asset
-            return json.dumps(sql.selectAllDict(ASSET_BOOKINGS_SQL, asset_id=request.args['asset_id']))
+            # get bookings for an asset or user
+            if 'user_id' in request.args and not application.user_has_role([ADMIN_ROLE, BOOK_ROLE]):
+                return "Role required", 403
+            for column in ['asset_id', 'user_id']:
+                if column in request.args:
+                    args = {column: request.args[column]}
+                    return json.dumps(sql.selectAllDict(BOOKINGS_SQL.format(column), args))
+            return 'Missing argument', 400
         if request.method == 'POST':
             # add a booking for an asset for the current user - returns a clashing booking if one exists (and doesn't add the submitted booking)
             if not application.user_has_role([ADMIN_ROLE, BOOK_ROLE]):
