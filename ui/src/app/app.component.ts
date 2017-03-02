@@ -1,4 +1,4 @@
-import { Component, trigger, transition, style, animate, state } from '@angular/core';
+import { Component } from '@angular/core';
 import { DataService } from './data.service';
 import { EnumService } from './enum.service';
 import { TableComponent } from './table.component';
@@ -36,12 +36,11 @@ import { User, ADMIN_ROLE } from './user';
 })
 export class AppComponent {
   user: User = new User(); // start with an anonymous user
+  notifications: any[];
   results: Results = new Results();
   search: Search = new Search();
   asset: any;
   error: any;
-
-  notifications: any[];
 
   constructor(private dataService: DataService, private enumService: EnumService, private fieldMap: FieldMap) { }
 
