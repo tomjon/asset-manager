@@ -209,7 +209,7 @@ export class LoginComponent {
   error: any = {};
 
   users: User[];
-  book_role: number = BOOK_ROLE;
+  book_role: string = BOOK_ROLE;
 
   @ViewChild('detailsForm') detailsForm;
   @ViewChild('addUserForm') addUserForm;

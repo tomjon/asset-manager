@@ -1,4 +1,4 @@
-import { Component, Input, ViewChildren, ElementRef, QueryList } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ViewChildren, ElementRef, QueryList } from '@angular/core';
 import { EnumService } from './enum.service';
 import { DataService } from './data.service';
 import { FieldMap } from './field-map';
@@ -16,12 +16,12 @@ declare var $;
                    <div class="modal-content">
                      <div class="modal-header">
                        <button type="button" class="close" data-dismiss="modal">&times;</button>
-                       <h4 class="modal-title"><span *ngIf="editing">Editing Booking</span><span *ngIf="! editing">New Booking</span> for <b *ngIf="asset.id_number != undefined">{{asset.id_number}}</b> <i *ngIf="asset.manufacturer != undefined">{{asset.manufacturer | enum:'manufacturer'}} </i>{{asset.model}}</h4>
+                       <h4 class="modal-title"><span *ngIf="editing">Editing Booking</span><span *ngIf="! editing">New Booking</span><span *ngIf="asset">for <b *ngIf="asset.id_number != undefined">{{asset.id_number}}</b> <i *ngIf="asset.manufacturer != undefined">{{asset.manufacturer | enum:'manufacturer'}} </i>{{asset.model}}</span></h4>
                      </div>
                      <div class="modal-body">
                        <div class="form-group">
                          <label for="project">{{fieldMap.projectInput.label}}</label>
-                         <select *ngIf="addNew.field != fieldMap.projectInput.field" [disabled]="! booking.canEditProject(user)" class="form-control" [(ngModel)]="booking.project" [name]="projectInput.field" (ngModelChange)="onEnumChange(fieldMap.projectInput)">
+                         <select *ngIf="addNew.field != fieldMap.projectInput.field" [disabled]="! booking.canEditProject(user)" class="form-control" [(ngModel)]="booking.project" [name]="fieldMap.projectInput.field" (ngModelChange)="onEnumChange(fieldMap.projectInput)">
                            <option *ngFor="let o of options(fieldMap.projectInput.field)" [value]="o.value">{{o.label}}</option>
                          </select>
                          <input #addNew type="text" *ngIf="addNew.field == fieldMap.projectInput.field" class="form-control" [(ngModel)]="addNew.label" [name]="fieldMap.projectInput.field" (blur)="onAddNew(fieldMap.projectInput, addNew.label)" (change)="onAddNew(fieldMap.projectInput, addNew.label)"/>
@@ -61,13 +61,15 @@ export class BookingComponent {
   @Input('asset') asset: any;
 
   // collects form input values
-  booking: Booking = new Booking();
+  booking: Booking;
 
   @Input('booking') set _booking(booking: Booking) {
     this.booking = booking;
     this.editing = booking.booking_id != '';
     this.clash = undefined;
   }
+
+  @Output('event') event = new EventEmitter<any>();
 
   addNew: any = {};
   @ViewChildren('addNew') addNewInput: QueryList<ElementRef>;
@@ -79,18 +81,22 @@ export class BookingComponent {
   constructor(private enumService: EnumService, private dataService: DataService, private fieldMap: FieldMap) {}
 
   onSubmit() {
-    let editFields = undefined;
+    let editFields: any = undefined;
     if (this.editing) {
       editFields = {};
       if (this.booking.canEditProject(this.user)) editFields.project = true;
       if (this.booking.canEditDueOutDate(this.user)) editFields.dueOutDate = true;
       if (this.booking.canEditDueInDate(this.user)) editFields.dueInDate = true;
     }
-    this.dataService.updateBooking(this.asset, this.booking, editFields)
+    this.booking.asset_id = this.asset.id;
+    this.dataService.updateBooking(this.booking, editFields)
                     .subscribe(booking => {
                       this.clash = booking.booking_id ? booking : undefined;
                       if (! this.clash) {
                         $('#bookingModal').modal('hide');
+                        if (! this.editing) {
+                          this.event.emit({addBooking: this.booking});
+                        }
                         this.editing = false;
                       }
                     });

@@ -13,6 +13,35 @@ export class Booking {
               public in_date: string=undefined,
               public out_date: string=undefined) {}
 
+  private get today(): string {
+    return new Date().toISOString().substring(0, 10);
+  }
+
+  get current(): boolean {
+    return this.today >= this.due_out_date && this.today <= this.due_in_date;
+  }
+
+  // asset is 'out' if it has been taken out but not returned in
+  get isOut(): boolean {
+    return this.out_date && ! this.in_date;
+  }
+
+  // asset is 'back in' if it has been returned before the due in date
+  get backIn(): boolean {
+    return this.in_date && this.in_date <= this.due_in_date;
+  }
+
+  // asset is 'overdue out' if it has not been taken out, and today is after the due out date;
+  // but today is also before the due in date, in case this is a lapsed booking
+  get overdueOut(): boolean {
+    return ! this.out_date && this.today >= this.due_out_date && this.today <= this.due_in_date;
+  }
+
+  // asset is 'overdue in' if it has been taken out, not returned in, and today is after the due in date
+  get overdueIn(): boolean {
+    return this.out_date && ! this.in_date && this.today >= this.due_in_date;
+  }
+
   canEditProject(user: User): boolean {
     return this.canDelete(user);
   }

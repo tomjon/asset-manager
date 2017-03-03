@@ -259,18 +259,26 @@ export class DataService {
     return this.get(`logout`);
   }
 
+  private bookingArray(json: any[]): Booking[] {
+    let bookings: Booking[] = [];
+    for (let booking of json) {
+      bookings.push(Object.assign(new Booking(), booking));
+    }
+    return bookings;
+  }
+
   getBookings(asset: any): Observable<Booking[]> {
     let params: URLSearchParams = new URLSearchParams();
     params.set('asset_id', asset.id);
     return this.get(`booking`, {search: params})
-               .map(res => res.json());
+               .map(res => this.bookingArray(res.json()));
   }
 
   getUserBookings(user: User): Observable<Booking[]> {
     let params: URLSearchParams = new URLSearchParams();
     params.set('user_id', user.user_id);
     return this.get(`booking`, {search: params})
-               .map(res => res.json());
+               .map(res => this.bookingArray(res.json()));
   }
 
   getBookingsForProject(project_id: string): Observable<Booking[]> {
@@ -283,10 +291,10 @@ export class DataService {
   }
 
   // add or update a booking (if editFields is undefined, we are adding)
-  updateBooking(asset: any, booking: Booking, editFields: any): Observable<any> {
+  updateBooking(booking: Booking, editFields: any): Observable<any> {
     let params: URLSearchParams = new URLSearchParams();
     if (! editFields) {
-      params.set('asset_id', asset.id);
+      params.set('asset_id', booking.asset_id);
     }
     if (! editFields || editFields.project) {
       params.set('project', booking.project);
@@ -302,11 +310,11 @@ export class DataService {
     return obs.map(res => res.json());
   }
 
-  book(asset: any, out: boolean): Observable<void> {
+  book(asset_id: string, out: boolean): Observable<void> {
     if (out) {
-      return this.put(`book/${asset.id}`, null);
+      return this.put(`book/${asset_id}`, null);
     } else {
-      return this.delete(`book/${asset.id}`);
+      return this.delete(`book/${asset_id}`);
     }
   }
 
