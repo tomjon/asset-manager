@@ -16,7 +16,7 @@ declare var $;
                    <div class="modal-content">
                      <div class="modal-header">
                        <button type="button" class="close" data-dismiss="modal">&times;</button>
-                       <h4 class="modal-title"><span *ngIf="editing">Editing Booking</span><span *ngIf="! editing">New Booking</span><span *ngIf="asset">for <b *ngIf="asset.id_number != undefined">{{asset.id_number}}</b> <i *ngIf="asset.manufacturer != undefined">{{asset.manufacturer | enum:'manufacturer'}} </i>{{asset.model}}</span></h4>
+                       <h4 class="modal-title"><span *ngIf="editing">Editing Booking</span><span *ngIf="! editing">New Booking</span><span *ngIf="asset"> for <b *ngIf="asset.id_number != undefined">{{asset.id_number}}</b> <i *ngIf="asset.manufacturer != undefined">{{asset.manufacturer | enum:'manufacturer'}} </i>{{asset.model}}</span></h4>
                      </div>
                      <div class="modal-body">
                        <div class="form-group">
@@ -89,14 +89,13 @@ export class BookingComponent {
       if (this.booking.canEditDueInDate(this.user)) editFields.dueInDate = true;
     }
     this.booking.asset_id = this.asset.id;
+    this.booking.user_id = this.user.user_id;
     this.dataService.updateBooking(this.booking, editFields)
                     .subscribe(booking => {
                       this.clash = booking.booking_id ? booking : undefined;
                       if (! this.clash) {
                         $('#bookingModal').modal('hide');
-                        if (! this.editing) {
-                          this.event.emit({addBooking: this.booking});
-                        }
+                        this.event.emit({addUpdateBooking: this.booking});
                         this.editing = false;
                       }
                     });

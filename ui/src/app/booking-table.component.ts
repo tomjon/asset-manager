@@ -23,10 +23,10 @@ import { Booking } from './booking';
                      <td rowspan="5">No future bookings</td>
                    </tr>
                    <tr *ngFor="let booking of bookings" [ngClass]="{current: booking.current}">
-                     <td class="row">{{booking.user_label}}</td>
-                     <td class="row">{{booking.project_label}}</td>
-                     <td class="row" [ngClass]="{good: booking.isOut || booking.backIn, overdue: booking.overdueOut}">{{booking.due_out_date}}</td>
-                     <td class="row" [ngClass]="{good: booking.backIn, overdue: booking.overdueIn}">{{booking.due_in_date}}</td>
+                     <td class="row">{{booking.user_id | enum:"user"}}</td>
+                     <td class="row">{{booking.project | enum:"project"}}</td>
+                     <td class="row" [ngClass]="{good: booking.isOut || booking.backIn, overdue: booking.overdueOut}">{{booking.due_out_date | date:'dd/MM/yyyy'}}</td>
+                     <td class="row" [ngClass]="{good: booking.backIn, overdue: booking.overdueIn}">{{booking.due_in_date | date:'dd/MM/yyyy'}}</td>
                      <td>
                        <span *ngIf="booking.canEdit(user)" class="glyphicon glyphicon-pencil" (click)="onEdit(booking)" data-toggle="modal" data-target="#bookingModal"></span>
                        <span *ngIf="booking.canDelete(user)" class="glyphicon glyphicon-trash" (click)="onDelete(booking)"></span>
@@ -48,11 +48,10 @@ export class BookingTableComponent {
 
   @Output('event') event = new EventEmitter<any>();
 
-  //FIXME why isn't the enum service being used to fill in the user and project labels?
   constructor(private enumService: EnumService, private dataService: DataService) {}
 
   onEdit(booking: Booking) {
-    this.event.emit({editBooking: booking});
+    this.event.emit({editBooking: Object.assign(new Booking(), booking)});
   }
 
   onDelete(booking: Booking) {

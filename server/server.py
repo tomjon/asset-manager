@@ -39,20 +39,15 @@ ORDER BY `order`
 """
 
 BOOKINGS_SQL = """
-  SELECT booking_id, asset_id,
+  SELECT booking_id,
+         asset_id,
          booking.user_id,
-         user_enum_entry.label AS user_label,
          project,
-         project_enum_entry.label AS project_label,
          due_out_date, due_in_date, out_date, in_date
-    FROM booking, user,
-         enum AS user_enum, enum_entry AS user_enum_entry,
-         enum AS project_enum, enum_entry AS project_enum_entry
+    FROM booking, user
    WHERE {0}=:{0}
          AND (date('now') <= due_in_date OR (out_date IS NOT NULL AND in_date IS NULL))
          AND booking.user_id=user.user_id
-         AND user_enum.field='user' AND user_enum.enum_id=user_enum_entry.enum_id AND user_enum_entry.value=user.user_id
-         AND project_enum.field='project' AND project_enum.enum_id=project_enum_entry.enum_id AND project_enum_entry.value=booking.project
 ORDER BY due_out_date
 """
 

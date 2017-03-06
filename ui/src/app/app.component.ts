@@ -141,7 +141,7 @@ export class AppComponent {
     }
     else if (event.book) {
       this.booking = new Booking();
-      this.asset = event.book; //FIXME this is moot because the current asset already is the one being booked
+      //FIXME the current asset already is the one being booked, but will need to do something here when it's not
     }
     else if (event.editBooking) {
       this.booking = event.editBooking;
@@ -153,8 +153,13 @@ export class AppComponent {
     else if (event.search) {
       this.doSearch();
     }
-    else if (event.addBooking) {
-      this.assetBookings.push(event.addBooking);
+    else if (event.addUpdateBooking) {
+      let index = this.assetBookings.findIndex(booking => booking.booking_id == event.addUpdateBooking.booking_id);
+      if (index != -1) {
+        this.assetBookings.splice(index, 1, event.addUpdateBooking);
+      } else {
+        this.assetBookings.push(event.addUpdateBooking);
+      }
     }
     else {
       console.log("Bad event", event);
