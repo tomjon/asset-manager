@@ -8,6 +8,8 @@ import { LoginComponent } from './login.component';
 import { AssetComponent } from './asset.component';
 import { TableComponent } from './table.component';
 import { BookingComponent} from './booking.component';
+import { BookingTableComponent} from './booking-table.component';
+import { UserBookingsComponent} from './user-bookings.component';
 import { AttachmentComponent } from './attachment.component';
 import { NotificationComponent } from './notification.component';
 import { EnumPipe } from './enum.pipe';
@@ -25,6 +27,8 @@ import './rxjs-operators';
     AssetComponent,
     TableComponent,
     BookingComponent,
+    BookingTableComponent,
+    UserBookingsComponent,
     AttachmentComponent,
     NotificationComponent,
     EnumPipe
@@ -37,7 +41,8 @@ import './rxjs-operators';
   providers: [
     DataService,
     EnumService,
-    FieldMap],
+    FieldMap
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

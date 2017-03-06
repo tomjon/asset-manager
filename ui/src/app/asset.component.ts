@@ -5,6 +5,7 @@ import { BookingComponent } from './booking.component';
 import { AttachmentComponent } from './attachment.component';
 import { FieldMap } from './field-map';
 import { Frequency } from './frequency';
+import { Booking, Bookings } from './booking';
 import { User, BOOK_ROLE, VIEW_ROLE, ADMIN_ROLE } from './user';
 import { pristine } from './pristine';
 import { LAST_OPTION } from './enum';
@@ -31,13 +32,13 @@ import { LAST_OPTION } from './enum';
                    <div class="row">
                      <h3 class="col-lg-12">
                        Asset
-                       <span class="glyphicon glyphicon-arrow-left" (click)="onReset()" [ngClass]="{disabled: form.pristine}"></span>
-                       <span class="glyphicon glyphicon-floppy-disk" (click)="onSave()" [ngClass]="{disabled: ! hasRole() || form.pristine || original == undefined}"></span>
-                       <span class="glyphicon glyphicon-trash" (click)="onDelete()" [ngClass]="{disabled: ! hasRole(true) || original == undefined}"></span>
-                       <span class="glyphicon glyphicon-plus-sign" (click)="onAdd()" [ngClass]="{disabled: ! hasRole(true)}"></span>
-                       <span class="glyphicon glyphicon-book" [ngClass]="{disabled: bookDisabled()}" data-toggle="modal" data-target="#bookingModal"></span>
-                       <span class="glyphicon glyphicon-export bookOut" (click)="status.book(true)" [ngClass]="{disabled: status.out || ! status.overdue}"></span>
-                       <span class="glyphicon glyphicon-import bookIn" (click)="status.book(false)" [ngClass]="{disabled: ! status.out, overdue: status.out && status.overdue}"></span>
+                       <span class="glyphicon glyphicon-arrow-left" (click)="onReset()" [ngClass]="{disabled: ! canReset}"></span>
+                       <span class="glyphicon glyphicon-floppy-disk" (click)="onSave()" [ngClass]="{disabled: ! canSave}"></span>
+                       <span class="glyphicon glyphicon-trash" (click)="onDelete()" [ngClass]="{disabled: ! canDelete}"></span>
+                       <span class="glyphicon glyphicon-plus-sign" (click)="onAdd()" [ngClass]="{disabled: ! canAdd}"></span>
+                       <span class="glyphicon glyphicon-book" [ngClass]="{disabled: ! canBook}" (click)="onBook()" [attr.data-toggle]="canBook ? 'modal' : null" [attr.data-target]="canBook ? '#bookingModal' : null"></span>
+                       <span class="glyphicon glyphicon-export checkOut" (click)="onCheck(true)" [ngClass]="{disabled: ! canCheckOut}"></span>
+                       <span class="glyphicon glyphicon-import checkIn" (click)="onCheck(false)" [ngClass]="{disabled: ! canCheckIn, overdue: status.out && status.overdue}"></span>
                      </h3>
                    </div>
                    <form role="form" #form="ngForm" class="row">
@@ -79,7 +80,7 @@ import { LAST_OPTION } from './enum';
                  </div>
                  <div class="col-lg-4">
                    <badass-attachment [user]="user" [asset]="asset"></badass-attachment>
-                   <badass-booking *ngIf="showBookings()" [user]="user" [asset]="asset" (status)="setStatus($event)"></badass-booking>
+                   <badass-booking-table *ngIf="bookings != undefined" [user]="user" [bookings]="bookings" (event)="onBookingEvent($event)"></badass-booking-table>
                  </div>
                </div>
              </div>`,
@@ -88,7 +89,7 @@ import { LAST_OPTION } from './enum';
            '.my-input-group:last-child { padding-right: 0 }',
            'textarea { resize: none }',
            '.glyphicon:not(.disabled) { cursor: pointer }',
-           '.bookOut { margin-left: 20px }',
+           '.checkOut { margin-left: 20px }',
            '.overdue { color: red }',
            '.disabled { color: lightgrey }',
            'badass-booking { display: block; height: 177px; overflow: auto }']
@@ -96,6 +97,7 @@ import { LAST_OPTION } from './enum';
 export class AssetComponent {
   private original: any;
   private asset: any = {};
+  private bookings: Bookings;
   private freqs: any = {};
   private addNew: any = {};
 
@@ -120,17 +122,45 @@ export class AssetComponent {
     }
   }
 
+  // analyse bookings to determine the check in/out status of the asset (must be correct user)
+  @Input('bookings') set _bookings(bookings: Bookings) {
+    this.bookings = bookings;
+    if (! bookings) return;
+    for (let booking of this.bookings) {
+      if (booking.user_id != this.user.user_id && this.user.role != ADMIN_ROLE) {
+        continue;
+      }
+      if (booking.overdueIn) {
+        this.status = {out: true, overdue: true};
+        return;
+      }
+      if (booking.isOut) {
+        this.status = {out: true};
+        return;
+      }
+      if (booking.overdueOut) {
+        this.status = {out: false, overdue: true};
+        return;
+      }
+    }
+  }
+
+  get canCheckOut() {
+    return ! this.status.out && this.status.overdue;
+  }
+
+  get canCheckIn() {
+    return this.status.out;
+  }
+
+  onCheck(out: boolean) {
+    if ((out && ! this.canCheckOut) || (! out && ! this.canCheckIn)) return;
+    this.event.emit({check: {asset_id: this.asset.id, out: out}});
+  }
+
   @Input('search') search;
 
   constructor(private fieldMap: FieldMap, private enumService: EnumService, private dataService: DataService) {}
-
-  setStatus(status: any) {
-    this.status = status;
-  }
-
-  showBookings() {
-    return this.user != undefined && this.user.role >= VIEW_ROLE;
-  }
 
   unitOptions() {
     return Frequency.unitOptions();
@@ -145,26 +175,59 @@ export class AssetComponent {
     return this.user != undefined && this.user.role >= role;
   }
 
-  bookDisabled() {
-    let hasRole: boolean = this.user != undefined && this.user.role >= BOOK_ROLE;
-    return this.original == undefined || ! hasRole;
+  get canReset() {
+    let form: any = this.form;
+    return ! form.pristine;
   }
 
   onReset() {
+    if (! this.canReset) return;
     this._asset = this.original;
     pristine(this.form);
   }
 
+  get canSave() {
+    let form: any = this.form;
+    return this.hasRole() && ! form.pristine && this.original != undefined;
+  }
+
   onSave() {
+    if (! this.canSave) return;
     this.event.emit({save: this.asset});
   }
 
+  get canDelete() {
+    return this.hasRole(true) && this.original != undefined;
+  }
+
   onDelete() {
+    if (! this.canDelete) return;
     this.event.emit({delete: this.original.id});
   }
 
+  get canAdd() {
+    return this.hasRole(true);
+  }
+
   onAdd() {
+    if (! this.canAdd) return;
     this.event.emit({add: this.asset});
+    pristine(this.form, false);
+  }
+
+  get canBook() {
+    let hasRole: boolean = this.user != undefined && this.user.role >= BOOK_ROLE;
+    return this.original != undefined && hasRole;
+  }
+
+  onBook() {
+    if (! this.canBook) return;
+    this.event.emit({book: this.asset});
+  }
+
+  // booking table events are cascaded up to the app component
+  onBookingEvent(event) {
+    this.event.emit(event);
   }
 
   onEnumChange(input) {

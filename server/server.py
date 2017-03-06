@@ -38,21 +38,16 @@ GROUP BY user.user_id
 ORDER BY `order`
 """
 
-ASSET_BOOKINGS_SQL = """
+BOOKINGS_SQL = """
   SELECT booking_id,
+         asset_id,
          booking.user_id,
-         user_enum_entry.label AS user_label,
          project,
-         project_enum_entry.label AS project_label,
          due_out_date, due_in_date, out_date, in_date
-    FROM booking, user,
-         enum AS user_enum, enum_entry AS user_enum_entry,
-         enum AS project_enum, enum_entry AS project_enum_entry
-   WHERE asset_id=:asset_id
+    FROM booking, user
+   WHERE {0}.{1}=:{1}
          AND (date('now') <= due_in_date OR (out_date IS NOT NULL AND in_date IS NULL))
          AND booking.user_id=user.user_id
-         AND user_enum.field='user' AND user_enum.enum_id=user_enum_entry.enum_id AND user_enum_entry.value=user.user_id
-         AND project_enum.field='project' AND project_enum.enum_id=project_enum_entry.enum_id AND project_enum_entry.value=booking.project
 ORDER BY due_out_date
 """
 
@@ -341,10 +336,10 @@ def asset_endpoint(asset_id=None):
 def asset_endpoint_GET(asset_id):
     """ Asset endpoint to get an existing asset.
     """
-    asset = applications.solr.get(asset_id)
+    asset = application.solr.get(asset_id)
     if asset is None:
         return "Asset not found", 404
-    return Response(json.dumps(asset), mimetype=r.headers['content-type'])
+    return Response(json.dumps(asset), mimetype='application/json')
 
 
 @application.route('/file', methods=['GET', 'POST'])
@@ -424,8 +419,20 @@ def booking_endpoint(booking_id=None):
     """
     with application.db.cursor() as sql:
         if request.method == 'GET':
-            # get bookings for an asset
-            return json.dumps(sql.selectAllDict(ASSET_BOOKINGS_SQL, asset_id=request.args['asset_id']))
+            # get bookings for an asset or user
+            if 'user_id' in request.args and not application.user_has_role([ADMIN_ROLE, BOOK_ROLE]):
+                return "Role required", 403
+            for table, column in [('booking', 'asset_id'), ('user', 'user_id')]:
+                if column in request.args:
+                    args = {column: request.args[column]}
+                    bookings = sql.selectAllDict(BOOKINGS_SQL.format(table, column), args)
+                    if column == 'user_id':
+                        # talk to SOLR to get some asset details
+                        assets_dict = application.solr.assets_dict(args[column])
+                        update_booking = lambda b: b.update(assets_dict[b['asset_id']]) or b
+                        bookings = [update_booking(booking) for booking in bookings]
+                    return json.dumps(bookings)
+            return 'Missing argument', 400
         if request.method == 'POST':
             # add a booking for an asset for the current user - returns a clashing booking if one exists (and doesn't add the submitted booking)
             if not application.user_has_role([ADMIN_ROLE, BOOK_ROLE]):

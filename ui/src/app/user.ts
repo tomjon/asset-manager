@@ -1,11 +1,11 @@
-export var ANONYMOUS = 0;
-export var VIEW_ROLE = 1;
-export var BOOK_ROLE = 2;
-export var ADMIN_ROLE = 3;
+export var ANONYMOUS = '0';
+export var VIEW_ROLE = '1';
+export var BOOK_ROLE = '2';
+export var ADMIN_ROLE = '3';
 
 export class User {
-  public user_id: number;
-  public role: number;
+  public user_id: string;
+  public role: string;
   public roleLabel: string;
   public username: string;
   public email: string;
@@ -16,7 +16,7 @@ export class User {
   public password: string;
   public new_password: string;
 
-  constructor(role: number = ANONYMOUS) {
+  constructor(role: string=ANONYMOUS) {
     this.role = role;
   }
 }

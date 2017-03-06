@@ -30,6 +30,13 @@ class AssetIndex(object):
         assert_status_code(r, httplib.OK)
         return json.loads(r.text)
 
+    def assets_dict(self, user_id):
+        """ Get a dictionary keyed by asset_id whose values are the asset details to be displayed
+            for the user's bookings table.
+        """
+        docs = self.search({'q': '*', 'fl': 'id,serial,manufacturer,model', 'xjoin_user': 'true', 'xjoin_user.external.user': user_id, 'fq': '{!xjoin}xjoin_user'})['response']['docs']
+        return dict((doc['id'], doc) for doc in docs)
+
     def new_id(self):
         r = requests.get(self.query_url, params={'q': '*', 'rows': 1, 'fl': 'id', 'sort': 'id desc'})
         assert_status_code(r, httplib.OK)
