@@ -45,7 +45,7 @@ BOOKINGS_SQL = """
          project,
          due_out_date, due_in_date, out_date, in_date
     FROM booking, user
-   WHERE {0}=:{0}
+   WHERE {0}.{1}=:{1}
          AND (date('now') <= due_in_date OR (out_date IS NOT NULL AND in_date IS NULL))
          AND booking.user_id=user.user_id
 ORDER BY due_out_date
@@ -336,10 +336,10 @@ def asset_endpoint(asset_id=None):
 def asset_endpoint_GET(asset_id):
     """ Asset endpoint to get an existing asset.
     """
-    asset = applications.solr.get(asset_id)
+    asset = application.solr.get(asset_id)
     if asset is None:
         return "Asset not found", 404
-    return Response(json.dumps(asset), mimetype=r.headers['content-type'])
+    return Response(json.dumps(asset), mimetype='application/json')
 
 
 @application.route('/file', methods=['GET', 'POST'])
@@ -422,10 +422,16 @@ def booking_endpoint(booking_id=None):
             # get bookings for an asset or user
             if 'user_id' in request.args and not application.user_has_role([ADMIN_ROLE, BOOK_ROLE]):
                 return "Role required", 403
-            for column in ['asset_id', 'user_id']:
+            for table, column in [('booking', 'asset_id'), ('user', 'user_id')]:
                 if column in request.args:
                     args = {column: request.args[column]}
-                    return json.dumps(sql.selectAllDict(BOOKINGS_SQL.format(column), args))
+                    bookings = sql.selectAllDict(BOOKINGS_SQL.format(table, column), args)
+                    if column == 'user_id':
+                        # talk to SOLR to get some asset details
+                        assets_dict = application.solr.assets_dict(args[column])
+                        update_booking = lambda b: b.update(assets_dict[b['asset_id']]) or b
+                        bookings = [update_booking(booking) for booking in bookings]
+                    return json.dumps(bookings)
             return 'Missing argument', 400
         if request.method == 'POST':
             # add a booking for an asset for the current user - returns a clashing booking if one exists (and doesn't add the submitted booking)

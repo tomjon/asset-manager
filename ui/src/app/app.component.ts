@@ -4,7 +4,7 @@ import { EnumService } from './enum.service';
 import { Search } from './search';
 import { Results } from './results';
 import { User, ADMIN_ROLE, BOOK_ROLE, VIEW_ROLE } from './user';
-import { Booking } from './booking';
+import { Booking, Bookings } from './booking';
 
 //FIXME instance of Search to live in DataService? tidies up some dependencies
 
@@ -25,7 +25,7 @@ import { Booking } from './booking';
              </div>
              <badass-booking [user]="user" [asset]="asset" [booking]="booking" (event)="onEvent($event)"></badass-booking>
              <badass-notification [notifications]="notifications"></badass-notification>
-             <!--badass-user-bookings [bookings]="userBookings"></badass-user-bookings-->
+             <badass-user-bookings [user]="user" [bookings]="userBookings" (event)="onEvent($event)"></badass-user-bookings>
              <div id="blocker"></div>`,
   styles: ['div.container-fluid { margin-top: 10px }',
            'badass-asset { display: block; margin: 20px 0 20px 0 }',
@@ -38,8 +38,8 @@ export class AppComponent {
   user: User = new User(); // start with an anonymous user
   booking: Booking = new Booking(); // the booking currently being edited
   notifications: any[];
-  assetBookings: Booking[];
-  userBookings: Booking[];
+  assetBookings: Bookings;
+  userBookings: Bookings;
   results: Results = new Results();
   search: Search = new Search();
 
@@ -49,6 +49,10 @@ export class AppComponent {
   }
   set asset(asset: any) {
     this._asset = asset;
+    this.loadAssetBookings();
+  }
+
+  loadAssetBookings() {
     if (this.asset && this.asset.id && this.showBookings()) {
       this.dataService.getBookings(this.asset)
                       .subscribe(bookings => {
@@ -141,7 +145,6 @@ export class AppComponent {
     }
     else if (event.book) {
       this.booking = new Booking();
-      //FIXME the current asset already is the one being booked, but will need to do something here when it's not
     }
     else if (event.editBooking) {
       this.booking = event.editBooking;
@@ -160,6 +163,17 @@ export class AppComponent {
       } else {
         this.assetBookings.push(event.addUpdateBooking);
       }
+    }
+    else if (event.check) {
+      this.dataService.book(event.check.asset_id, event.check.out)
+                      .subscribe(() => {
+                        if (this.asset && event.check.asset_id == this.asset.id) {
+                          this.loadAssetBookings();
+                        }
+                        if (event.check.user) {
+                          this.loadUserBookings();
+                        }
+                      });
     }
     else {
       console.log("Bad event", event);
