@@ -35,7 +35,7 @@ import { Booking, Bookings } from './booking';
                      <td class="row" [ngClass]="{good: booking.isOut || booking.backIn, overdue: booking.overdueOut}">{{booking.due_out_date | date:'dd/MM/yyyy'}}</td>
                      <td class="row" [ngClass]="{good: booking.backIn, overdue: booking.overdueIn}">{{booking.due_in_date | date:'dd/MM/yyyy'}}</td>
                      <td>
-                       <span *ngIf="bookings.isByAsset && booking.canEdit(user)" class="glyphicon glyphicon-pencil" (click)="onEdit(booking)" data-toggle="modal" data-target="#bookingModal"></span>
+                       <span *ngIf="booking.canEdit(user)" class="glyphicon glyphicon-pencil" (click)="onEdit(booking)" data-dismiss="modal" data-toggle="modal" data-target="#bookingModal"></span>
                        <span *ngIf="booking.canDelete(user)" class="glyphicon glyphicon-trash" (click)="onDelete(booking)"></span>
                        <span *ngIf="bookings.isByUser && booking.canCheckOut" class="glyphicon glyphicon-export" (click)="onCheck(booking.asset_id, true)"></span>
                        <span *ngIf="bookings.isByUser && booking.isOut" class="glyphicon glyphicon-import" (click)="onCheck(booking.asset_id, false)" [ngClass]="{overdue: booking.overdueIn}"></span>
@@ -44,7 +44,7 @@ import { Booking, Bookings } from './booking';
                  </tbody>
                </table>
              </div>`,
-  styles: ['th, td { padding: 5px }',
+  styles: ['th, td { padding: 5px; white-space: nowrap }',
            '.good { color: green }',
            '.overdue { color: red }',
            '.current .row { background: lightblue }',

@@ -23,7 +23,8 @@ declare var $;
                    </div>
                  </div>
                </form>
-             </div>`
+             </div>`,
+  styles: ['.modal-dialog { width: 50% }']
 })
 export class UserBookingsComponent {
   @Input('user') user: User;
