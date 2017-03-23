@@ -21,21 +21,21 @@ declare var $;
                      <div class="modal-body">
                        <div class="form-group">
                          <label for="project">{{fieldMap.projectInput.label}}</label>
-                         <select *ngIf="addNew.field != fieldMap.projectInput.field" [disabled]="! booking.canEditProject(user)" class="form-control" [(ngModel)]="booking.project" [name]="fieldMap.projectInput.field" (ngModelChange)="onEnumChange(fieldMap.projectInput)">
+                         <select *ngIf="addNew.field != fieldMap.projectInput.field" [disabled]="editing && ! booking.canEditProject(user)" class="form-control" [(ngModel)]="booking.project" [name]="fieldMap.projectInput.field" (ngModelChange)="onEnumChange(fieldMap.projectInput)">
                            <option *ngFor="let o of options(fieldMap.projectInput.field)" [value]="o.value">{{o.label}}</option>
                          </select>
                          <input #addNew type="text" *ngIf="addNew.field == fieldMap.projectInput.field" class="form-control" [(ngModel)]="addNew.label" [name]="fieldMap.projectInput.field" (blur)="onAddNew(fieldMap.projectInput, addNew.label)" (change)="onAddNew(fieldMap.projectInput, addNew.label)"/>
                        </div>
                        <div class="form-group">
                          <label for="dueOutDate">Due Out Date</label>
-                         <input type="date" required min="{{today}}" [disabled]="! booking.canEditDueOutDate(user)" class="form-control" [(ngModel)]="booking.due_out_date" name="dueOutDate" #f_dueOutDate="ngModel">
+                         <input type="date" required min="{{today}}" [disabled]="editing && ! booking.canEditDueOutDate(user)" class="form-control" [(ngModel)]="booking.due_out_date" name="dueOutDate" #f_dueOutDate="ngModel">
                          <div [hidden]="! booking.canEditDueOutDate(user) || f_dueOutDate.valid" class="alert alert-danger">
                            Due out date is required
                          </div>
                        </div>
                        <div class="form-group">
                          <label for="dueInDate">Due In Date</label>
-                         <input type="date" required min="{{booking.due_out_date}}" [disabled]="! booking.canEditDueInDate(user)" class="form-control" [(ngModel)]="booking.due_in_date" name="dueInDate" #f_dueInDate="ngModel">
+                         <input type="date" required min="{{booking.due_out_date}}" [disabled]="editing && ! booking.canEditDueInDate(user)" class="form-control" [(ngModel)]="booking.due_in_date" name="dueInDate" #f_dueInDate="ngModel">
                          <div [hidden]="! booking.canEditDueInDate(user) || (f_dueInDate.valid && booking.due_in_date >= booking.due_out_date)" class="alert alert-danger">
                            Due in date is required, and should be the same or after the due out date
                          </div>

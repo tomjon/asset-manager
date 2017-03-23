@@ -26,7 +26,7 @@ import { Booking, Bookings } from './booking';
                      <td colspan="6">No future bookings</td>
                    </tr>
                    <tr *ngFor="let booking of bookings" [ngClass]="{current: booking.current}">
-                     <td><span class="glyphicon glyphicon-link" (click)="onClick(booking.asset_id)" data-dismiss="modal"></span></td>
+                     <td *ngIf="! bookings.isByAsset"><span class="glyphicon glyphicon-link" (click)="onClick(booking.asset_id)" data-dismiss="modal"></span></td>
                      <td *ngIf="! bookings.isByUser" class="row">{{booking.user_id | enum:"user"}}</td>
                      <td *ngIf="! bookings.isByAsset" class="row">{{booking.manufacturer | enum:"manufacturer"}}</td>
                      <td *ngIf="! bookings.isByAsset" class="row">{{booking.model}}</td>
