@@ -440,11 +440,11 @@ def booking_endpoint(booking_id=None):
             args = request.args.to_dict()
             try:
                 booking = sql.selectOneDict(CHECK_BOOKING_SQL, args)
-                return json.dumps(booking)
+                return json.dumps(booking), 409
             except NoResult:
                 pass
-            sql.insert("INSERT INTO booking VALUES (NULL, :asset_id, :user_id, datetime('now'), :due_out_date, :due_in_date, NULL, NULL, :project)", args, user_id=current_user.user_id)
-            return json.dumps({})
+            args['booking_id'] = sql.insert("INSERT INTO booking VALUES (NULL, :asset_id, :user_id, datetime('now'), :due_out_date, :due_in_date, NULL, NULL, :project)", args, user_id=current_user.user_id)
+            return json.dumps(args)
         if request.method == 'PUT':
             # update an existing booking by id
             if not application.user_has_role([ADMIN_ROLE, BOOK_ROLE]):
@@ -455,7 +455,7 @@ def booking_endpoint(booking_id=None):
             due_in_date = '"{0}"'.format(request.args['due_in_date']) if 'due_in_date' in request.args else "booking.due_in_date"
             try:
                 booking = sql.selectOneDict(CHECK_CLASH_SQL.format(due_out_date, due_in_date), booking_id=booking_id)
-                return json.dumps(booking)
+                return json.dumps(booking), 409
             except NoResult:
                 pass
 
@@ -472,7 +472,8 @@ def booking_endpoint(booking_id=None):
                 clauses.append("user_id=:user_id")
             if sql.update("UPDATE booking SET {0} WHERE {1}".format(set_fields, ' AND '.join(clauses)), request.args.to_dict(), booking_id=booking_id, user_id=current_user.user_id) < 1:
                 return "No updatable booking", 400
-            return json.dumps({})
+            fields['booking_id'] = booking_id
+            return json.dumps(fields)
         if request.method == 'DELETE':
             # delete a particular booking by id
             if not application.user_has_role([ADMIN_ROLE, BOOK_ROLE]):

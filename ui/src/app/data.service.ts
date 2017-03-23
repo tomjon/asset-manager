@@ -290,7 +290,7 @@ export class DataService {
   }
 
   // add or update a booking (if editFields is undefined, we are adding)
-  updateBooking(booking: Booking, editFields: any): Observable<any> {
+  updateBooking(booking: Booking, editFields: any): Observable<Booking> {
     let params: URLSearchParams = new URLSearchParams();
     if (! editFields) {
       params.set('asset_id', booking.asset_id);
@@ -344,6 +344,6 @@ export class DataService {
     } else {
       errMsg = error.message ? error.message : error.toString();
     }
-    return Observable.throw({status: error.status, message: errMsg});
+    return Observable.throw({status: error.status, message: errMsg, rsp: error});
   }
 }

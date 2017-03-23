@@ -5,6 +5,7 @@ import { FieldMap } from './field-map';
 import { User } from './user';
 import { Booking } from './booking';
 import { LAST_OPTION } from './enum';
+import { Observable } from 'rxjs/Observable';
 
 declare var $;
 
@@ -92,11 +93,16 @@ export class BookingComponent {
     this.booking.user_id = this.user.user_id;
     this.dataService.updateBooking(this.booking, editFields)
                     .subscribe(booking => {
-                      this.clash = booking.booking_id ? booking : undefined;
-                      if (! this.clash) {
-                        $('#bookingModal').modal('hide');
-                        this.event.emit({addUpdateBooking: this.booking});
-                        this.editing = false;
+                      $('#bookingModal').modal('hide');
+                      this.booking.booking_id = booking.booking_id;
+                      this.event.emit({addUpdateBooking: this.booking});
+                      this.editing = false;
+                    },
+                    error => {
+                      if (error.status == 409) {
+                        this.clash = error.rsp.json();
+                      } else {
+                        Observable.throw(error);
                       }
                     });
   }
