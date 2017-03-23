@@ -10,10 +10,11 @@ import { Booking, Bookings } from './booking';
                <table *ngIf="bookings != undefined">
                  <thead>
                    <tr>
+                     <th *ngIf="! bookings.isByAsset">&nbsp;</th>
                      <th *ngIf="! bookings.isByUser">User</th>
                      <th *ngIf="! bookings.isByAsset">Manufacturer</th>
                      <th *ngIf="! bookings.isByAsset">Model</th>
-                     <th *ngIf="! bookings.isByAsset">Serial</th>
+                     <th *ngIf="! bookings.isByAsset">Bar&nbsp;Code</th>
                      <th *ngIf="! bookings.isByProject">Project</th>
                      <th>Due Out</th>
                      <th>Due In</th>
@@ -22,13 +23,14 @@ import { Booking, Bookings } from './booking';
                  </thead>
                  <tbody>
                    <tr *ngIf="bookings.length == 0">
-                     <td rowspan="5">No future bookings</td>
+                     <td colspan="6">No future bookings</td>
                    </tr>
                    <tr *ngFor="let booking of bookings" [ngClass]="{current: booking.current}">
+                     <td><span class="glyphicon glyphicon-link" (click)="onClick(booking.asset_id)" data-dismiss="modal"></span></td>
                      <td *ngIf="! bookings.isByUser" class="row">{{booking.user_id | enum:"user"}}</td>
                      <td *ngIf="! bookings.isByAsset" class="row">{{booking.manufacturer | enum:"manufacturer"}}</td>
                      <td *ngIf="! bookings.isByAsset" class="row">{{booking.model}}</td>
-                     <td *ngIf="! bookings.isByAsset" class="row"><a (click)="onClick(booking.asset_id)" data-dismiss="modal">{{booking.serial}}</a></td>
+                     <td *ngIf="! bookings.isByAsset" class="row">{{booking.barcode}}</td>
                      <td *ngIf="! bookings.isByProject" class="row">{{booking.project | enum:"project"}}</td>
                      <td class="row" [ngClass]="{good: booking.isOut || booking.backIn, overdue: booking.overdueOut}">{{booking.due_out_date | date:'dd/MM/yyyy'}}</td>
                      <td class="row" [ngClass]="{good: booking.backIn, overdue: booking.overdueIn}">{{booking.due_in_date | date:'dd/MM/yyyy'}}</td>

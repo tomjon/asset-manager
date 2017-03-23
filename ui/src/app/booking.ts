@@ -4,7 +4,7 @@ import { User, ADMIN_ROLE } from './user';
 export class Booking {
   constructor(public booking_id: string='',
               public asset_id: string='',
-              public serial: string='',
+              public barcode: string='',
               public manufacturer: string='',
               public model: string='',
               public user_id: string='',
