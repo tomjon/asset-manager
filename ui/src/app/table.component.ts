@@ -95,8 +95,7 @@ import { Frequency } from './frequency';
            'select.freq { width: 60 }',
            '.header, .hl { font-weight: bold }',
            '.booking-filters div { display: inline; margin-right: 10px }',
-           '.booking-filters select { width: 200; background: white }'],
-  //pipes: [EnumPipe]
+           '.booking-filters select { width: 200; background: white }']
 })
 export class TableComponent {
   showInput: any = {};

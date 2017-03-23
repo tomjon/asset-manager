@@ -12,6 +12,7 @@ export class Frequency {
     let m = Math.floor(Math.log10(f) / 3) + 2;
     this._units = Math.min(Math.max(m, 0), FREQ_UNITS.length - 1);
     this._value = f * Math.pow(10, 6 - 3 * m);
+    this._value = +this._value.toFixed(3);
   }
 
   private setFreq(): void {
