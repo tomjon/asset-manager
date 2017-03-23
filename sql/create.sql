@@ -65,7 +65,10 @@ CREATE TABLE notification(
 	notification_id INTEGER PRIMARY KEY,
 	name TEXT,
 	title_template TEXT,
-	body_template TEXT
+	body_template TEXT,
+	every INTEGER,
+	offset INTEGER,
+	run DATE
 );
 
 CREATE TABLE notification_role_pivot(
@@ -99,7 +102,7 @@ CREATE TABLE notification_sent(
 );
 
 /**
- * Create and populate the 'role' enum, and create the 'project' and 'user' enums, which are
+ * Create and populate the 'role' and 'every' enums, and create the 'project' and 'user' enums, which are
  * all required for the system to run. The labels for roles can be edited later, but the
  * particular values are assumed by server.py and the UI.
  *
@@ -111,6 +114,14 @@ INSERT INTO enum_entry VALUES (NULL, -1, 1, 2, 'Booker');
 INSERT INTO enum_entry VALUES (NULL, -1, 2, 3, 'Admin');
 INSERT INTO enum VALUES (NULL, 'role');
 UPDATE enum_entry SET enum_id=(SELECT last_insert_rowid()) WHERE enum_id=-1;
+
+INSERT INTO enum_entry VALUES (NULL, -1, 0, 0, 'Day');
+INSERT INTO enum_entry VALUES (NULL, -1, 1, 1, 'Week');
+INSERT INTO enum_entry VALUES (NULL, -1, 2, 2, 'Month');
+INSERT INTO enum_entry VALUES (NULL, -1, 3, 3, 'Year');
+INSERT INTO enum VALUES (NULL, 'every');
+UPDATE enum_entry SET enum_id=(SELECT last_insert_rowid()) WHERE enum_id=-1;
+
 INSERT INTO enum VALUES (NULL, 'user');
 INSERT INTO enum VALUES (NULL, 'project');
 

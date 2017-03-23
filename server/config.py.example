@@ -1,4 +1,8 @@
+MAIL_COMMAND = "/bin/mail"
+MAIL_FROM = ["BADASS", "notifications@badass.ofcom.net"]
 BASE_SOLR_URL = "http://localhost:8983/solr"
 SOLR_COLLECTION = "assets"
 DATABASE = "sql/assets.db"
 ROUNDS = 10^6
+LOG_PATH = "/var/log/badass"
+LOG_SIZE = 1048576

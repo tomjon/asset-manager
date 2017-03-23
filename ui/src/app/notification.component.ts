@@ -6,6 +6,7 @@ import { Notification } from './notification';
 import { Trigger } from './trigger';
 import { Filter } from './filter';
 import { EnumPipe } from './enum.pipe';
+import { Enum } from './enum';
 import { User, ADMIN_ROLE } from './user';
 import { pristine } from './pristine';
 
@@ -37,6 +38,25 @@ declare var $;
                            Name is required
                          </div>
                        </div>
+                       <div class="form-group">
+                         <div class="col-lg-4 my-input-group">
+                           <label for="every">Run Every ...</label>
+                           <select class="form-control" [(ngModel)]="notification.every" name="every">
+                             <option *ngFor="let o of everyEnum.options(false, false)" [value]="o.value">{{o.label}}</option>
+                           </select>
+                         </div>
+                         <div class="col-lg-4 my-input-group" [ngClass]="{disabled: notification.every == 0}">
+                           <label for="offset">Offset (days)</label>
+                           <input type="number" required class="form-control" [disabled]="notification.every == 0" [(ngModel)]="notification.offset" name="offset" #f_offset="ngModel">
+                           <div [hidden]="notification.every == 0 || f_offset.valid" class="alert alert-danger">
+                             Offset is required
+                           </div>
+                         </div>
+                         <div class="col-lg-4 my-input-group">
+                           <label for="run">Last Run <span class="glyphicon glyphicon-remove-circle" [ngClass]="{disabled: ! notification.run}" (click)="onRunReset()"></span></label>
+                           <input type="text" class="form-control" [disabled]="true" name="last_run">
+                         </div>
+                       </div>
                        <ul class="nav nav-tabs">
                          <li *ngFor="let trigger of notification.triggers; let index=index" [ngClass]="{active: trigger == activeTrigger}" (click)="activeTrigger = trigger"><a>Trigger {{index + 1}}</a></li>
                          <li><a class="glyphicon glyphicon-plus-sign" (click)="onNewTrigger()"></a></li>
@@ -56,8 +76,8 @@ declare var $;
                              </select>
                            </div>
                            <div class="col-lg-4">
-                             <label for="triggerDays">Days</label>
-                             <input type="number" class="form-control" [(ngModel)]="activeTrigger.days" name="triggerDays">
+                             <label for="triggerDays">Offset (days)</label>
+                             <input type="text" class="form-control" [(ngModel)]="activeTrigger.days" name="triggerDays">
                            </div>
                          </div>
                          &nbsp;
@@ -65,7 +85,7 @@ declare var $;
                            <li *ngFor="let filter of activeTrigger.filters; let index=index" class="active">
                              <a class="trigger-filter">
                                <span class="filter-label">Filter</span>
-                               {{filter.column != null ? filter.column : filter.field}} {{operatorLabel(filter)}} {{filter.value != null ? filter.value : ''}}<i *ngIf="filter.value == null">NULL</i>
+                               {{filter.column != null ? filter.column : filter.field}} {{operatorLabel(filter)}} <i>{{filter.value.toUpperCase()}}</i>
                                <span class="glyphicon glyphicon-trash" (click)="onDeleteFilter(index)"></span>
                              </a>
                            </li>
@@ -80,12 +100,23 @@ declare var $;
                                <select [(ngModel)]="newFilter.operator" name="newFilterOperator">
                                  <option *ngFor="let o of fieldMap.filterOperators" [value]="o.value">{{o.label}}</option>
                                </select>
-                               <input type="text" name="newFilterValue" [disabled]="newFilter.nullValue" [(ngModel)]="newFilter.value" />
-                               <input type="checkbox" name="newFilterNull" [(ngModel)]="newFilter.nullValue" (ngModelChange)="newFilter.value = newFilter.nullValue ? 'NULL' : ''" />
+                               <select [(ngModel)]="newFilter.value" name="newFilterValue">
+                                 <option value="null">NULL</option>
+                                 <option value="now">NOW</option>
+                               </select>
                                <span class="glyphicon glyphicon-plus-sign" (click)="onNewFilter()"></span>
                              </a>
                            </li>
                          </ul>
+                       </div>
+                       <div class="form-group">
+                         <label for="titleTemplate">Cc: Recipient Roles</label>
+                         <select class="form-control" multiple [(ngModel)]="notification.roles" name="roles">
+                           <option *ngFor="let o of rolesEnum.options(false, false)" [value]="o.value">{{o.label}}</option>
+                         </select>
+                         <div [hidden]="! showRoleAlert()" class="alert alert-danger">
+                           You must specify Cc: Recipient Roles if you have asset field based triggers
+                         </div>
                        </div>
                        <div class="form-group">
                          <label for="titleTemplate">Title Template</label>
@@ -116,8 +147,13 @@ declare var $;
            '.nav-tabs a { cursor: pointer }',
            '.trigger-filter .filter-label { margin-right: 20px; font-weight: bold }',
            '.trigger-filter .glyphicon { width: 100%; text-align: right }',
+           '.newFilter a { white-space: nowrap }',
+           '.my-input-group { padding: 0 5px 10px 0 }',
+           '.my-input-group:last-child { padding-right: 0 }',
+           'label span { margin-left: 30px }',
            '.glyphicon { cursor: pointer }',
-           '.newFilter a { white-space: nowrap }']
+           '.disabled { color: lightgrey; cursor: default }',
+           '.disabled input { color: white }']
 })
 export class NotificationComponent {
   @Input('notifications') notifications: Notification[];
@@ -125,6 +161,8 @@ export class NotificationComponent {
   notification: Notification;
   activeTrigger: Trigger;
   newFilter: Filter = new Filter();
+  rolesEnum: Enum = this.enumService.get("role");
+  everyEnum: Enum = this.enumService.get("every");
 
   @ViewChild('form') form: HTMLFormElement;
 
@@ -143,12 +181,28 @@ export class NotificationComponent {
     }
   }
 
+  showRoleAlert(): boolean {
+    for (let trigger of this.notification.triggers) {
+      if (! trigger.column && this.notification.roles.length == 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   onSelect() {
     this.notification = this.notifications.find(notification => notification.notification_id == this.notification_id);
     this.activeTrigger = this.notification.triggers[0];
     if (this.activeTrigger == undefined) {
       this.activeTrigger = new Trigger();
       this.notification.triggers.push(this.activeTrigger);
+    }
+  }
+
+  onRunReset() {
+    if (! this.notification.run) {
+      this.dataService.resetNotification(this.notification.notification_id)
+                      .subscribe(() => this.notification.run = null);
     }
   }
 
@@ -207,8 +261,6 @@ export class NotificationComponent {
   }
 
   onNewFilter() {
-    if (this.newFilter.nullValue) this.newFilter.value = null;
-    delete this.newFilter.nullValue;
     this.activeTrigger.filters.push(this.newFilter);
     this.newFilter = new Filter();
   }

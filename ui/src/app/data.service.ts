@@ -333,6 +333,10 @@ export class DataService {
     return this.delete(`notification/${notification_id}`);
   }
 
+  resetNotification(notification_id: string): Observable<void> {
+    return this.post(`notification/${notification_id}`, null);
+  }
+
   private handleError(error: Response | any) {
     let errMsg: string;
     if (error instanceof Response) {

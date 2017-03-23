@@ -517,19 +517,30 @@ def _insert_triggers(sql, notification):
             _default(filter, 'column', 'field')
             filter['filter_id'] = sql.insert("INSERT INTO trigger_filter VALUES (NULL, :trigger_id, :column, :field, :operator, :value)", filter, trigger_id=trigger['trigger_id'])
 
+def _delete_roles(sql, notification_id):
+    sql.delete("DELETE FROM notification_role_pivot WHERE notification_id=:notification_id", notification_id=notification_id)
+
+def _insert_roles(sql, notification):
+    for role in notification['roles']:
+        sql.insert("INSERT INTO notification_role_pivot VALUES (NULL, :notification_id, :role)", notification_id=notification['notification_id'], role=role)
+
 def _insert_notification(sql, notification, notification_id=None):
-    notification['notification_id'] = sql.insert("INSERT INTO notification VALUES (:notification_id, :name, :title_template, :body_template)", notification, notification_id=notification_id)
-    _delete_triggers(sql, notification_id)
+    notification['notification_id'] = sql.insert("INSERT INTO notification VALUES (:notification_id, :name, :title_template, :body_template, :every, :offset, NULL)", notification, notification_id=notification_id)
+    _delete_roles(sql, notification['notification_id'])
+    _insert_roles(sql, notification)
+    _delete_triggers(sql, notification['notification_id'])
     _insert_triggers(sql, notification)
 
 def _update_notification(sql, notification, notification_id):
     notification['notification_id'] = notification_id
-    sql.update("UPDATE notification SET name=:name, title_template=:title_template, body_template=:body_template WHERE notification_id=:notification_id", notification, notification_id=notification_id)
+    sql.update("UPDATE notification SET name=:name, title_template=:title_template, body_template=:body_template, every=:every, offset=:offset WHERE notification_id=:notification_id", notification, notification_id=notification_id)
+    _delete_roles(sql, notification_id)
+    _insert_roles(sql, notification)
     _delete_triggers(sql, notification_id)
     _insert_triggers(sql, notification)
 
 @application.route('/notification', methods=['GET', 'POST'])
-@application.route('/notification/<notification_id>', methods=['GET', 'PUT', 'DELETE'])
+@application.route('/notification/<notification_id>', methods=['GET', 'PUT', 'POST', 'DELETE'])
 @application.role_required([ADMIN_ROLE])
 def notification_endpoint(notification_id=None):
     """ Endpoint for notifications. From the server API standpoint, these are hierarchal objects - notifications contains triggers,
@@ -547,6 +558,7 @@ def notification_endpoint(notification_id=None):
             else:
                 notifications = sql.selectAllDict("SELECT * FROM notification")
             for notification in notifications:
+                notification['roles'] = sql.selectAllSingle("SELECT role FROM notification_role_pivot WHERE notification_id=:notification_id", notification_id=notification['notification_id'])
                 notification['triggers'] = sql.selectAllDict("SELECT * FROM trigger WHERE notification_id=:notification_id", notification_id=notification['notification_id'])
                 for trigger in notification['triggers']:
                     trigger['filters'] = sql.selectAllDict("SELECT * FROM trigger_filter WHERE trigger_id=:trigger_id", trigger_id=trigger['trigger_id'])
@@ -564,12 +576,19 @@ def notification_endpoint(notification_id=None):
         if request.method == 'DELETE':
             if sql.delete("DELETE FROM notification WHERE notification_id=:notification_id", notification_id=notification_id) == 0:
                 return "No such notification", 404
+            _delete_roles(sql, notification_id)
             _delete_triggers(sql, notification_id)
             return json.dumps({})
         if request.method == 'POST':
-            notification = request.get_json()
-            _insert_notification(sql, notification)
-            return json.dumps(notification)
+            if notification_id is not None:
+                # clear 'run' date
+                if sql.update("UPDATE notification SET run=NULL WHERE notification_id=:notification_id", notification_id=notification_id) == 0:
+                    return "No such notification", 404
+                return json.dumps({})
+            else:
+                notification = request.get_json()
+                _insert_notification(sql, notification)
+                return json.dumps(notification)
 
 
 if __name__ == '__main__':
