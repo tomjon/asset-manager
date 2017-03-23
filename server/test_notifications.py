@@ -26,9 +26,10 @@ TEST_BOOKINGS = [
 ]
 
 TEST_NOTIFICATIONS = [
-    {'notification_id': 1, 'name': '', 'title_template': 'Asset <SERIAL>', 'body_template': 'Asset <SERIAL> due out on [DUE_OUT_DATE]!', 'every': 0, 'offset': None},
-    {'notification_id': 2, 'name': '', 'title_template': '<MANUFACTURER> <MODEL>', 'body_template': 'Asset <SERIAL> was due for calibration on <CALIBRATION_DUE>', 'every': 1, 'offset': 1},
-    {'notification_id': 3, 'name': '', 'title_template': '<SERIAL>', 'body_template': 'Asset <SERIAL> became overdue on [DUE_IN_DATE]', 'every': 0, 'offset': None}
+    {'notification_id': 1, 'name': '', 'title_template': 'Asset <SERIAL>', 'body_template': 'Asset <SERIAL> due out on [DUE_OUT_DATE]!', 'every': 1, 'offset': None},
+    {'notification_id': 2, 'name': '', 'title_template': '<MANUFACTURER> <MODEL>', 'body_template': 'Asset <SERIAL> was due for calibration on <CALIBRATION_DUE>', 'every': 2, 'offset': 1},
+    {'notification_id': 3, 'name': '', 'title_template': '<SERIAL>', 'body_template': 'Asset <SERIAL> became overdue on [DUE_IN_DATE]', 'every': 1, 'offset': None},
+    {'notification_id': 4, 'name': '', 'title_template': '', 'body_template': '', 'every': 0, 'offset': None}
 ]
 
 TEST_ROLES = [

@@ -115,10 +115,11 @@ INSERT INTO enum_entry VALUES (NULL, -1, 2, 3, 'Admin');
 INSERT INTO enum VALUES (NULL, 'role');
 UPDATE enum_entry SET enum_id=(SELECT last_insert_rowid()) WHERE enum_id=-1;
 
-INSERT INTO enum_entry VALUES (NULL, -1, 0, 0, 'Day');
-INSERT INTO enum_entry VALUES (NULL, -1, 1, 1, 'Week');
-INSERT INTO enum_entry VALUES (NULL, -1, 2, 2, 'Month');
-INSERT INTO enum_entry VALUES (NULL, -1, 3, 3, 'Year');
+INSERT INTO enum_entry VALUES (NULL, -1, 0, 0, 'Never');
+INSERT INTO enum_entry VALUES (NULL, -1, 1, 1, 'Day');
+INSERT INTO enum_entry VALUES (NULL, -1, 2, 2, 'Week');
+INSERT INTO enum_entry VALUES (NULL, -1, 3, 3, 'Month');
+INSERT INTO enum_entry VALUES (NULL, -1, 4, 4, 'Year');
 INSERT INTO enum VALUES (NULL, 'every');
 UPDATE enum_entry SET enum_id=(SELECT last_insert_rowid()) WHERE enum_id=-1;
 

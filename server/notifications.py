@@ -12,11 +12,13 @@ import subprocess
 import logging
 from sql import SqlDatabase, NoResult
 from solr import AssetIndex
-from config import DATABASE, SOLR_COLLECTION, MAIL_COMMAND, MAIL_FROM
+from config import DATABASE, SOLR_COLLECTION, MAIL_COMMAND, MAIL_FROM_SWITCH, MAIL_FROM_FORMAT, MAIL_FROM, MAIL_TO_FORMAT
 from logger import get_logger
 
 OPERATORS = ['==', '!=', '<', '>', '<=', '>='] # allowed filter operators
 COLUMN_FIELD = re.compile(r'^[a-zA-Z_]+$') # allowed column/field names
+
+debug = False
 
 class Email(object):
     """ Representation of an email.
@@ -30,20 +32,20 @@ class Email(object):
     def add_cc(self, cc):
         self.cc.append(cc) # expects (name, email)
 
-    def send(self, debug=False):
+    def send(self):
         if self.to is None:
             if len(self.cc) == 0:
                 log.warn("No To: and no Cc:")
                 return
             self.to = self.cc[0]
             self.cc = self.cc[1:]
-        log.info("Sending mail To: %s", self.to)
+        log.info("Sending mail Title: %s To: %s Cc: %s", self.title, self.to, str(self.cc))
         if debug:
             return
-        args = [MAIL_COMMAND, '-s', self.title, '-a', 'From: {0} <{1}>'.format(*MAIL_FROM)]
+        args = [MAIL_COMMAND, '-s', self.title, MAIL_FROM_SWITCH, MAIL_FROM_FORMAT.format(*MAIL_FROM)]
         if len(self.cc) > 0:
-            args += ['-c', ','.join(self.cc)]
-        args += ['{0} <{1}>'.format(*self.to)]
+            args += ['-c', ','.join([MAIL_TO_FORMAT.format(cc) for cc in self.cc])]
+        args += [MAIL_TO_FORMAT.format(*self.to)]
         p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate(self.body)
         log.debug("%s\nStdout: %s\nStderr: %s", str(args), stdout, stderr)
@@ -77,7 +79,7 @@ def _eval_template(sql, template, values, asset):
                 result.append(value)
         pos = match.end()
     result.append(template[pos:])
-    return ''.join(result)
+    return ''.join([str(x) for x in result])
 
 
 class Filter(object):
@@ -107,7 +109,7 @@ class Trigger(object):
     def __init__(self, filters, column=None, field=None, days=None, **_):
         self.column = column # trigger can have a column OR a field - column is a booking table column,
         self.field = field # field is a SOLR asset field
-        self.days = '{0}{1}'.format('+' if days >= 0 else '', str(days))
+        self.days = days
         self.filters = filters
         assert self.column is None or COLUMN_FIELD.match(self.column)
         assert self.field is None or COLUMN_FIELD.match(self.field)
@@ -118,9 +120,7 @@ class Trigger(object):
         log.debug("Testing trigger filters against asset %s", asset['id'])
         for filter in self.filters:
             if not filter._apply(values, asset):
-                log.debug("No")
                 return False
-        log.debug("Yes")
         return True
 
 class Notification(object):
@@ -147,18 +147,20 @@ class Notification(object):
     def check_run(self, now, sql):
         """ Return whether to run the notification based on when it was last run, the 'every' (every day, week, ..) and the offset.
         """
-        if self.run is None:
+        if self.every == 0: # never
+            return False
+        if self.run is None: # not run before - no need to check, just run it
             return True
-        if self.every == 0: # every day, ignore offset
+        if self.every == 1: # every day, ignore offset
             every = 'start of day'
             offset = '0 day'
-        elif self.every == 1: # every week - offset starts from Monday (sqlite starts from Sunday, hence 0/-6)
+        elif self.every == 2: # every week - offset starts from Monday (sqlite starts from Sunday, hence 0/-6)
             every = 'weekday 0' # next Sunday, or same day if it is Sunday
             offset = '{0} day'.format(str(self.offset - 6))
-        elif self.every == 2: # every month
+        elif self.every == 3: # every month
             every = 'start of month'
             offset = '{0} day'.format(str(self.offset))
-        elif self.every == 3: # every year
+        elif self.every == 4: # every year
             every = 'start of year'
             offset = '{0} day'.format(str(self.offset))
         else:
@@ -166,13 +168,19 @@ class Notification(object):
         return sql.selectSingle("SELECT :run < DATE(:now, :every, :offset)", run=self.run, now=now, every=every, offset=offset) == 1
 
     def _insert_sent(self, now, sql, asset_id):
-        sql.insert("INSERT INTO notification_sent VALUES (NULL, :notification_id, :asset_id, DATE(:now))", notification_id=self.id, asset_id=asset_id, now=now)
+        if not debug:
+            sql.insert("INSERT INTO notification_sent VALUES (NULL, :notification_id, :asset_id, DATE(:now))", notification_id=self.id, asset_id=asset_id, now=now)
+
+    def _sign(self, x):
+        # return the integer x with sign
+        return '{0}{1}'.format('+' if x >= 0 else '', str(x))
 
     def run_now(self, now, sql, index):
         """ Triggers are ORed - if any fire, yield a mail.
         """
         log.debug("Running notification: %s", self.id)
-        sql.insert("UPDATE notification SET run=DATE(:now) WHERE notification_id=:notification_id", notification_id=self.id, now=now)
+        if not debug:
+            sql.insert("UPDATE notification SET run=DATE(:now) WHERE notification_id=:notification_id", notification_id=self.id, now=now)
         for trigger in self.triggers:
             if trigger.column is not None:
                 for values in sql.selectAllDict("SELECT * FROM booking, user, enum, enum_entry WHERE DATE(:now) >= date(booking.{0}, '{1} DAYS') AND booking.user_id=user.user_id AND enum.field='user' AND enum.enum_id=enum_entry.enum_id AND enum_entry.value=user.user_id".format(trigger.column, trigger.days), now=now):
@@ -181,7 +189,7 @@ class Notification(object):
                     if trigger._filter(values, asset):
                         yield self._mail(sql, values, asset)
             elif trigger.field is not None:
-                for asset in index.search({'q': '{0}:[* TO {1}{2}DAYS]'.format(trigger.field, now.upper(), trigger.days)})['response']['docs']:
+                for asset in index.search({'q': '{0}:[* TO {1}{2}DAYS]'.format(trigger.field, now.upper(), self._sign(-trigger.days))})['response']['docs']:
                     self._insert_sent(now, sql, asset['id'])
                     if trigger._filter(None, asset):
                         yield self._mail(sql, None, asset)
@@ -213,4 +221,4 @@ if __name__ == "__main__":
     db = SqlDatabase(DATABASE)
     index = AssetIndex(SOLR_COLLECTION)
     for mail in run_notifications('now', db, index):
-        mail.send(debug=debug)
+        mail.send()

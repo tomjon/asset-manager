@@ -45,16 +45,16 @@ declare var $;
                              <option *ngFor="let o of everyEnum.options(false, false)" [value]="o.value">{{o.label}}</option>
                            </select>
                          </div>
-                         <div class="col-lg-4 my-input-group" [ngClass]="{disabled: notification.every == 0}">
+                         <div class="col-lg-4 my-input-group blanker" [ngClass]="{disabled: notification.every <= 1}">
                            <label for="offset">Offset (days)</label>
-                           <input type="number" required class="form-control" [disabled]="notification.every == 0" [(ngModel)]="notification.offset" name="offset" #f_offset="ngModel">
-                           <div [hidden]="notification.every == 0 || f_offset.valid" class="alert alert-danger">
+                           <input type="number" required class="form-control" [disabled]="notification.every <= 1" [(ngModel)]="notification.offset" name="offset" #f_offset="ngModel">
+                           <div [hidden]="notification.every <= 1 || f_offset.valid" class="alert alert-danger">
                              Offset is required
                            </div>
                          </div>
                          <div class="col-lg-4 my-input-group">
                            <label for="run">Last Run <span class="glyphicon glyphicon-remove-circle" [ngClass]="{disabled: ! notification.run}" (click)="onRunReset()"></span></label>
-                           <input type="text" class="form-control" [disabled]="true" name="last_run">
+                           <input type="text" class="form-control" [disabled]="true" [(ngModel)]="notification.run" name="last_run">
                          </div>
                        </div>
                        <ul class="nav nav-tabs">
@@ -153,7 +153,7 @@ declare var $;
            'label span { margin-left: 30px }',
            '.glyphicon { cursor: pointer }',
            '.disabled { color: lightgrey; cursor: default }',
-           '.disabled input { color: white }']
+           '.blanker.disabled input { color: white }']
 })
 export class NotificationComponent {
   @Input('notifications') notifications: Notification[];
@@ -200,7 +200,7 @@ export class NotificationComponent {
   }
 
   onRunReset() {
-    if (! this.notification.run) {
+    if (this.notification.run) {
       this.dataService.resetNotification(this.notification.notification_id)
                       .subscribe(() => this.notification.run = null);
     }
