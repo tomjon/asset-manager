@@ -6,6 +6,9 @@ export class Frequency {
 
   constructor(private asset: any, private field: string) {
     let f = asset[field];
+    if (f == undefined) {
+      return;
+    }
     let m = Math.floor(Math.log10(f) / 3) + 2;
     this._units = Math.min(Math.max(m, 0), FREQ_UNITS.length - 1);
     this._value = f * Math.pow(10, 6 - 3 * m);
@@ -16,7 +19,7 @@ export class Frequency {
   }
 
   public get value(): number {
-    return this._value || undefined;
+    return this._value;
   }
 
   public set value(value: number) {
@@ -25,7 +28,7 @@ export class Frequency {
   }
 
   public get units(): number {
-    return this._units || undefined;
+    return this._units;
   }
 
   public set units(units: number) {
