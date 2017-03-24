@@ -18,6 +18,8 @@ import { Booking, Bookings } from './booking';
                      <th *ngIf="! bookings.isByProject">Project</th>
                      <th>Due Out</th>
                      <th>Due In</th>
+                     <th>Checked Out</th>
+                     <th>Checked In</th>
                      <th>&nbsp;</th>
                    </tr>
                  </thead>
@@ -34,6 +36,8 @@ import { Booking, Bookings } from './booking';
                      <td *ngIf="! bookings.isByProject" class="row">{{booking.project | enum:"project"}}</td>
                      <td class="row" [ngClass]="{good: booking.isOut || booking.backIn, overdue: booking.overdueOut}">{{booking.due_out_date | date:'dd/MM/yyyy'}}</td>
                      <td class="row" [ngClass]="{good: booking.backIn, overdue: booking.overdueIn}">{{booking.due_in_date | date:'dd/MM/yyyy'}}</td>
+                     <td class="row" [ngClass]="{overdue: booking.lateOut}">{{booking.out_date | date:'dd/MM/yyyy'}}</td>
+                     <td class="row" [ngClass]="{overdue: booking.lateIn}">{{booking.in_date | date:'dd/MM/yyyy'}}</td>
                      <td>
                        <span *ngIf="booking.canEdit(user)" class="glyphicon glyphicon-pencil" (click)="onEdit(booking)" data-dismiss="modal" data-toggle="modal" data-target="#bookingModal"></span>
                        <span *ngIf="booking.canDelete(user)" class="glyphicon glyphicon-trash" (click)="onDelete(booking)"></span>

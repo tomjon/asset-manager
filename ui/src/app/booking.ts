@@ -48,6 +48,14 @@ export class Booking {
     return this.out_date && ! this.in_date && this.today >= this.due_in_date;
   }
 
+  get lateOut(): boolean {
+    return this.out_date > this.due_out_date;
+  }
+
+  get lateIn(): boolean {
+    return this.in_date > this.due_in_date;
+  }
+
   canEditProject(user: User): boolean {
     return this.canDelete(user);
   }
