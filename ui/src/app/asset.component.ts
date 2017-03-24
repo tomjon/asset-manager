@@ -34,7 +34,7 @@ import { LAST_OPTION } from './enum';
                        Asset
                        <span class="glyphicon glyphicon-arrow-left" (click)="onReset()" [ngClass]="{disabled: ! canReset}"></span>
                        <span class="glyphicon glyphicon-floppy-disk" (click)="onSave()" [ngClass]="{disabled: ! canSave}"></span>
-                       <span class="glyphicon glyphicon-trash" (click)="onDelete()" [ngClass]="{disabled: ! canDelete}"></span>
+                       <span class="glyphicon glyphicon-trash"  [attr.data-toggle]="canDelete ? 'modal' : null" [attr.data-target]="canDelete ? '#confirmModal' : null" [ngClass]="{disabled: ! canDelete}"></span>
                        <span class="glyphicon glyphicon-plus-sign" (click)="onAdd()" [ngClass]="{disabled: ! canAdd}"></span>
                        <span class="glyphicon glyphicon-book" [ngClass]="{disabled: ! canBook}" (click)="onBook()" [attr.data-toggle]="canBook ? 'modal' : null" [attr.data-target]="canBook ? '#bookingModal' : null"></span>
                        <span class="glyphicon glyphicon-export checkOut" (click)="onCheck(true)" [ngClass]="{disabled: ! canCheckOut}"></span>
@@ -81,6 +81,23 @@ import { LAST_OPTION } from './enum';
                  <div class="col-lg-4">
                    <badass-attachment [user]="user" [asset]="asset"></badass-attachment>
                    <badass-booking-table *ngIf="bookings != undefined" [user]="user" [bookings]="bookings" (event)="onBookingEvent($event)"></badass-booking-table>
+                 </div>
+               </div>
+             </div>
+             <div id="confirmModal" class="modal fade" role="dialog">
+               <div class="modal-dialog">
+                 <div class="modal-content">
+                   <div class="modal-header">
+                     <button type="button" class="close" data-dismiss="modal">&times;</button>
+                     <h4 class="modal-title">Confirm delete</h4>
+                   </div>
+                   <div class="modal-body">
+                     Do you really want to delete the asset <i *ngIf="asset.manufacturer != undefined">{{asset.manufacturer | enum:'manufacturer'}} </i>{{asset.model}} {{asset.serial}}?
+                   </div>
+                   <div class="modal-footer">
+                     <button type="button" class="btn btn-default" data-dismiss="modal" (click)="onDelete()">Delete</button>
+                     <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                   </div>
                  </div>
                </div>
              </div>`,
