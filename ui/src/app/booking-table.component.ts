@@ -18,14 +18,14 @@ import { Booking, Bookings } from './booking';
                      <th *ngIf="! bookings.isByProject">Project</th>
                      <th>Due Out</th>
                      <th>Due In</th>
-                     <th></th>
+                     <th>&nbsp;</th>
                    </tr>
                  </thead>
                  <tbody>
                    <tr *ngIf="bookings.length == 0">
                      <td colspan="6">No future bookings</td>
                    </tr>
-                   <tr *ngFor="let booking of bookings" [ngClass]="{current: booking.current}">
+                   <tr *ngFor="let booking of bookings" [ngClass]="{current: booking.current}" [title]="booking.notes || '[no notes]'">
                      <td *ngIf="! bookings.isByAsset"><span class="glyphicon glyphicon-link" (click)="onClick(booking.asset_id)" data-dismiss="modal"></span></td>
                      <td *ngIf="! bookings.isByUser" class="row">{{booking.user_id | enum:"user"}}</td>
                      <td *ngIf="! bookings.isByAsset" class="row">{{booking.manufacturer | enum:"manufacturer"}}</td>

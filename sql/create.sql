@@ -58,7 +58,8 @@ CREATE TABLE booking(
 	due_in_date DATE,
 	out_date DATE,
 	in_date DATE,
-	project INTEGER
+	project INTEGER,
+	notes TEXT
 );
 
 CREATE TABLE notification(

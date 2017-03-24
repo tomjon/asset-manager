@@ -157,11 +157,13 @@ export class AppComponent {
       this.doSearch();
     }
     else if (event.addUpdateBooking) {
-      let index = this.assetBookings.findIndex(booking => booking.booking_id == event.addUpdateBooking.booking_id);
-      if (index != -1) {
-        this.assetBookings.splice(index, 1, event.addUpdateBooking);
-      } else {
-        this.assetBookings.push(event.addUpdateBooking);
+      if (this.assetBookings) {
+        let index = this.assetBookings.findIndex(booking => booking.booking_id == event.addUpdateBooking.booking_id);
+        if (index != -1) {
+          this.assetBookings.splice(index, 1, event.addUpdateBooking);
+        } else {
+          this.assetBookings.push(event.addUpdateBooking);
+        }
       }
     }
     else if (event.check) {

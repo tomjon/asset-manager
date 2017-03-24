@@ -304,8 +304,8 @@ export class DataService {
     if (! editFields || editFields.dueInDate) {
       params.set('due_in_date', booking.due_in_date);
     }
-    let obs: Observable<any> = editFields ? this.put(`booking/${booking.booking_id}`, null, {search: params})
-                                          : this.post(`booking`, null, {search: params});
+    let obs: Observable<any> = editFields ? this.put(`booking/${booking.booking_id}`, booking.notes, {search: params})
+                                          : this.post(`booking`, booking.notes, {search: params});
     return obs.map(res => res.json());
   }
 

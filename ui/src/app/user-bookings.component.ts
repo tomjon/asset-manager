@@ -18,13 +18,15 @@ declare var $;
                        <badass-booking-table [user]="user" [bookings]="bookings" (event)="onBookingEvent($event)"></badass-booking-table>
                      </div>
                      <div class="modal-footer">
+                       <p class="info"><span class="glyphicon glyphicon-info-sign"></span> Hover over a booking for notes</p>
                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                      </div>
                    </div>
                  </div>
                </form>
              </div>`,
-  styles: ['.modal-dialog { width: 50% }']
+  styles: ['.modal-dialog { width: 50% }',
+           '.info { float: left }']
 })
 export class UserBookingsComponent {
   @Input('user') user: User;

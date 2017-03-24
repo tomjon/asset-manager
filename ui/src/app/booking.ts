@@ -12,7 +12,8 @@ export class Booking {
               public due_out_date: string=undefined,
               public due_in_date: string=undefined,
               public in_date: string=undefined,
-              public out_date: string=undefined) {}
+              public out_date: string=undefined,
+              public notes: string='') {}
 
   private get today(): string {
     return new Date().toISOString().substring(0, 10);

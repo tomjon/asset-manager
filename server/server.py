@@ -43,7 +43,9 @@ BOOKINGS_SQL = """
          asset_id,
          booking.user_id,
          project,
-         due_out_date, due_in_date, out_date, in_date
+         due_out_date, due_in_date,
+         out_date, in_date,
+         notes
     FROM booking, user
    WHERE {0}.{1}=:{1}
          AND (date('now') <= due_in_date OR (out_date IS NOT NULL AND in_date IS NULL))
@@ -443,7 +445,7 @@ def booking_endpoint(booking_id=None):
                 return json.dumps(booking), 409
             except NoResult:
                 pass
-            args['booking_id'] = sql.insert("INSERT INTO booking VALUES (NULL, :asset_id, :user_id, datetime('now'), :due_out_date, :due_in_date, NULL, NULL, :project)", args, user_id=current_user.user_id)
+            args['booking_id'] = sql.insert("INSERT INTO booking VALUES (NULL, :asset_id, :user_id, datetime('now'), :due_out_date, :due_in_date, NULL, NULL, :project, :notes)", args, notes=request.get_data(), user_id=current_user.user_id)
             return json.dumps(args)
         if request.method == 'PUT':
             # update an existing booking by id
@@ -460,6 +462,9 @@ def booking_endpoint(booking_id=None):
                 pass
 
             fields = [field for field in ['project', 'due_out_date', 'due_in_date'] if field in request.args]
+            notes = request.get_data()
+            if notes is not None:
+                fields.append('notes')
             if len(fields) == 0:
                 return "No update arguments", 400
             set_fields = ', '.join(["{0}=:{0}".format(field) for field in fields])
@@ -472,7 +477,7 @@ def booking_endpoint(booking_id=None):
                 clauses.append("user_id=:user_id")
             booking = request.args.to_dict()
             booking['booking_id'] = booking_id
-            if sql.update("UPDATE booking SET {0} WHERE {1}".format(set_fields, ' AND '.join(clauses)), booking, user_id=current_user.user_id) < 1:
+            if sql.update("UPDATE booking SET {0} WHERE {1}".format(set_fields, ' AND '.join(clauses)), booking, notes=notes, user_id=current_user.user_id) < 1:
                 return "No updatable booking", 400
             return json.dumps(booking)
         if request.method == 'DELETE':

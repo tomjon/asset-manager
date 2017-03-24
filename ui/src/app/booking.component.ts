@@ -41,6 +41,10 @@ declare var $;
                            Due in date is required, and should be the same or after the due out date
                          </div>
                        </div>
+                       <div class="form-group">
+                         <label for="notes">Notes</label>
+                         <textarea class="form-control" [(ngModel)]="booking.notes" name="notes" rows="4"></textarea>
+                       </div>
                        <div *ngIf="clash" class="alert alert-danger">
                          A booking by <strong>{{clash.user_label}}</strong> already exists that clashes with your booking
                        </div>
@@ -89,8 +93,10 @@ export class BookingComponent {
       if (this.booking.canEditDueOutDate(this.user)) editFields.dueOutDate = true;
       if (this.booking.canEditDueInDate(this.user)) editFields.dueInDate = true;
     }
-    this.booking.asset_id = this.asset.id;
     this.booking.user_id = this.user.user_id;
+    if (! this.editing && this.asset) {
+      this.booking.asset_id = this.asset.id;
+    }
     this.dataService.updateBooking(this.booking, editFields)
                     .subscribe(booking => {
                       $('#bookingModal').modal('hide');
