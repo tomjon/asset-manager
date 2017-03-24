@@ -470,10 +470,11 @@ def booking_endpoint(booking_id=None):
                 clauses.append("in_date IS NULL")
             if not application.user_has_role([ADMIN_ROLE]):
                 clauses.append("user_id=:user_id")
-            if sql.update("UPDATE booking SET {0} WHERE {1}".format(set_fields, ' AND '.join(clauses)), request.args.to_dict(), booking_id=booking_id, user_id=current_user.user_id) < 1:
+            booking = request.args.to_dict()
+            booking['booking_id'] = booking_id
+            if sql.update("UPDATE booking SET {0} WHERE {1}".format(set_fields, ' AND '.join(clauses)), booking, user_id=current_user.user_id) < 1:
                 return "No updatable booking", 400
-            fields['booking_id'] = booking_id
-            return json.dumps(fields)
+            return json.dumps(booking)
         if request.method == 'DELETE':
             # delete a particular booking by id
             if not application.user_has_role([ADMIN_ROLE, BOOK_ROLE]):
