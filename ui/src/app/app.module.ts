@@ -9,6 +9,7 @@ import { AssetComponent } from './asset.component';
 import { TableComponent } from './table.component';
 import { BookingComponent} from './booking.component';
 import { BookingTableComponent} from './booking-table.component';
+import { BookingConditionComponent} from './booking-condition.component';
 import { UserBookingsComponent} from './user-bookings.component';
 import { AttachmentComponent } from './attachment.component';
 import { NotificationComponent } from './notification.component';
@@ -29,6 +30,7 @@ import './rxjs-operators';
     TableComponent,
     BookingComponent,
     BookingTableComponent,
+    BookingConditionComponent,
     UserBookingsComponent,
     AttachmentComponent,
     NotificationComponent,

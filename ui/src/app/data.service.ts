@@ -297,12 +297,9 @@ export class DataService {
     return obs.map(res => res.json());
   }
 
-  book(asset_id: string, out: boolean): Observable<void> {
-    if (out) {
-      return this.put(`book/${asset_id}`, null);
-    } else {
-      return this.delete(`book/${asset_id}`);
-    }
+  // no condition means we are checking out, otherwise checking in
+  check(asset_id: string, condition: string=undefined): Observable<void> {
+    return this.put(`check/${asset_id}`, condition);
   }
 
   getNotifications(): Observable<Notification[]> {

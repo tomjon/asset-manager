@@ -28,6 +28,7 @@ import { Booking, Bookings } from './booking';
              <badass-notification [notifications]="notifications"></badass-notification>
              <badass-enumerations #enumerations [search]="search"></badass-enumerations>
              <badass-user-bookings [user]="user" [bookings]="userBookings" (event)="onEvent($event)"></badass-user-bookings>
+             <badass-booking-condition [user]="user" [search]="search" [booking]="booking" (event)="onEvent($event)"></badass-booking-condition>
              <div id="blocker"></div>`,
   styles: ['div.container-fluid { margin-top: 10px }',
            'badass-asset { display: block; margin: 20px 0 20px 0 }',
@@ -38,7 +39,7 @@ import { Booking, Bookings } from './booking';
 })
 export class AppComponent {
   user: User = new User(); // start with an anonymous user
-  booking: Booking = new Booking(); // the booking currently being edited
+  booking: Booking = new Booking(); // the booking currently being edited (or selection of condition)
   notifications: any[];
   assetBookings: Bookings;
   userBookings: Bookings;
@@ -115,6 +116,15 @@ export class AppComponent {
                     });
   }
 
+  _updateBookings(event: any) {
+    if (this.asset && event.check.booking.asset_id == this.asset.id) {
+      this.loadAssetBookings();
+    }
+    if (event.check.user) {
+      this.loadUserBookings();
+    }
+  }
+
   onEvent(event: any) {
     if (event.save) {
       this.dataService.updateAsset(event.save)
@@ -172,15 +182,16 @@ export class AppComponent {
       }
     }
     else if (event.check) {
-      this.dataService.book(event.check.asset_id, event.check.out)
-                      .subscribe(() => {
-                        if (this.asset && event.check.asset_id == this.asset.id) {
-                          this.loadAssetBookings();
-                        }
-                        if (event.check.user) {
-                          this.loadUserBookings();
-                        }
-                      });
+      if (event.check.out === true) {
+        this.dataService.check(event.check.booking.asset_id)
+                        .subscribe(() => this._updateBookings(event));
+      } else if (event.check.out === null) {
+        this.booking = event.check.booking;
+        if (this.booking.condition == undefined) this.booking.condition = this.asset.condition;
+      } else {
+        this.dataService.check(event.check.booking.asset_id, event.check.booking.condition)
+                        .subscribe(() => this._updateBookings(event));
+      }
     }
     else {
       console.log("Bad event", event);

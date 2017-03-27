@@ -9,6 +9,7 @@ export class Booking {
               public model: string='',
               public user_id: string='',
               public project: string='0',
+              public condition: string=undefined,
               public due_out_date: string=undefined,
               public due_in_date: string=undefined,
               public in_date: string=undefined,
@@ -109,6 +110,6 @@ export class Bookings extends Array<Booking> {
   }
 
   canCheckOut(booking: Booking): boolean {
-    return this.out_asset_ids[booking.asset_id] == undefined && booking.today >= booking.due_out_date && booking.today <= booking.due_in_date;
+    return this.out_asset_ids[booking.asset_id] == undefined && booking.out_date == null && booking.in_date == null && booking.today >= booking.due_out_date && booking.today <= booking.due_in_date;
   }
 }

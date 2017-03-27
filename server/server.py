@@ -25,6 +25,8 @@ else:
     application = UserApplication(__name__, static_folder=None) # pylint: disable=invalid-name
 application.solr = AssetIndex(SOLR_COLLECTION)
 
+CONDITION_FIELD = 'condition'
+
 XJOIN_PREFIX = 'xjoin_'
 
 USER_BOOKING_SUMMARY_SQL = """
@@ -83,6 +85,7 @@ CHECK_OUT_SQL = """
          AND out_date IS NULL AND in_date IS NULL
 """.format(ADMIN_ROLE)
 
+# also check that the condition value is valid
 CHECK_IN_SQL = """
   UPDATE booking
      SET in_date=date('now')
@@ -90,7 +93,8 @@ CHECK_IN_SQL = """
          AND (user_id=:user_id OR (SELECT COUNT(*) FROM user WHERE user_id=:user_id AND role={0})=1)
          AND date('now') >= due_out_date
          AND out_date IS NOT NULL AND in_date IS NULL
-""".format(ADMIN_ROLE)
+         AND (SELECT COUNT(*) FROM enum, enum_entry WHERE field='{1}' AND enum.enum_id=enum_entry.enum_id AND value=:condition)=1
+""".format(ADMIN_ROLE, CONDITION_FIELD)
 
 GET_ATTACHMENT_SQL = """
   SELECT name, data
@@ -519,18 +523,20 @@ def booking_endpoint(booking_id=None):
             return json.dumps({})
 
 
-@application.route('/book/<asset_id>', methods=['PUT', 'DELETE'])
+@application.route('/check/<asset_id>', methods=['PUT'])
 @application.role_required([ADMIN_ROLE, BOOK_ROLE])
 def book_endpoint(asset_id):
-    """ Endpoint for checking out (PUT) or checking in (DELETE) an asset.
+    """ Endpoint for checking out (request body empty) or checking in (request body is condition) an asset.
     """
     with application.db.cursor() as sql:
-        if request.method == 'PUT':
+        condition = request.get_data()
+        if len(condition) == 0:
             if sql.update(CHECK_OUT_SQL, asset_id=asset_id, user_id=current_user.user_id) < 1:
                 return "Bad request", 400
-        elif request.method == 'DELETE':
-            if sql.update(CHECK_IN_SQL, asset_id=asset_id, user_id=current_user.user_id) < 1:
+        else:
+            if sql.update(CHECK_IN_SQL, asset_id=asset_id, user_id=current_user.user_id, condition=condition) < 1:
                 return "Bad request", 400
+            application.solr.update_field(asset_id, CONDITION_FIELD, condition)
         return json.dumps({})
 
 

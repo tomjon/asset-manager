@@ -98,6 +98,8 @@ export class FieldMap {
 
   public filterOperators: any[] = FILTER_OPERATORS;
 
+  public conditionInput: any = CONDITION;
+
   constructor() {
     for (let input of this.allInputs) {
       this.map[input.field] = input;

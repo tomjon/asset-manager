@@ -34,7 +34,7 @@ class AssetIndex(object):
         """ Get a dictionary keyed by asset_id whose values are the asset details to be displayed
             for the user's bookings table.
         """
-        docs = self.search({'q': '*', 'fl': 'id,barcode,manufacturer,model', 'xjoin_user': 'true', 'xjoin_user.external.user': user_id, 'fq': '{!xjoin}xjoin_user'})['response']['docs']
+        docs = self.search({'q': '*', 'fl': 'id,barcode,manufacturer,model,condition', 'xjoin_user': 'true', 'xjoin_user.external.user': user_id, 'fq': '{!xjoin}xjoin_user'})['response']['docs']
         return dict((doc['id'], doc) for doc in docs)
 
     def new_id(self):
@@ -64,6 +64,9 @@ class AssetIndex(object):
         if '_version_' in data['add']['doc']:
             del data['add']['doc']['_version_']
         self._update(data)
+
+    def update_field(self, asset_id, field, value):
+        self._update([{'id': asset_id, field: {'set': value}}])
 
     def get(self, asset_id):
         r = requests.get(self.query_url, params={'q': 'id:{0}'.format(asset_id)})

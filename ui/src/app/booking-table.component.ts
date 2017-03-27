@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { DataService } from './data.service';
+import { EnumService } from './enum.service';
 import { EnumPipe } from './enum.pipe';
 import { User, ADMIN_ROLE } from './user';
 import { Booking, Bookings } from './booking';
@@ -47,8 +48,8 @@ import { Booking, Bookings } from './booking';
                      <td class="icons">
                        <span *ngIf="booking.canEdit(user)" class="glyphicon glyphicon-pencil" (click)="onEdit(booking)" data-dismiss="modal" data-toggle="modal" data-target="#bookingModal"></span>
                        <span *ngIf="booking.canDelete(user)" class="glyphicon glyphicon-trash" (click)="onDelete(booking)"></span>
-                       <span *ngIf="bookings.canCheckOut(booking)" class="glyphicon glyphicon-export" (click)="onCheck(booking.asset_id, true)" [ngClass]="{overdue: booking.overdueOut}"></span>
-                       <span *ngIf="booking.isOut" class="glyphicon glyphicon-import" (click)="onCheck(booking.asset_id, false)" [ngClass]="{overdue: booking.overdueIn}"></span>
+                       <span *ngIf="bookings.canCheckOut(booking)" class="glyphicon glyphicon-export" (click)="onCheck(booking, true)" [ngClass]="{overdue: booking.overdueOut}"></span>
+                       <span *ngIf="booking.isOut" class="glyphicon glyphicon-import" (click)="onCheck(booking, false)" data-dismiss="modal" data-toggle="modal" data-target="#conditionModal" [ngClass]="{overdue: booking.overdueIn}"></span>
                      </td>
                    </tr>
                  </tbody>
@@ -65,7 +66,6 @@ import { Booking, Bookings } from './booking';
 })
 export class BookingTableComponent {
   @Input('bookings') bookings: Bookings;
-
   @Input('user') user: User;
 
   @Output('event') event = new EventEmitter<any>();
@@ -83,8 +83,8 @@ export class BookingTableComponent {
                     });
   }
 
-  onCheck(asset_id: string, out: boolean) {
-    this.event.emit({check: {asset_id: asset_id, out: out, user: this.user}});
+  onCheck(booking: Booking, out: boolean) {
+    this.event.emit({check: {booking: booking, out: out, user: this.user}})
   }
 
   onClick(asset_id: string) {

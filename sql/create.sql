@@ -103,7 +103,7 @@ CREATE TABLE notification_sent(
 );
 
 /**
- * Create and populate the 'role' and 'every' enums, and create the 'project' and 'user' enums, which are
+ * Create and populate the 'role' and 'every' enums, and create the 'project', 'user' and 'condition' enums, which are
  * all required for the system to run. The labels for roles can be edited later, but the
  * particular values are assumed by server.py and the UI.
  *
@@ -126,4 +126,5 @@ UPDATE enum_entry SET enum_id=(SELECT last_insert_rowid()) WHERE enum_id=-1;
 
 INSERT INTO enum VALUES (NULL, 'user');
 INSERT INTO enum VALUES (NULL, 'project');
+INSERT INTO enum VALUES (NULL, 'condition');
 
