@@ -102,7 +102,6 @@ export class DataService {
     }
     if (search.reload_enums) {
       params.set('reload_enums', 'true');
-      console.log("set reload enums");
       search.reload_enums = false;
     }
 
@@ -251,6 +250,7 @@ export class DataService {
     for (let booking of json) {
       bookings.push(Object.assign(new Booking(), booking));
     }
+    bookings.checkAssets();
     return bookings;
   }
 

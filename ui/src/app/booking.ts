@@ -13,9 +13,10 @@ export class Booking {
               public due_in_date: string=undefined,
               public in_date: string=undefined,
               public out_date: string=undefined,
+              public asset_is_out: boolean=undefined,
               public notes: string='') {}
 
-  private get today(): string {
+  get today(): string {
     return new Date().toISOString().substring(0, 10);
   }
 
@@ -26,10 +27,6 @@ export class Booking {
   // asset is 'out' if it has been taken out but not returned in
   get isOut(): boolean {
     return this.out_date && ! this.in_date;
-  }
-
-  get canCheckOut(): boolean {
-    return ! this.out_date && this.today <= this.due_in_date && ! this.in_date;
   }
 
   // asset is 'back in' if it has been returned before the due in date
@@ -79,14 +76,24 @@ export class Booking {
   }
 }
 
-
 export class Bookings extends Array<Booking> {
   static ASSET_TYPE = 'asset';
   static USER_TYPE = 'user';
   static PROJECT_TYPE = 'project';
 
+  private out_asset_ids: any;
+
   constructor(public type: string) {
     super();
+  }
+
+  checkAssets(): void {
+    this.out_asset_ids = {};
+    for (let booking of this) {
+      if (booking.out_date && ! booking.in_date) {
+        this.out_asset_ids[booking.asset_id] = true;
+      }
+    }
   }
 
   get isByAsset(): boolean {
@@ -99,5 +106,9 @@ export class Bookings extends Array<Booking> {
 
   get isByProject(): boolean {
     return this.type == Bookings.PROJECT_TYPE;
+  }
+
+  canCheckOut(booking: Booking): boolean {
+    return this.out_asset_ids[booking.asset_id] == undefined && booking.today <= booking.due_in_date;
   }
 }

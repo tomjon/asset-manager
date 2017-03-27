@@ -37,8 +37,6 @@ import { Enum, LAST_OPTION } from './enum';
                        <span class="glyphicon glyphicon-trash"  [attr.data-toggle]="canDelete ? 'modal' : null" [attr.data-target]="canDelete ? '#confirmModal' : null" [ngClass]="{disabled: ! canDelete}"></span>
                        <span class="glyphicon glyphicon-plus-sign" (click)="onAdd()" [ngClass]="{disabled: ! canAdd}"></span>
                        <span class="glyphicon glyphicon-book" [ngClass]="{disabled: ! canBook}" (click)="onBook()" [attr.data-toggle]="canBook ? 'modal' : null" [attr.data-target]="canBook ? '#bookingModal' : null"></span>
-                       <span class="glyphicon glyphicon-export checkOut" (click)="onCheck(true)" [ngClass]="{disabled: ! canCheckOut}"></span>
-                       <span class="glyphicon glyphicon-import checkIn" (click)="onCheck(false)" [ngClass]="{disabled: ! canCheckIn, overdue: status.out && status.overdue}"></span>
                      </h3>
                    </div>
                    <form role="form" #form="ngForm" class="row">
@@ -114,11 +112,8 @@ import { Enum, LAST_OPTION } from './enum';
 export class AssetComponent {
   private original: any;
   private asset: any = {};
-  private bookings: Bookings;
   private freqs: any = {};
   private addNew: any = {};
-
-  private status: any = {};
 
   @ViewChild('form') form: HTMLFormElement;
   @ViewChildren('addNew') addNewInput: QueryList<ElementRef>;
@@ -129,7 +124,6 @@ export class AssetComponent {
   @Input('asset') set _asset(asset: any) {
     this.original = asset;
     this.asset = Object.assign({}, this.original);
-    this.status = {};
     pristine(this.form);
     // pull out frequencies
     for (let input of this.fieldMap.allInputs) {
@@ -139,41 +133,7 @@ export class AssetComponent {
     }
   }
 
-  // analyse bookings to determine the check in/out status of the asset (must be correct user)
-  @Input('bookings') set _bookings(bookings: Bookings) {
-    this.bookings = bookings;
-    if (! bookings) return;
-    for (let booking of this.bookings) {
-      if (booking.user_id != this.user.user_id && this.user.role != ADMIN_ROLE) {
-        continue;
-      }
-      if (booking.overdueIn) {
-        this.status = {out: true, overdue: true};
-        return;
-      }
-      if (booking.isOut) {
-        this.status = {out: true};
-        return;
-      }
-      if (booking.overdueOut) {
-        this.status = {out: false, overdue: true};
-        return;
-      }
-    }
-  }
-
-  get canCheckOut() {
-    return ! this.status.out && this.status.overdue;
-  }
-
-  get canCheckIn() {
-    return this.status.out;
-  }
-
-  onCheck(out: boolean) {
-    if ((out && ! this.canCheckOut) || (! out && ! this.canCheckIn)) return;
-    this.event.emit({check: {asset_id: this.asset.id, out: out}});
-  }
+  @Input('bookings') bookings: Bookings;
 
   @Input('search') search;
 

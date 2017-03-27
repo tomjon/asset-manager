@@ -17,9 +17,9 @@ import { Booking, Bookings } from './booking';
                      <th *ngIf="! bookings.isByAsset">Bar&nbsp;Code</th>
                      <th *ngIf="! bookings.isByProject">Project</th>
                      <th>Due Out</th>
+                     <th *ngIf="! bookings.isByAsset">Checked Out</th>
                      <th>Due In</th>
-                     <th>Checked Out</th>
-                     <th>Checked In</th>
+                     <th *ngIf="! bookings.isByAsset">Checked In</th>
                      <th>&nbsp;</th>
                    </tr>
                  </thead>
@@ -29,29 +29,37 @@ import { Booking, Bookings } from './booking';
                    </tr>
                    <tr *ngFor="let booking of bookings" [ngClass]="{current: booking.current}" [title]="booking.notes || '[no notes]'">
                      <td *ngIf="! bookings.isByAsset"><span class="glyphicon glyphicon-link" (click)="onClick(booking.asset_id)" data-dismiss="modal"></span></td>
-                     <td *ngIf="! bookings.isByUser" class="row">{{booking.user_id | enum:"user"}}</td>
-                     <td *ngIf="! bookings.isByAsset" class="row">{{booking.manufacturer | enum:"manufacturer"}}</td>
-                     <td *ngIf="! bookings.isByAsset" class="row">{{booking.model}}</td>
-                     <td *ngIf="! bookings.isByAsset" class="row">{{booking.barcode}}</td>
-                     <td *ngIf="! bookings.isByProject" class="row">{{booking.project | enum:"project"}}</td>
-                     <td class="row" [ngClass]="{good: booking.isOut || booking.backIn, overdue: booking.overdueOut}">{{booking.due_out_date | date:'dd/MM/yyyy'}}</td>
-                     <td class="row" [ngClass]="{good: booking.backIn, overdue: booking.overdueIn}">{{booking.due_in_date | date:'dd/MM/yyyy'}}</td>
-                     <td class="row" [ngClass]="{overdue: booking.lateOut}">{{booking.out_date | date:'dd/MM/yyyy'}}</td>
-                     <td class="row" [ngClass]="{overdue: booking.lateIn}">{{booking.in_date | date:'dd/MM/yyyy'}}</td>
+                     <td *ngIf="! bookings.isByUser">{{booking.user_id | enum:"user"}}</td>
+                     <td *ngIf="! bookings.isByAsset">{{booking.manufacturer | enum:"manufacturer"}}</td>
+                     <td *ngIf="! bookings.isByAsset">{{booking.model}}</td>
+                     <td *ngIf="! bookings.isByAsset">{{booking.barcode}}</td>
+                     <td *ngIf="! bookings.isByProject">{{booking.project | enum:"project"}}</td>
                      <td>
+                       <span [ngClass]="{good: booking.isOut || booking.backIn, overdue: booking.overdueOut}">{{booking.due_out_date | date:'dd/MM/yyyy'}}</span>
+                       <span *ngIf="bookings.isByAsset && booking.out_date > booking.due_out_date"><br>({{booking.out_date | date:'dd/MM/yyyy'}})</span>
+                     </td>
+                     <td *ngIf="! bookings.isByAsset">{{booking.out_date | date:'dd/MM/yyyy'}}</td>
+                     <td>
+                       <span [ngClass]="{good: booking.backIn, overdue: booking.overdueIn}">{{booking.due_in_date | date:'dd/MM/yyyy'}}</span>
+                       <span *ngIf="bookings.isByAsset && booking.in_date > booking.due_in_date"><br>({{booking.in_date | date:'dd/MM/yyyy'}})</span>
+                     </td>
+                     <td *ngIf="! bookings.isByAsset">{{booking.in_date | date:'dd/MM/yyyy'}}</td>
+                     <td class="icons">
                        <span *ngIf="booking.canEdit(user)" class="glyphicon glyphicon-pencil" (click)="onEdit(booking)" data-dismiss="modal" data-toggle="modal" data-target="#bookingModal"></span>
                        <span *ngIf="booking.canDelete(user)" class="glyphicon glyphicon-trash" (click)="onDelete(booking)"></span>
-                       <span *ngIf="bookings.isByUser && booking.canCheckOut" class="glyphicon glyphicon-export" (click)="onCheck(booking.asset_id, true)"></span>
-                       <span *ngIf="bookings.isByUser && booking.isOut" class="glyphicon glyphicon-import" (click)="onCheck(booking.asset_id, false)" [ngClass]="{overdue: booking.overdueIn}"></span>
+                       <span *ngIf="bookings.canCheckOut(booking)" class="glyphicon glyphicon-export" (click)="onCheck(booking.asset_id, true)" [ngClass]="{overdue: booking.overdueOut}"></span>
+                       <span *ngIf="booking.isOut" class="glyphicon glyphicon-import" (click)="onCheck(booking.asset_id, false)" [ngClass]="{overdue: booking.overdueIn}"></span>
                      </td>
                    </tr>
                  </tbody>
                </table>
              </div>`,
-  styles: ['th, td { padding: 5px; white-space: nowrap }',
+  styles: ['tr { margin-top: 2px; margin-bottom: 2px }',
+           'th, td { padding: 5px; white-space: nowrap; vertical-align: top }',
+           '.icons { background: white }',
            '.good { color: green }',
            '.overdue { color: red }',
-           '.current .row { background: lightblue }',
+           '.current { background: lightblue }',
            '.glyphicon, td a { cursor: pointer }',
            '.overdue { color: red }']
 })
