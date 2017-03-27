@@ -109,6 +109,6 @@ export class Bookings extends Array<Booking> {
   }
 
   canCheckOut(booking: Booking): boolean {
-    return this.out_asset_ids[booking.asset_id] == undefined && booking.today <= booking.due_in_date;
+    return this.out_asset_ids[booking.asset_id] == undefined && booking.today >= booking.due_out_date && booking.today <= booking.due_in_date;
   }
 }

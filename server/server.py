@@ -77,10 +77,11 @@ CHECK_CLASH_SQL = """
 CHECK_OUT_SQL = """
   UPDATE booking
      SET out_date=date('now')
-   WHERE asset_id=:asset_id AND user_id=:user_id
+   WHERE asset_id=:asset_id
+         AND (user_id=:user_id OR (SELECT COUNT(*) FROM user WHERE user_id=:user_id AND role={0})=1)
          AND date('now') >= due_out_date AND date('now') <= due_in_date
          AND out_date IS NULL AND in_date IS NULL
-"""
+""".format(ADMIN_ROLE)
 
 CHECK_IN_SQL = """
   UPDATE booking
