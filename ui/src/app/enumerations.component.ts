@@ -6,7 +6,6 @@ import { EnumPipe } from './enum.pipe';
 import { Enum } from './enum';
 import { Search } from './search';
 import { User, ADMIN_ROLE } from './user';
-import { pristine } from './pristine';
 
 @Component({
   selector: 'badass-enumerations',
@@ -16,7 +15,7 @@ import { pristine } from './pristine';
                    <div class="modal-content">
                      <div class="modal-header">
                        <button type="button" class="close" data-dismiss="modal">&times;</button>
-                       <h4 class="modal-title">Enumerations</h4>
+                       <h4 class="modal-title">Enumerations Manager</h4>
                      </div>
                      <div class="modal-body">
                        <div class="form-group">
@@ -27,7 +26,7 @@ import { pristine } from './pristine';
                          </select>
                        </div>
                        <div class="form-group" [ngClass]="{disabled: field == undefined}">
-                         <label for="values">Values</label>
+                         <label for="values">Values <span *ngIf="field != undefined">({{size}})</span></label>
                          <select multiple class="form-control" name="values" [size]="size" [(ngModel)]="values">
                            <option *ngFor="let o of options" [value]="o.value">{{o.label}}</option>
                          </select>
@@ -38,9 +37,9 @@ import { pristine } from './pristine';
                        </div>
                      </div>
                      <div class="modal-footer">
-                       <button type="button" class="btn btn-default" (click)="onPrune()">Prune</button>
-                       <button type="button" class="btn btn-default" (click)="onSort()">Sort</button>
-                       <button type="button" class="btn btn-default" (click)="onSave()" [disabled]="form.form.pristine">Save</button>
+                       <button type="button" class="btn btn-default" (click)="onPrune()" [disabled]="field == undefined">Prune</button>
+                       <button type="button" class="btn btn-default" (click)="onSort()" [disabled]="field == undefined">Sort</button>
+                       <button type="button" class="btn btn-default" (click)="onSave()" [disabled]="field == undefined || pristine">Save</button>
                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                      </div>
                    </div>
@@ -57,6 +56,7 @@ export class EnumerationsComponent {
 
   @ViewChild('form') form: HTMLFormElement;
 
+  pristine: boolean;
   field: string;
   options: any[] = [];
   values: number[] = [];
@@ -65,6 +65,7 @@ export class EnumerationsComponent {
 
   onSelect() {
     this.options = this.enumService.get(this.field).options(false, false);
+    this.pristine = true;
   }
 
   get size(): number {
@@ -80,6 +81,7 @@ export class EnumerationsComponent {
     if (index + offset < 0 || index + offset >= this.options.length) return;
     let option = this.options.splice(index, 1)[0];
     this.options.splice(index + offset, 0, option);
+    this.pristine = false;
   }
 
   rotate(offset: number): void {
@@ -92,6 +94,7 @@ export class EnumerationsComponent {
       index0 = index1;
     }
     this.options[index0] = option;
+    this.pristine = false;
   }
 
   onPrune() {
@@ -101,6 +104,7 @@ export class EnumerationsComponent {
                       this.onSelect();
                       this.search.reload_enums = true;
                     });
+    this.pristine = true;
   }
 
   onSort() {
@@ -118,6 +122,7 @@ export class EnumerationsComponent {
     this.dataService.saveEnumeration(this.field, e.values)
                     .subscribe(() => {
                       this.search.reload_enums = true;
+                      this.pristine = true;
                     });
   }
 }

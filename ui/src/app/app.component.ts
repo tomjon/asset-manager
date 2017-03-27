@@ -1,4 +1,4 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component } from '@angular/core';
 import { DataService } from './data.service';
 import { EnumService } from './enum.service';
 import { Search } from './search';
@@ -44,8 +44,6 @@ export class AppComponent {
   userBookings: Bookings;
   results: Results = new Results();
   search: Search = new Search();
-
-  @ViewChild('enumerations') enumerationsComponent;
 
   _asset: any; // the asset currently being viewed
   get asset(): any {
@@ -183,9 +181,6 @@ export class AppComponent {
                           this.loadUserBookings();
                         }
                       });
-    }
-    else if (event.reloadEnums) {
-      this.enumerationsComponent.onSelect();
     }
     else {
       console.log("Bad event", event);

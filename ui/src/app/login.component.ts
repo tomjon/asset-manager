@@ -90,7 +90,7 @@ declare var $;
                    <div class="modal-content">
                      <div class="modal-header">
                        <button type="button" class="close" data-dismiss="modal">&times;</button>
-                       <h4 class="modal-title">Users</h4>
+                       <h4 class="modal-title">Users Manager</h4>
                      </div>
                      <div class="modal-body">
                        <table class="users table table-responsive">

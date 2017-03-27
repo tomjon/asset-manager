@@ -8,7 +8,7 @@ import { Frequency } from './frequency';
 import { Booking, Bookings } from './booking';
 import { User, BOOK_ROLE, VIEW_ROLE, ADMIN_ROLE } from './user';
 import { pristine } from './pristine';
-import { LAST_OPTION } from './enum';
+import { Enum, LAST_OPTION } from './enum';
 
 /**
  * The component makes a copy of the input asset.
@@ -71,7 +71,7 @@ import { LAST_OPTION } from './enum';
                              <select *ngIf="addNew.field != input.field" class="form-control" [(ngModel)]="asset[input.field]" [name]="input.field" (ngModelChange)="onEnumChange(input)">
                                <option *ngFor="let o of options(input.field)" [value]="o.value">{{o.label}}</option>
                              </select>
-                             <input #addNew type="text" *ngIf="addNew.field == input.field" class="form-control" [(ngModel)]="addNew.label" [name]="input.field" (blur)="onAddNew(input, addNew.label)" (change)="onAddNew(input, addNew.label)"/>
+                             <input #addNew type="text" *ngIf="addNew.field == input.field" class="form-control" [(ngModel)]="addNew.label" [name]="input.field" (change)="onAddNew(input, addNew.label)"/>
                            </div>
                          </div>
                        </div>
@@ -184,7 +184,11 @@ export class AssetComponent {
   }
 
   options(field: string) {
-    return this.enumService.get(field).options(true, this.user != undefined && this.user.role >= ADMIN_ROLE);
+    let e: Enum = this.enumService.get(field);
+    if (this.asset[field] != undefined && ! e.hasValue(this.asset[field])) {
+      setTimeout(() => this.asset[field] = this.original ? this.original[field] : undefined);
+    }
+    return e.options(true, this.user != undefined && this.user.role >= ADMIN_ROLE);
   }
 
   hasRole(admin: boolean=false) {
@@ -262,7 +266,6 @@ export class AssetComponent {
                         this.asset[input.field] = enumValue.value;
                         delete this.addNew.field;
                         this.search.reload_enums = true;
-                        this.event.emit({reloadEnums: true});
                       });
     } else {
       this.asset[input.field] = undefined;

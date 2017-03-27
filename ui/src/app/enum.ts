@@ -6,7 +6,13 @@ export class EnumValue {
 }
 
 export class Enum {
+  private optionsList: any[] = [];
+
   constructor(public field: string, public values: EnumValue[]=[]) {}
+
+  public hasValue(value: string): boolean {
+    return this.values.find(v => v.value == value) != undefined;
+  }
 
   public update(values: EnumValue[]) {
     this.values = values;
@@ -22,6 +28,9 @@ export class Enum {
 
   public addEnumValue(enumValue: EnumValue): EnumValue {
     this.values.push(enumValue);
+    for (let options of this.optionsList) {
+      options.push({value: enumValue.value, label: enumValue.label});
+    }
     return enumValue;
   }
 
@@ -32,12 +41,15 @@ export class Enum {
     return undefined;
   }
 
+  // create an options array and return it, but keep a reference to the returned
+  // array - we might want to update it later
   public options(add_first: boolean, add_last: boolean): any[] {
     let ordered = [];
     for (let e of this.values) {
       ordered[e.order] = {value: e.value, label: e.label};
     }
     let options = [];
+    this.optionsList.push(options);
     if (add_first) {
       options.push(FIRST_OPTION);
     }
