@@ -10,8 +10,6 @@ import { Enum } from './enum';
 import { User, ADMIN_ROLE } from './user';
 import { pristine } from './pristine';
 
-declare var $;
-
 @Component({
   selector: 'badass-notification',
   template: `<div id="notificationsModal" class="modal fade" role="dialog">

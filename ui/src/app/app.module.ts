@@ -12,6 +12,7 @@ import { BookingTableComponent} from './booking-table.component';
 import { UserBookingsComponent} from './user-bookings.component';
 import { AttachmentComponent } from './attachment.component';
 import { NotificationComponent } from './notification.component';
+import { EnumerationsComponent } from './enumerations.component';
 import { EnumPipe } from './enum.pipe';
 import { FieldMap } from './field-map';
 import { DataService } from './data.service';
@@ -31,6 +32,7 @@ import './rxjs-operators';
     UserBookingsComponent,
     AttachmentComponent,
     NotificationComponent,
+    EnumerationsComponent,
     EnumPipe
   ],
   imports: [

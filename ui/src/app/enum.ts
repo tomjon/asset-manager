@@ -6,12 +6,18 @@ export class EnumValue {
 }
 
 export class Enum {
-  private values: EnumValue[] = [];
+  constructor(public field: string, public values: EnumValue[]=[]) {}
 
-  constructor(private field: string) {}
-
-  public update(values: any[]) {
+  public update(values: EnumValue[]) {
     this.values = values;
+  }
+
+  public orderFromOptions(options: any[]) {
+    this.values = [];
+    let index = 0;
+    for (let option of options) {
+      this.values.push(new EnumValue(option.value, option.label, ++index));
+    }
   }
 
   public addEnumValue(enumValue: EnumValue): EnumValue {

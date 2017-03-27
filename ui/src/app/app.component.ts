@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { DataService } from './data.service';
 import { EnumService } from './enum.service';
 import { Search } from './search';
@@ -15,6 +15,7 @@ import { Booking, Bookings } from './booking';
                  <div class="col-lg-12">
                    <h1><img src="assets/ofcom.gif"/> Baldock Asset Database and Scheduling System</h1>
                    <badass-login [user]="user" (login)="onLogin($event)"></badass-login>
+                   <button *ngIf="showEnumerations()" class="btn" data-toggle="modal" data-target="#enumerationsModal">Enumerations</button>
                    <button *ngIf="showNotifications()" class="btn" data-toggle="modal" data-target="#notificationsModal" (click)="loadNotifications()">Notifications</button>
                    <button *ngIf="showUserBookings()" class="btn" data-toggle="modal" data-target="#userBookingsModal" (click)="loadUserBookings()">My Bookings</button>
                    <badass-asset [user]="user" [asset]="asset" [search]="search" [bookings]="assetBookings" (event)="onEvent($event)"></badass-asset>
@@ -25,6 +26,7 @@ import { Booking, Bookings } from './booking';
              </div>
              <badass-booking [user]="user" [asset]="asset" [booking]="booking" (event)="onEvent($event)"></badass-booking>
              <badass-notification [notifications]="notifications"></badass-notification>
+             <badass-enumerations #enumerations [search]="search"></badass-enumerations>
              <badass-user-bookings [user]="user" [bookings]="userBookings" (event)="onEvent($event)"></badass-user-bookings>
              <div id="blocker"></div>`,
   styles: ['div.container-fluid { margin-top: 10px }',
@@ -42,6 +44,8 @@ export class AppComponent {
   userBookings: Bookings;
   results: Results = new Results();
   search: Search = new Search();
+
+  @ViewChild('enumerations') enumerationsComponent;
 
   _asset: any; // the asset currently being viewed
   get asset(): any {
@@ -76,8 +80,11 @@ export class AppComponent {
                     });
   }
 
-  //FIXME these very similar - method on User, or make a user.service?
+  //FIXME these very similar - method on User, or make a user.service? Or a role service?
   showNotifications(): boolean {
+    return this.user != undefined && this.user.role == ADMIN_ROLE;
+  }
+  showEnumerations(): boolean {
     return this.user != undefined && this.user.role == ADMIN_ROLE;
   }
 
@@ -176,6 +183,9 @@ export class AppComponent {
                           this.loadUserBookings();
                         }
                       });
+    }
+    else if (event.reloadEnums) {
+      this.enumerationsComponent.onSelect();
     }
     else {
       console.log("Bad event", event);

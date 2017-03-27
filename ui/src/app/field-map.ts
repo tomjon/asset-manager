@@ -80,6 +80,8 @@ export class FieldMap {
     BOOKING_PROJECT, BOOKING_USER, BOOKING_OUT, BOOKING_DUE_OUT, BOOKING_OVERDUE_IN, BOOKING_AVAILABLE
   ];
 
+  public enumInputs: any[] = [];
+
   public enumFields: string[] = [];
 
   public triggerColumns: any[] = [
@@ -99,7 +101,10 @@ export class FieldMap {
   constructor() {
     for (let input of this.allInputs) {
       this.map[input.field] = input;
-      if (input.type == 'enum') this.enumFields.push(input.field);
+      if (input.type == 'enum') {
+        this.enumInputs.push(input);
+        this.enumFields.push(input.field);
+      }
       if (input.type == 'date') this.triggerInputs.push(input);
       if (input.type != 'enum') this.filterInputs.push(input); // FIXME if you want enums, you have to provide labels in the UI
     }

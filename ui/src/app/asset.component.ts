@@ -262,6 +262,7 @@ export class AssetComponent {
                         this.asset[input.field] = enumValue.value;
                         delete this.addNew.field;
                         this.search.reload_enums = true;
+                        this.event.emit({reloadEnums: true});
                       });
     } else {
       this.asset[input.field] = undefined;

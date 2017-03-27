@@ -102,6 +102,7 @@ export class DataService {
     }
     if (search.reload_enums) {
       params.set('reload_enums', 'true');
+      console.log("set reload enums");
       search.reload_enums = false;
     }
 
@@ -158,7 +159,7 @@ export class DataService {
                        facets[field][values[i]] = values[i + 1];
                      }
                    }
-                }
+                 }
                  return new Results(start, total, assets, facets, json['enums']);
                });
   }
@@ -213,19 +214,6 @@ export class DataService {
 
   removeAssociation(asset: any, attachment_id: number): Observable<void> {
     return this.delete(`attachment/${asset.id}/${attachment_id}`);
-  }
-
-  getEnums(): Observable<any> {
-    return this.get(`enum`)
-               .map(res => res.json());
-  }
-
-  addNewEnumLabel(field: string, label: any): Observable<any> {
-    let body = JSON.stringify(label);
-    let params: URLSearchParams = new URLSearchParams();
-    params.set('label', label);
-    return this.post(`enum/${field}`, body, {search: params})
-               .map(res => res.json());
   }
 
   getCurrentUser(): Observable<User> {
@@ -326,7 +314,8 @@ export class DataService {
   }
 
   updateNotification(notification: Notification): Observable<Notification> {
-    return this.put(`notification/${notification.notification_id}`, JSON.stringify(notification)).map(res => res.json());
+    return this.put(`notification/${notification.notification_id}`, JSON.stringify(notification))
+               .map(res => res.json());
   }
 
   deleteNotification(notification_id: string): Observable<void> {
@@ -335,6 +324,31 @@ export class DataService {
 
   resetNotification(notification_id: string): Observable<void> {
     return this.post(`notification/${notification_id}`, null);
+  }
+
+  saveEnumeration(field: string, values: any[]): Observable<void> {
+    return this.put(`enum/${field}`, JSON.stringify(values));
+  }
+
+  addNewEnumLabel(field: string, label: any): Observable<any> {
+    let params: URLSearchParams = new URLSearchParams();
+    params.set('action', 'add_label');
+    return this.post(`enum/${field}`, label, {search: params})
+               .map(res => res.json());
+  }
+
+  pruneEnumeration(field: string): Observable<any[]> {
+    let params: URLSearchParams = new URLSearchParams();
+    params.set('action', 'prune');
+    return this.post(`enum/${field}`, null, {search: params})
+               .map(res => res.json());
+  }
+
+  sortEnumeration(field: string): Observable<any[]> {
+    let params: URLSearchParams = new URLSearchParams();
+    params.set('action', 'sort');
+    return this.post(`enum/${field}`, null, {search: params})
+               .map(res => res.json());
   }
 
   private handleError(error: Response | any) {

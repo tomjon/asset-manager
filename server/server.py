@@ -192,7 +192,7 @@ def handle_solr_error(error):
     """
     return "SOLR Error", error.status_code
 
-@application.route('/enum/<field>', methods=['POST'])
+@application.route('/enum/<field>', methods=['PUT', 'POST'])
 @application.role_required([ADMIN_ROLE])
 def enums_endpoint(field=None):
     """ Endpoint for getting and updating enumerations.
@@ -201,16 +201,44 @@ def enums_endpoint(field=None):
         try:
             enum_id = sql.selectSingle("SELECT enum_id FROM enum WHERE field=:field", field=field)
         except NoResult:
-            return "No such enum", 400
-        label = request.args.get('label', 'No label')
-        try:
-            entry = sql.selectOneDict("SELECT value, label, `order` FROM enum_entry WHERE enum_id=:enum_id AND label=:label", enum_id=enum_id, label=label)
-        except NoResult:
-            next = max(sql.selectOne("SELECT MAX(value), MAX(`order`) FROM enum_entry WHERE enum_id=:enum_id", enum_id=enum_id))
-            next = next + 1 if next is not None else 0
-            entry = {'enum_id': enum_id, 'order': next, 'value': next, 'label': label}
-            sql.insert("INSERT INTO enum_entry VALUES (NULL, :enum_id, :order, :value, :label)", entry)
-        return json.dumps(entry)
+            return "No such enum", 404
+        if request.method == 'PUT':
+            # update all values
+            values = request.get_json()
+            sql.delete("DELETE FROM enum_entry WHERE enum_id=:enum_id", enum_id=enum_id)
+            for value in values:
+                sql.insert("INSERT INTO enum_entry VALUES (NULL, :enum_id, :order, :value, :label)", value, enum_id=enum_id)
+            return json.dumps({})
+        else:
+            # update enum depending on the action parameter
+            action = request.args.get('action')
+            if action == 'add_label':
+                label = request.get_data()
+                try:
+                    entry = sql.selectOneDict("SELECT value, label, `order` FROM enum_entry WHERE enum_id=:enum_id AND label=:label", enum_id=enum_id, label=label)
+                except NoResult:
+                    next = max(sql.selectOne("SELECT MAX(value), MAX(`order`) FROM enum_entry WHERE enum_id=:enum_id", enum_id=enum_id))
+                    next = next + 1 if next is not None else 0
+                    entry = {'enum_id': enum_id, 'order': next, 'value': next, 'label': label}
+                    sql.insert("INSERT INTO enum_entry VALUES (NULL, :enum_id, :order, :value, :label)", entry)
+                return json.dumps(entry)
+            elif action == 'prune':
+                r = application.solr.search([('q', '*'), ('rows', 0), ('facet', 'true'), ('facet.field', field)])
+                facets = r['facet_counts']['facet_fields'][field]
+                counts = dict(zip(facets[::2], facets[1::2]))
+                for entry in sql.selectAllDict("SELECT entry_id, value FROM enum_entry WHERE enum_id=:enum_id", enum_id=enum_id):
+                    if counts.get(str(entry['value']), 0) == 0:
+                        sql.delete("DELETE FROM enum_entry WHERE entry_id=:entry_id", entry_id=entry['entry_id'])
+                return json.dumps(sql.selectAllDict("SELECT value, label, `order` FROM enum_entry WHERE enum_id=:enum_id", enum_id=enum_id))
+            elif action == 'sort':
+                entries = sql.selectAllDict("SELECT entry_id, value, label, `order` FROM enum_entry WHERE enum_id=:enum_id", enum_id=enum_id)
+                entries.sort(key=lambda entry: entry['label'])
+                for index in xrange(len(entries)):
+                    entries[index]['order'] = index + 1
+                    sql.update("UPDATE enum_entry SET `order`=:order WHERE entry_id=:entry_id", entries[index])
+                return json.dumps(entries)
+            else:
+                return "Bad action", 400
         
 
 @application.route('/search')
