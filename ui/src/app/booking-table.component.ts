@@ -57,10 +57,9 @@ import { Booking, Bookings } from './booking';
              </div>`,
   styles: ['tr { margin-top: 2px; margin-bottom: 2px }',
            'th, td { padding: 5px; white-space: nowrap; vertical-align: top }',
-           '.icons { background: white }',
            '.good { color: green }',
            '.overdue { color: red }',
-           '.current { background: lightblue }',
+           '.current td:not(.icons) { background: lightblue }',
            '.glyphicon, td a { cursor: pointer }',
            '.overdue { color: red }']
 })
