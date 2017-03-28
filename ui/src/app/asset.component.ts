@@ -143,10 +143,15 @@ export class AssetComponent {
     return Frequency.unitOptions();
   }
 
+  //FIXME this is called many, many times per field....
   options(field: string) {
     let e: Enum = this.enumService.get(field);
     if (this.asset[field] != undefined && ! e.hasValue(this.asset[field])) {
-      setTimeout(() => this.asset[field] = this.original ? this.original[field] : undefined);
+      let value = this.original ? this.original[field] : undefined;
+      if (! e.hasValue(value)) {
+        value = undefined; // if even the original doesn't have the value, go back to undefined
+      }
+      setTimeout(() => this.asset[field] = value);
     }
     return e.options(true, this.user != undefined && this.user.role >= ADMIN_ROLE);
   }
