@@ -6,23 +6,25 @@ class NoResult(Exception):
 
 
 class SqlDatabase(object):
-    def __init__(self, database):
+    def __init__(self, database, debug=False):
         self.db = sqlite3.connect(database, isolation_level='EXCLUSIVE')
         self.lock = Lock()
+        self.debug = debug
 
     def cursor(self):
         with self.lock: #FIXME this is pretty cavalier, only one cursor will be allowed at a time. May need to revisit
-            return SqlCursor(self.db)
+            return SqlCursor(self.db, self.debug)
 
     def close(self):
         self.db.close()
 
 
 class SqlCursor(object):
-    def __init__(self, db):
+    def __init__(self, db, debug=False):
         self.db = db
         self.cursor = db.cursor()
         self._commit = False
+        self.debug = debug
 
     def __enter__(self):
         return self
@@ -36,7 +38,8 @@ class SqlCursor(object):
             values = {}
         values = dict(values) # work on a copy
         values.update(kwargs)
-        #print stmt, values
+        if self.debug:
+            print stmt, values
         self.cursor.execute(stmt, values)
 
     def selectOne(self, stmt, values=None, **kwargs):

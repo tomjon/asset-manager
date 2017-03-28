@@ -7,6 +7,7 @@ import { Frequency } from './frequency';
 import { User } from './user';
 import { Notification } from './notification';
 import { Booking, Bookings } from './booking';
+import { DateRange } from './date-range';
 
 export var DATETIME_RE = /^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\dZ$/;
 export var DATE_RE = /^\d\d\d\d-\d\d-\d\d$/;
@@ -245,8 +246,8 @@ export class DataService {
     return this.get(`logout`);
   }
 
-  private bookingArray(json: any[], type: string): Bookings {
-    let bookings: Bookings = new Bookings(type);
+  private bookingArray(json: any[], type: string, asset_id: string=undefined): Bookings {
+    let bookings: Bookings = new Bookings(type, asset_id);
     for (let booking of json) {
       bookings.push(Object.assign(new Booking(), booking));
     }
@@ -254,22 +255,36 @@ export class DataService {
     return bookings;
   }
 
-  getBookings(asset: any): Observable<Bookings> {
+  getAssetBookings(asset: any, range: DateRange): Observable<Bookings> {
     let params: URLSearchParams = new URLSearchParams();
     params.set('asset_id', asset.id);
+    if (range != undefined && range.use) {
+      params.set('fromDate', range.from);
+      params.set('toDate', range.to);
+    }
     return this.get(`booking`, {search: params})
-               .map(res => this.bookingArray(res.json(), Bookings.ASSET_TYPE));
+               .map(res => this.bookingArray(res.json(), Bookings.ASSET_TYPE, asset.id));
   }
 
-  getUserBookings(user: User): Observable<Bookings> {
+  getUserBookings(user: User, range: DateRange): Observable<Bookings> {
     let params: URLSearchParams = new URLSearchParams();
     params.set('user_id', user.user_id);
+    if (range != undefined && range.use) {
+      params.set('fromDate', range.from);
+      params.set('toDate', range.to);
+    }
     return this.get(`booking`, {search: params})
                .map(res => this.bookingArray(res.json(), Bookings.USER_TYPE));
   }
 
-  getBookingsForProject(project_id: string): Observable<Bookings> {
-    return this.get(`project/${project_id}`)
+  getProjectBookings(project_id: string, range: DateRange): Observable<Bookings> {
+    let params: URLSearchParams = new URLSearchParams();
+    params.set('project', project_id);
+    if (range != undefined && range.use) {
+      params.set('fromDate', range.from);
+      params.set('toDate', range.to);
+    }
+    return this.get(`booking`, {search: params})
                .map(res => this.bookingArray(res.json(), Bookings.PROJECT_TYPE));
   }
 

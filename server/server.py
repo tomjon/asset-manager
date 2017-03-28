@@ -40,6 +40,7 @@ GROUP BY user.user_id
 ORDER BY `order`
 """
 
+# use either EXTANT_CLAUSE or RANGE_CLAUSE for substitution {2}
 BOOKINGS_SQL = """
   SELECT booking_id,
          asset_id,
@@ -50,10 +51,13 @@ BOOKINGS_SQL = """
          notes
     FROM booking, user
    WHERE {0}.{1}=:{1}
-         AND (date('now') <= due_in_date OR (out_date IS NOT NULL AND in_date IS NULL))
+         AND {2}
          AND booking.user_id=user.user_id
 ORDER BY due_out_date
 """
+
+EXTANT_CLAUSE = "(date('now') <= due_in_date OR (out_date IS NOT NULL AND in_date IS NULL))"
+RANGE_CLAUSE = "(IFNULL(in_date, due_in_date) >= :from_date AND due_out_date <= :to_date)"
 
 # the IFNULL ensures that in_date is used in preference to due_in_date, should it be non-null, so that a user can book
 # an asset where it has been returned early, and can not book an asset that has been returned late (in both cases where
@@ -454,13 +458,19 @@ def booking_endpoint(booking_id=None):
     """
     with application.db.cursor() as sql:
         if request.method == 'GET':
-            # get bookings for an asset or user
+            # get bookings for an asset or user, applying any given range
             if 'user_id' in request.args and not application.user_has_role([ADMIN_ROLE, BOOK_ROLE]):
                 return "Role required", 403
             for table, column in [('booking', 'asset_id'), ('user', 'user_id')]:
                 if column in request.args:
                     args = {column: request.args[column]}
-                    bookings = sql.selectAllDict(BOOKINGS_SQL.format(table, column), args)
+                    if 'fromDate' in request.args and 'toDate' in request.args:
+                        clause = RANGE_CLAUSE
+                        args['from_date'] = request.args['fromDate']
+                        args['to_date'] = request.args['toDate']
+                    else:
+                        clause = EXTANT_CLAUSE
+                    bookings = sql.selectAllDict(BOOKINGS_SQL.format(table, column, clause), args)
                     if column == 'user_id':
                         # talk to SOLR to get some asset details
                         assets_dict = application.solr.assets_dict(args[column])

@@ -3,10 +3,11 @@ import { DataService } from './data.service';
 import { EnumService } from './enum.service';
 import { Search } from './search';
 import { Results } from './results';
+import { DateRange } from './date-range';
 import { User, ADMIN_ROLE, BOOK_ROLE, VIEW_ROLE } from './user';
 import { Booking, Bookings } from './booking';
 
-//FIXME instance of Search to live in DataService? tidies up some dependencies
+//FIXME instance of Search to live in DataService? tidies up some dependencies. There are now several 'globals'! :P :(
 
 @Component({
   selector: 'badass-app',
@@ -18,7 +19,7 @@ import { Booking, Bookings } from './booking';
                    <button *ngIf="showEnumerations()" class="btn" data-toggle="modal" data-target="#enumerationsModal">Enumerations</button>
                    <button *ngIf="showNotifications()" class="btn" data-toggle="modal" data-target="#notificationsModal" (click)="loadNotifications()">Notifications</button>
                    <button *ngIf="showUserBookings()" class="btn" data-toggle="modal" data-target="#userBookingsModal" (click)="loadUserBookings()">My Bookings</button>
-                   <badass-asset [user]="user" [asset]="asset" [search]="search" [bookings]="assetBookings" (event)="onEvent($event)"></badass-asset>
+                   <badass-asset [user]="user" [asset]="asset" [search]="search" [range]="range" [bookings]="assetBookings" (event)="onEvent($event)"></badass-asset>
                    <div *ngIf="error" class="alert alert-danger">{{error.message}}</div>
                    <badass-table [user]="user" [assets]="results" [search]="search" [selected]="asset" (event)="onEvent($event)"></badass-table>
                  </div>
@@ -27,7 +28,7 @@ import { Booking, Bookings } from './booking';
              <badass-booking [user]="user" [asset]="asset" [booking]="booking" (event)="onEvent($event)"></badass-booking>
              <badass-notification [notifications]="notifications"></badass-notification>
              <badass-enumerations #enumerations [search]="search"></badass-enumerations>
-             <badass-user-bookings [user]="user" [bookings]="userBookings" (event)="onEvent($event)"></badass-user-bookings>
+             <badass-user-bookings [user]="user" [range]="range" [bookings]="userBookings" (event)="onEvent($event)"></badass-user-bookings>
              <badass-booking-condition [user]="user" [search]="search" [booking]="booking" (event)="onEvent($event)"></badass-booking-condition>
              <div id="blocker"></div>`,
   styles: ['div.container-fluid { margin-top: 10px }',
@@ -45,6 +46,7 @@ export class AppComponent {
   userBookings: Bookings;
   results: Results = new Results();
   search: Search = new Search();
+  range: DateRange = new DateRange();
 
   _asset: any; // the asset currently being viewed
   get asset(): any {
@@ -57,13 +59,17 @@ export class AppComponent {
 
   loadAssetBookings() {
     if (this.asset && this.asset.id && this.showBookings()) {
-      this.dataService.getBookings(this.asset)
+      this.dataService.getAssetBookings(this.asset, this.range)
                       .subscribe(bookings => {
                         this.assetBookings = bookings;
                       });
     } else {
       this.assetBookings = undefined;
     }
+  }
+
+  loadUserBookings() {
+    this.dataService.getUserBookings(this.user, this.range).subscribe(userBookings => this.userBookings = userBookings);
   }
 
   error: any;
@@ -99,10 +105,6 @@ export class AppComponent {
     this.dataService.getNotifications().subscribe(notifications => this.notifications = notifications);
   }
 
-  loadUserBookings() {
-    this.dataService.getUserBookings(this.user).subscribe(userBookings => this.userBookings = userBookings);
-  }
-
   onLogin(user) {
     this.user = user;
   }
@@ -116,11 +118,11 @@ export class AppComponent {
                     });
   }
 
-  _updateBookings(event: any) {
-    if (this.asset && event.check.booking.asset_id == this.asset.id) {
+  _updateBookings(asset_id: string, user: boolean) {
+    if (this.asset && asset_id == this.asset.id) {
       this.loadAssetBookings();
     }
-    if (event.check.user) {
+    if (user) {
       this.loadUserBookings();
     }
   }
@@ -184,7 +186,7 @@ export class AppComponent {
     else if (event.check) {
       if (event.check.out === true) {
         this.dataService.check(event.check.booking.asset_id)
-                        .subscribe(() => this._updateBookings(event));
+                        .subscribe(() => this._updateBookings(event.check.booking.asset_id, event.check.user));
       } else if (event.check.out === null) {
         this.booking = event.check.booking;
         if (this.booking.condition == undefined) {
@@ -193,7 +195,7 @@ export class AppComponent {
       } else {
         this.dataService.check(event.check.booking.asset_id, event.check.booking.condition)
                         .subscribe(() => {
-                          this._updateBookings(event);
+                          this._updateBookings(event.check.booking.asset_id, event.check.user);
                           this.doSearch();
                           if (this.asset.id == event.check.booking.asset_id) {
                             this.asset.condition = event.check.booking.condition;
@@ -201,6 +203,9 @@ export class AppComponent {
                           }
                         });
       }
+    }
+    else if (event.range) {
+      this._updateBookings(event.range.asset_id, event.range.user);
     }
     else {
       console.log("Bad event", event);

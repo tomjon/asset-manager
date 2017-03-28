@@ -9,6 +9,7 @@ import { Booking, Bookings } from './booking';
 import { User, BOOK_ROLE, VIEW_ROLE, ADMIN_ROLE } from './user';
 import { pristine } from './pristine';
 import { Enum, LAST_OPTION } from './enum';
+import { DateRange } from './date-range';
 
 /**
  * The component makes a copy of the input asset.
@@ -79,7 +80,7 @@ import { Enum, LAST_OPTION } from './enum';
                  </div>
                  <div class="col-lg-4">
                    <badass-attachment [user]="user" [asset]="asset"></badass-attachment>
-                   <badass-booking-table *ngIf="bookings != undefined" [user]="user" [bookings]="bookings" (event)="onBookingEvent($event)"></badass-booking-table>
+                   <badass-booking-table *ngIf="bookings != undefined" [user]="user" [range]="range" [bookings]="bookings" (event)="onBookingEvent($event)"></badass-booking-table>
                  </div>
                </div>
              </div>
@@ -122,6 +123,8 @@ export class AssetComponent {
 
   @Input('user') user: User;
   @Output('event') event = new EventEmitter<any>();
+
+  @Input('range') range: DateRange;
 
   @Input('asset') set _asset(asset: any) {
     this.original = asset;

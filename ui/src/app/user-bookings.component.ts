@@ -1,6 +1,7 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { User } from './user';
 import { Bookings } from './booking';
+import { DateRange } from './date-range';
 
 declare var $;
 
@@ -12,10 +13,10 @@ declare var $;
                    <div class="modal-content">
                      <div class="modal-header">
                        <button type="button" class="close" data-dismiss="modal">&times;</button>
-                       <h4 class="modal-title">Current bookings for <b>{{user.label}}</b></h4>
+                       <h4 class="modal-title">Bookings for <b>{{user.label}}</b></h4>
                      </div>
                      <div class="modal-body">
-                       <badass-booking-table [user]="user" [bookings]="bookings" (event)="onBookingEvent($event)"></badass-booking-table>
+                       <badass-booking-table [user]="user" [range]="range" [bookings]="bookings" (event)="onBookingEvent($event)"></badass-booking-table>
                      </div>
                      <div class="modal-footer">
                        <p class="info"><span class="glyphicon glyphicon-info-sign"></span> Hover over a booking for notes</p>
@@ -31,6 +32,7 @@ declare var $;
 export class UserBookingsComponent {
   @Input('user') user: User;
   @Input('bookings') bookings: Bookings;
+  @Input('range') range: DateRange;
 
   @Output('event') event = new EventEmitter<any>();
 

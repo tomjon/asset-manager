@@ -1,4 +1,5 @@
 import { User, ADMIN_ROLE } from './user';
+import { today } from './today';
 
 // accommodates all the 'extra' fields provided by the server
 export class Booking {
@@ -17,12 +18,8 @@ export class Booking {
               public asset_is_out: boolean=undefined,
               public notes: string='') {}
 
-  get today(): string {
-    return new Date().toISOString().substring(0, 10);
-  }
-
   get current(): boolean {
-    return this.today >= this.due_out_date && this.today <= this.due_in_date && this.in_date == null;
+    return today() >= this.due_out_date && today() <= this.due_in_date && this.in_date == null;
   }
 
   // asset is 'out' if it has been taken out but not returned in
@@ -35,15 +32,15 @@ export class Booking {
     return this.in_date && this.in_date <= this.due_in_date;
   }
 
-  // asset is 'overdue out' if it has not been taken out, and today is after the due out date;
-  // but today is also before the due in date, in case this is a lapsed booking
+  // asset is 'overdue out' if it has not been taken out, and today() is after the due out date;
+  // but today() is also before the due in date, in case this is a lapsed booking
   get overdueOut(): boolean {
-    return ! this.out_date && this.today >= this.due_out_date && this.today <= this.due_in_date;
+    return ! this.out_date && today() >= this.due_out_date && today() <= this.due_in_date;
   }
 
-  // asset is 'overdue in' if it has been taken out, not returned in, and today is after the due in date
+  // asset is 'overdue in' if it has been taken out, not returned in, and today() is after the due in date
   get overdueIn(): boolean {
-    return this.out_date && ! this.in_date && this.today >= this.due_in_date;
+    return this.out_date && ! this.in_date && today() >= this.due_in_date;
   }
 
   get lateOut(): boolean {
@@ -84,7 +81,7 @@ export class Bookings extends Array<Booking> {
 
   private out_asset_ids: any;
 
-  constructor(public type: string) {
+  constructor(public type: string, public asset_id: string) {
     super();
   }
 
@@ -110,6 +107,6 @@ export class Bookings extends Array<Booking> {
   }
 
   canCheckOut(booking: Booking): boolean {
-    return this.out_asset_ids[booking.asset_id] == undefined && booking.out_date == null && booking.in_date == null && booking.today >= booking.due_out_date && booking.today <= booking.due_in_date;
+    return this.out_asset_ids[booking.asset_id] == undefined && booking.out_date == null && booking.in_date == null && today() >= booking.due_out_date && today() <= booking.due_in_date;
   }
 }

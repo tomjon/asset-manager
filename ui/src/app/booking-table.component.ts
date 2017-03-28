@@ -4,10 +4,23 @@ import { EnumService } from './enum.service';
 import { EnumPipe } from './enum.pipe';
 import { User, ADMIN_ROLE } from './user';
 import { Booking, Bookings } from './booking';
+import { DateRange } from './date-range';
 
 @Component({
   selector: 'badass-booking-table',
   template: `<div>
+               <div class="controls">
+                 <label htmlFor="useRange">Range</label>
+                 <input type="checkbox" name="useRange" [(ngModel)]="range.use" (change)="onRange()"/>
+                 <span [ngClass]="{disabled: ! range.use}">
+                   <input type="date" name="from" [disabled]="! range.use" [(ngModel)]="range.from" (change)="onRange()"/>
+                   <label>to</label>
+                   <input type="date" name="to" [disabled]="! range.use" [(ngModel)]="range.to" (change)="onRange()"/>
+                 </span>
+                 <div *ngIf="range.use && range.to < range.from" class="alert alert-danger">
+                   'To' date must not be before the 'From' date
+                 </div>
+               </div>
                <table *ngIf="bookings != undefined">
                  <thead>
                    <tr>
@@ -26,7 +39,7 @@ import { Booking, Bookings } from './booking';
                  </thead>
                  <tbody>
                    <tr *ngIf="bookings.length == 0">
-                     <td colspan="6">No future bookings</td>
+                     <td colspan="6">No <span *ngIf="range.use">bookings in range</span><span *ngIf="! range.use">future bookings</span></td>
                    </tr>
                    <tr *ngFor="let booking of bookings" [ngClass]="{current: booking.current}" [title]="booking.notes || '[no notes]'">
                      <td *ngIf="! bookings.isByAsset"><span class="glyphicon glyphicon-link" (click)="onClick(booking.asset_id)" data-dismiss="modal"></span></td>
@@ -61,15 +74,24 @@ import { Booking, Bookings } from './booking';
            '.overdue { color: red }',
            '.current td:not(.icons) { background: lightblue }',
            '.glyphicon, td a { cursor: pointer }',
-           '.overdue { color: red }']
+           '.overdue { color: red }',
+           '.controls { margin-bottom: 10px }',
+           '.controls input[type=checkbox] { margin-right: 20px }',
+           '.controls input[type=date] { width: 130px }',
+           '.disabled { color: lightgrey }']
 })
 export class BookingTableComponent {
   @Input('bookings') bookings: Bookings;
   @Input('user') user: User;
+  @Input('range') range: DateRange;
 
   @Output('event') event = new EventEmitter<any>();
 
   constructor(private dataService: DataService) {}
+
+  onRange() {
+    this.event.emit({range: {asset_id: this.bookings.asset_id, user: this.bookings.isByUser}});
+  }
 
   onEdit(booking: Booking) {
     this.event.emit({editBooking: Object.assign(new Booking(), booking)});
