@@ -31,7 +31,8 @@ import { Enum, LAST_OPTION } from './enum';
                  <div class="col-lg-8">
                    <div class="row">
                      <h3 class="col-lg-12">
-                       Asset
+                       <a *ngIf="original != undefined && original.url != undefined" href="{{original.url}}" target="asset">Asset</a>
+                       <span *ngIf="asset.url == undefined">Asset</span>
                        <span class="glyphicon glyphicon-arrow-left" (click)="onReset()" [ngClass]="{disabled: ! canReset}"></span>
                        <span class="glyphicon glyphicon-floppy-disk" (click)="onSave()" [ngClass]="{disabled: ! canSave}"></span>
                        <span class="glyphicon glyphicon-trash"  [attr.data-toggle]="canDelete ? 'modal' : null" [attr.data-target]="canDelete ? '#confirmModal' : null" [ngClass]="{disabled: ! canDelete}"></span>
@@ -45,7 +46,7 @@ import { Enum, LAST_OPTION } from './enum';
                          <div *ngFor="let input of group" [ngClass]="{'col-lg-6': group.length > 1, 'my-input-group': group.length > 1}">
                            <div *ngIf="input.type != 'area' && input.type != 'enum' && input.type != 'freq'">
                              <label htmlFor="{{input.field}}">{{input.label}}</label>
-                             <input [type]="input.type" class="form-control" required [(ngModel)]="asset[input.field]" [name]="input.field" />
+                             <input [type]="text" class="form-control" required [(ngModel)]="asset[input.field]" [name]="input.field" />
                            </div>
                            <div *ngIf="input.type == 'freq'">
                              <label htmlFor="{{input.field}}">{{input.label}}</label>
@@ -114,6 +115,7 @@ export class AssetComponent {
   private asset: any = {};
   private freqs: any = {};
   private addNew: any = {};
+  private url: any = {};
 
   @ViewChild('form') form: HTMLFormElement;
   @ViewChildren('addNew') addNewInput: QueryList<ElementRef>;

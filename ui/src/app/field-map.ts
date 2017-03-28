@@ -23,8 +23,7 @@ var OWNER = {'field': 'owner', 'label': 'Owner', 'type': 'enum'};
 var NOTES = {'field': 'notes', 'label': 'Notes', 'type': 'area'};
 var AUDIT_DATE = {'field': 'audit_date', 'label': 'Audit Date', 'type': 'date'};
 var PAT_DUE_DATE = {'field': 'pat_due_date', 'label': 'PAT Test Due', 'type': 'date'};
-//FIXME should be type: url, and it is multi-valued
-var URLS = {'field': 'url', 'label': 'Links', 'type': 'text'};
+var URLS = {'field': 'url', 'label': 'URL', 'type': 'url'};
 
 var FREQ_RANGE = {'field': '', 'label': 'Frequency', 'type': 'freq', 'range': [START_FREQ, STOP_FREQ]};
 
