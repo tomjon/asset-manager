@@ -187,10 +187,19 @@ export class AppComponent {
                         .subscribe(() => this._updateBookings(event));
       } else if (event.check.out === null) {
         this.booking = event.check.booking;
-        if (this.booking.condition == undefined) this.booking.condition = this.asset.condition;
+        if (this.booking.condition == undefined) {
+          this.booking.condition = this.asset.condition;
+        }
       } else {
         this.dataService.check(event.check.booking.asset_id, event.check.booking.condition)
-                        .subscribe(() => this._updateBookings(event));
+                        .subscribe(() => {
+                          this._updateBookings(event);
+                          this.doSearch();
+                          if (this.asset.id == event.check.booking.asset_id) {
+                            this.asset.condition = event.check.booking.condition;
+                            this.asset = Object.assign({}, this.asset); //FIXME: force reload of asset in asset component
+                          }
+                        });
       }
     }
     else {
