@@ -510,7 +510,7 @@ def booking_endpoint(booking_id=None):
             # get bookings for an asset or user, applying any given range
             if 'user_id' in request.args and not application.user_has_role([ADMIN_ROLE, BOOK_ROLE]):
                 return "Role required", 403
-            for table, column in [('booking', 'asset_id'), ('user', 'user_id'), ('booking', 'project')]:
+            for table, column, xjoin_key in [('booking', 'asset_id', None), ('user', 'user_id', 'user'), ('booking', 'project', 'project')]:
                 if column in request.args:
                     args = {column: request.args[column]}
                     if 'fromDate' in request.args and 'toDate' in request.args:
@@ -520,9 +520,9 @@ def booking_endpoint(booking_id=None):
                     else:
                         clause = EXTANT_CLAUSE
                     bookings = sql.selectAllDict(BOOKINGS_SQL.format(table, column, clause), args)
-                    if column == 'user_id':
+                    if xjoin_key is not None:
                         # talk to SOLR to get some asset details
-                        assets_dict = application.solr.assets_dict(args[column])
+                        assets_dict = application.solr.assets_dict_xjoin(xjoin_key, args[column])
                         update_booking = lambda b: b.update(assets_dict[b['asset_id']]) or b
                         bookings = [update_booking(booking) for booking in bookings]
                     return json.dumps(bookings)

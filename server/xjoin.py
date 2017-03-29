@@ -60,7 +60,7 @@ def project_endpoint():
     """
     with application.db.cursor() as sql:
         if 'project' in request.args:
-            # booking data for XJoin (filters for assets based on bookings)
+            # booking data for XJoin (filters for assets based on project)
             return json.dumps(sql.selectAllDict("SELECT DISTINCT(asset_id) FROM booking WHERE project=:project_id", project_id=request.args['project']))
         if 'user' in request.args:
             # booking data for XJoin (filters for assets based on user)
