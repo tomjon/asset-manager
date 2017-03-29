@@ -19,6 +19,7 @@ import { Booking, Bookings } from './booking';
                    <button *ngIf="showEnumerations()" class="btn" data-toggle="modal" data-target="#enumerationsModal">Enumerations</button>
                    <button *ngIf="showNotifications()" class="btn" data-toggle="modal" data-target="#notificationsModal" (click)="loadNotifications()">Notifications</button>
                    <button *ngIf="showUserBookings()" class="btn" data-toggle="modal" data-target="#userBookingsModal" (click)="loadUserBookings(); loadUsers()">Bookings</button>
+                   <button *ngIf="showProjectBookings()" class="btn" data-toggle="modal" data-target="#projectBookingsModal">Projects</button>
                    <button *ngIf="showUsers()" class="btn" data-toggle="modal" data-target="#usersModal" (click)="loadUsers()">Users</button>
                    <badass-asset [user]="user" [asset]="asset" [search]="search" [range]="range" [bookings]="assetBookings" (event)="onEvent($event)"></badass-asset>
                    <div *ngIf="error" class="alert alert-danger">{{error.message}}</div>
@@ -30,6 +31,7 @@ import { Booking, Bookings } from './booking';
              <badass-notification [notifications]="notifications"></badass-notification>
              <badass-enumerations #enumerations [search]="search"></badass-enumerations>
              <badass-user-bookings [user]="user" [users]="users" [range]="range" [bookings]="userBookings" (event)="onEvent($event)"></badass-user-bookings>
+             <badass-project-bookings [user]="user" [range]="range" (event)="onEvent($event)"></badass-project-bookings>
              <badass-booking-condition [user]="user" [search]="search" [booking]="booking" (event)="onEvent($event)"></badass-booking-condition>
              <div id="blocker"></div>`,
   styles: ['div.container-fluid { margin-top: 10px }',
@@ -105,6 +107,10 @@ export class AppComponent {
 
   showUserBookings(): boolean {
     return this.user != undefined && this.user.role >= BOOK_ROLE;
+  }
+
+  showProjectBookings(): boolean {
+    return this.user != undefined && this.user.role >= VIEW_ROLE;
   }
 
   showBookings(): boolean {

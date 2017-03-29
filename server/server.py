@@ -510,7 +510,7 @@ def booking_endpoint(booking_id=None):
             # get bookings for an asset or user, applying any given range
             if 'user_id' in request.args and not application.user_has_role([ADMIN_ROLE, BOOK_ROLE]):
                 return "Role required", 403
-            for table, column in [('booking', 'asset_id'), ('user', 'user_id')]:
+            for table, column in [('booking', 'asset_id'), ('user', 'user_id'), ('booking', 'project')]:
                 if column in request.args:
                     args = {column: request.args[column]}
                     if 'fromDate' in request.args and 'toDate' in request.args:

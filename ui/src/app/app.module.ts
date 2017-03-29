@@ -11,6 +11,7 @@ import { BookingComponent} from './booking.component';
 import { BookingTableComponent} from './booking-table.component';
 import { BookingConditionComponent} from './booking-condition.component';
 import { UserBookingsComponent} from './user-bookings.component';
+import { ProjectBookingsComponent} from './project-bookings.component';
 import { AttachmentComponent } from './attachment.component';
 import { NotificationComponent } from './notification.component';
 import { EnumerationsComponent } from './enumerations.component';
@@ -32,6 +33,7 @@ import './rxjs-operators';
     BookingTableComponent,
     BookingConditionComponent,
     UserBookingsComponent,
+    ProjectBookingsComponent,
     AttachmentComponent,
     NotificationComponent,
     EnumerationsComponent,
