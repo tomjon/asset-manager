@@ -11,7 +11,7 @@ declare var $;
                  Attachments
                  <span class="glyphicon glyphicon-chevron-left" [ngClass]="{disabled: file_index <= 0}" (click)="onNavigate(-1)"></span>
                  <span class="glyphicon glyphicon-chevron-right" [ngClass]="{disabled: file_index >= files.length - 1}" (click)="onNavigate(+1)"></span>
-                 <span class="glyphicon glyphicon-th" [ngClass]="{disabled: ! canUpload()}" (click)="onThumbnails()" data-toggle="modal" data-target="#thumbnailsModal"></span>
+                 <span class="glyphicon glyphicon-th" [ngClass]="{disabled: ! canUpload}" (click)="onThumbnails()" data-toggle="modal" data-target="#thumbnailsModal"></span>
                </h3>
                <div class="attachment" *ngFor="let file of files; let i = index" [hidden]="file_index != i">
                  <img *ngIf="isImage(file.name)" src="{{base_url}}/file/{{file.attachment_id}}" title="{{file.name}}"/>
@@ -23,23 +23,37 @@ declare var $;
                  <div class="modal-content">
                    <div class="modal-header">
                      <button type="button" class="close" data-dismiss="modal">&times;</button>
-                     <h4 class="modal-title">Attachments</h4>
+                     <h3 class="modal-title">Attachments</h3>
                    </div>
                    <div class="modal-body">
-                     <div class="thumbnail container" *ngFor="let file of thumbnails" (click)="onClick(file)" [ngClass]="{selected: isSelected(file), selectable: isSelectable()}">
-                       <div class="thumbnail-img">
+                     <h4 *ngIf="folder.name != undefined">{{folder.name}}</h4>
+                     <div class="folder container" *ngFor="let f of folders">
+                       <div class="thumbnail-img" (click)="onFolder(f)">
+                         <span class="glyphicon glyphicon-folder-open" title="{{f.name}}"></span>
+                       </div>
+                       <p>
+                         <span *ngIf="rename != f" (click)="onRename(f)">{{f.name}}</span>
+                         <input *ngIf="rename == f" type="text" [(ngModel)]="rename.name" (blur)="onRename()"/>
+                       </p>
+                     </div>
+                     <div class="thumbnail container" *ngFor="let file of thumbnails" [ngClass]="{selected: isSelected(file), selectable: isSelectable()}">
+                       <div class="thumbnail-img" (click)="onClick(file)">
                          <img *ngIf="isImage(file.name)" src="{{base_url}}/file/{{file.attachment_id}}" title="{{file.name}}"/>
                          <span *ngIf="! isImage(file.name)" class="glyphicon glyphicon-file" title="{{file.name}}"></span>
                        </div>
                        <p>
-                         {{file.name}}
-                         <span *ngIf="file.count == 0" class="glyphicon glyphicon-trash" [ngClass]="{disabled: ! canUpload()}" (click)="onDelete($event, file)"></span>
+                         <span *ngIf="rename != file" (click)="onRename(file)">{{file.name}}</span>
+                         <input *ngIf="rename == file" type="text" [(ngModel)]="rename.name" (blur)="onRename()"/>
+                         <span *ngIf="file.count == 0" class="glyphicon glyphicon-trash" [ngClass]="{disabled: ! canUpload}" (click)="onDelete($event, file)"></span>
                        </p>
                      </div>
                    </div>
                    <div class="modal-footer">
                      <input #upload type="file" (change)="setFileCount()"/>
-                     <button type="button" class="btn btn-default" [ngClass]="{disabled: ! canAddNew()}" (click)="onAddNew()">Add New</button>
+                     <button type="button" class="btn btn-default" [ngClass]="{disabled: folder.folder_id == undefined}" (click)="onFolderUp()">Up</button>
+                     <button type="button" class="btn btn-default" (click)="onAddFolder()">New Folder</button>
+                     <button type="button" class="btn btn-default" [ngClass]="{disabled: ! canDeleteFolder}" (click)="onDeleteFolder()">Delete Folder</button>
+                     <button type="button" class="btn btn-default" [ngClass]="{disabled: ! canAddNew}" (click)="onAddNew()">Upload</button>
                      <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                    </div>
                  </div>
@@ -47,24 +61,30 @@ declare var $;
              </div>`,
   styles: ['.attachments { height: 350px }',
            '.attachment img { max-width: 100%; max-height: 100% }',
-           '.glyphicon:not(.disabled), .selectable { cursor: pointer }',
+           '.glyphicon:not(.disabled):not(.glyphicon-file), .selectable { cursor: pointer }',
            '.disabled { color: lightgrey }',
            '.container { display: inline-block; vertical-align: top; margin: 5px; width: 210px; height: 150px }',
            '.thumbnail-img { height: 100px }',
            '.thumbnail-img img { max-width: 200px; max-height: 100px }',
            '.thumbnail-img span { font-size: 80px }',
            '.container p { overflow-wrap: break-word; margin-top: 5px }',
-           '.container p span { float: right }',
+           '.container p .glyphicon { float: right }',
            '.thumbnails-dialog { width: 80% }',
            '.modal-footer input { float: left }',
-           '.selected { background: lightblue }']
+           '.selected { background: lightblue }',
+           '.glyphicon-file { color: grey }',
+           '.glyphicon-folder-open { color: brown }']
 })
 export class AttachmentComponent {
   private files: any[] = [];
   private file_index: number = -1;
 
+  private rename: any;
+
   // all attachments - not thumbnails, but attachment id, name and reference count
+  private folder: any = {};
   private thumbnails: any[] = [];
+  private folders: any[] = [];
 
   private fileCount: number = 0;
 
@@ -91,11 +111,24 @@ export class AttachmentComponent {
 
   constructor(private dataService: DataService) {}
 
-  canUpload(): boolean {
+  onRename(item: any=undefined) {
+    if (item != undefined) {
+      this.rename = item;
+    } else {
+      if (this.rename.folder_id) {
+        this.dataService.renameFolder(this.rename.folder_id, this.rename.name).subscribe();
+      } else {
+        this.dataService.renameAttachment(this.rename.attachment_id, this.rename.name).subscribe();
+      }
+      this.rename = undefined;
+    }
+  }
+
+  get canUpload(): boolean {
     return this.user.role >= BOOK_ROLE;
   }
 
-  canAddNew(): boolean {
+  get canAddNew(): boolean {
     return this.fileCount > 0;
   }
 
@@ -132,9 +165,41 @@ export class AttachmentComponent {
                     });
   }
 
-  onThumbnails() {
-    this.dataService.loadAttachments()
-                    .subscribe(files => this.thumbnails = files);
+  get canDeleteFolder(): boolean {
+    return this.thumbnails.length + this.folders.length == 0;
+  }
+
+  onFolder(folder: any) {
+    folder.parent = this.folder;
+    this.folder = folder;
+    this.onThumbnails(this.folder.folder_id);
+  }
+
+  onFolderUp() {
+    this.folder = this.folder.parent;
+    this.onThumbnails(this.folder.folder_id);
+  }
+
+  onAddFolder() {
+    let name = "Folder";
+    this.dataService.addFolder(name, this.folder.folder_id)
+                    .subscribe(folder_id => {
+                      let folder = {name: name, folder_id: folder_id, parent_id: this.folder.folder_id};
+                      this.folders.push(folder);
+                    });
+  }
+
+  onDeleteFolder() {
+    this.dataService.deleteFolder(this.folder.folder_id)
+                    .subscribe(() => this.onFolderUp());
+  }
+
+  onThumbnails(folder_id: number) {
+    this.dataService.loadAttachments(folder_id)
+                    .subscribe(r => {
+                      this.folders = r.folders;
+                      this.thumbnails = r.files;
+                    });
   }
 
   setFileCount() {
@@ -149,7 +214,7 @@ export class AttachmentComponent {
       let i = Math.max(name.lastIndexOf('/'), name.lastIndexOf('\\')) + 1;
       if (i >= name.length) return;
       name = name.substring(i);
-      this.dataService.uploadAttachment(name, inputEl.files[0])
+      this.dataService.uploadAttachment(name, inputEl.files[0], this.folder.folder_id)
                       .subscribe(data => {
                         if (! data.conflict) {
                           data.count = 0;

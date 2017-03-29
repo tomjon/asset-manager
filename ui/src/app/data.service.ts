@@ -187,8 +187,12 @@ export class DataService {
     return this.delete(`asset/${id}`);
   }
 
-  loadAttachments(): Observable<any[]> {
-    return this.get(`file`)
+  loadAttachments(folder_id: number): Observable<any> {
+    let params: URLSearchParams = new URLSearchParams();
+    if (folder_id != undefined) {
+      params.set('folder_id', `${folder_id}`);
+    }
+    return this.get(`file`, {search: params})
                .map(res => res.json());
   }
 
@@ -196,8 +200,31 @@ export class DataService {
     return this.delete(`file/${attachment_id}`);
   }
 
-  uploadAttachment(name: string, file: FileList): Observable<any> {
+  addFolder(name: string, parent_id: number): Observable<string> {
     let params: URLSearchParams = new URLSearchParams();
+    params.set('name', name);
+    if (parent_id != undefined) {
+      params.set('parent_id', `${parent_id}`);
+    }
+    return this.post(`folder`, null, {search: params}).map(rsp => rsp.json().folder_id);
+  }
+
+  renameFolder(folder_id: number, name: string): Observable<void> {
+    let params: URLSearchParams = new URLSearchParams();
+    params.set('folder_id', `${folder_id}`);
+    params.set('name', name);
+    return this.put(`folder/${folder_id}`, null, {search: params});
+  }
+
+  deleteFolder(folder_id: number): Observable<void> {
+    return this.delete(`folder/${folder_id}`);
+  }
+
+  uploadAttachment(name: string, file: FileList, folder_id: number): Observable<any> {
+    let params: URLSearchParams = new URLSearchParams();
+    if (folder_id != undefined) {
+      params.set('folder_id', `${folder_id}`);
+    }
     params.set('name', name);
     return this.post(`file`, file, {search: params})
                .map(res => res.json());
@@ -206,6 +233,13 @@ export class DataService {
   getAttachments(asset: any): Observable<any[]> {
     return this.get(`attachment/${asset.id}`)
                .map(res => res.json());
+  }
+
+  renameAttachment(attachment_id: number, name: string): Observable<void> {
+    let params: URLSearchParams = new URLSearchParams();
+    params.set('attachment_id', `${attachment_id}`);
+    params.set('name', name);
+    return this.put(`file/${attachment_id}`, null, {search: params});
   }
 
   addAssociation(asset: any, attachment_id: number): Observable<void> {

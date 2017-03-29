@@ -39,8 +39,15 @@ CREATE TABLE enum_entry(
 CREATE TABLE attachment(
 	attachment_id INTEGER PRIMARY KEY,
 	name VARCHAR(256),
+	folder_id INTEGER,
 	data BLOB,
 	hash CHAR(32)
+);
+
+CREATE TABLE attachment_folder(
+	folder_id INTEGER PRIMARY KEY,
+	parent_id INTEGER,
+	name VARCHAR(256)
 );
 
 CREATE TABLE attachment_asset_pivot(

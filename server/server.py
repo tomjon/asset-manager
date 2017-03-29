@@ -106,9 +106,16 @@ GET_ATTACHMENT_SQL = """
    WHERE attachment_id=:attachment_id
 """
 
-ALL_ATTACHMENTS_SQL = """
+FOLDER_SQL = """
+  SELECT folder_id, parent_id, name
+    FROM attachment_folder
+   WHERE {0}
+"""
+
+FOLDER_ATTACHMENTS_SQL = """
   SELECT name, a.attachment_id, COUNT(p.attachment_id) AS count
     FROM attachment AS a LEFT JOIN attachment_asset_pivot AS p ON a.attachment_id=p.attachment_id
+   WHERE {0}
 GROUP BY a.attachment_id
 """
 
@@ -388,7 +395,7 @@ def asset_endpoint_GET(asset_id):
 
 
 @application.route('/file', methods=['GET', 'POST'])
-@application.route('/file/<attachment_id>', methods=['GET', 'DELETE'])
+@application.route('/file/<attachment_id>', methods=['GET', 'PUT', 'DELETE'])
 @application.route('/file/<attachment_id>/<filename>')
 def file_endpoint(attachment_id=None, filename=None):
     """ Get the data for the attachment with given id, or list all attachment ids,
@@ -408,20 +415,31 @@ def file_endpoint(attachment_id=None, filename=None):
             mimetype = mimetypes.guess_type(name)[0] or 'application/octet-stream'
             return Response(str(data), mimetype=mimetype)
         if request.method == 'GET':
-            return json.dumps(sql.selectAllDict(ALL_ATTACHMENTS_SQL))
+            folder_id = request.args.get('folder_id', None)
+            clause = "folder_id IS NULL" if folder_id is None else "folder_id=:folder_id"
+            files = sql.selectAllDict(FOLDER_ATTACHMENTS_SQL.format(clause), folder_id=folder_id)
+            clause = "parent_id IS NULL" if folder_id is None else "parent_id=:folder_id"
+            folders = sql.selectAllDict(FOLDER_SQL.format(clause), folder_id=folder_id)
+            return json.dumps({'files': files, 'folders': folders})
         if not application.user_has_role([ADMIN_ROLE]):
             return "Not authorized", 403
         if request.method == 'POST':
             name = request.args.get('name')
             values = {'name': name, 'data': buffer(request.get_data())}
             values['hash'] = hashlib.md5(values['data']).hexdigest()
+            values['folder_id'] = request.args.get('folder_id', None)
             conflict = False
             try:
                 attachment_id, name = sql.selectOne("SELECT attachment_id, name FROM attachment WHERE hash=:hash", values)
                 conflict = True
             except NoResult:
-                attachment_id = sql.insert("INSERT INTO attachment VALUES (NULL, :name, :data, :hash)", values)
+                attachment_id = sql.insert("INSERT INTO attachment VALUES (NULL, :name, :data, :hash, :folder_id)", values)
             return json.dumps({'attachment_id': attachment_id, 'name': name, 'conflict': conflict})
+        if request.method == 'PUT':
+            # rename attachment
+            if sql.update("UPDATE attachment SET name=:name WHERE attachment_id=:attachment_id", attachment_id=attachment_id, name=request.args['name']) == 0:
+                return "No such attachment", 404
+            return json.dumps({})
         if request.method == 'DELETE':
             # only allow deletion of an attachment if it is orphaned
             if sql.selectSingle(COUNT_ASSETS_FOR_ATTACHMENT_SQL, attachment_id=attachment_id) != 0:
@@ -429,6 +447,31 @@ def file_endpoint(attachment_id=None, filename=None):
             sql.delete(DELETE_ATTACHMENT_SQL, attachment_id=attachment_id)
             return json.dumps({})
 
+@application.route('/folder', methods=['POST'])
+@application.route('/folder/<folder_id>', methods=['PUT', 'DELETE'])
+@application.role_required([ADMIN_ROLE])
+def folder_endpoint(folder_id=None):
+    """ Create or delete attachment folders.
+    """
+    with application.db.cursor() as sql:
+        if request.method == 'PUT':
+            # rename folder
+            if sql.update("UPDATE attachment_folder SET name=:name WHERE folder_id=:folder_id", folder_id=folder_id, name=request.args['name']) == 0:
+                return "No such folder", 404
+            return json.dumps({})
+        if request.method == 'POST':
+            # create folder, need the name and parent, and return the new id
+            parent_id = request.args.get('parent_id', None)
+            if parent_id is not None and sql.selectSingle("SELECT COUNT(*) FROM attachment_folder WHERE folder_id=:parent_id", parent_id=parent_id) == 0:
+                return "Bad parent id", 400
+            name = request.args['name']
+            folder_id = sql.insert("INSERT INTO attachment_folder VALUES (NULL, :parent_id, :name)", parent_id=parent_id, name=name)
+            return json.dumps({'folder_id': folder_id})
+        if request.method == 'DELETE':
+            # delete folder by id
+            if sql.delete("DELETE FROM attachment_folder WHERE folder_id=:folder_id", folder_id=folder_id) == 0:
+                return "No such folder", 404
+            return json.dumps({})
 
 @application.route('/attachment/<asset_id>')
 @application.route('/attachment/<asset_id>/<attachment_id>', methods=['PUT', 'DELETE'])
