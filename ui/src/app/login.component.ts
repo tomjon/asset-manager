@@ -89,16 +89,18 @@ declare var $;
                    <div class="modal-content">
                      <div class="modal-header">
                        <button type="button" class="close" data-dismiss="modal">&times;</button>
-                       <h4 class="modal-title">Users Manager</h4>
+                       <h4 class="modal-title">User Manager</h4>
                      </div>
                      <div class="modal-body">
                        <table class="users table table-responsive">
                          <thead>
                            <tr>
-                             <th colspan="2"></th>
+                             <th *ngIf="canDelete()">&nbsp;</th>
+                             <th colspan="2">&nbsp;</th>
                              <th colspan="3" class="assets">Asset Summary</th>
                            </tr>
                            <tr>
+                             <th *ngIf="canDelete()">&nbsp;</th>
                              <th>User</th>
                              <th>Role</th>
                              <th class="sh">Out</th>
@@ -107,12 +109,13 @@ declare var $;
                            </tr>
                          </thead>
                          <tbody>
-                           <tr *ngFor="let user of users">
-                             <td><a href="mailto:{{user.email}}" title="Last log in {{user.last_login}}">{{user.label}}</a></td>
-                             <td>{{user.role | enum:'role'}}</td>
-                             <td>{{user.role >= book_role ? user.out : ''}}</td>
-                             <td>{{user.role >= book_role ? user.booked : ''}}</td>
-                             <td>{{user.role >= book_role ? user.overdue : ''}}</td>
+                           <tr *ngFor="let u of users">
+                             <td *ngIf="canDelete()"><span *ngIf="u.user_id != user.user_id" class="glyphicon glyphicon-trash" data-toggle="modal" data-target="#deleteUserModal" (click)="deleteUser = u"></span></td>
+                             <td><a href="mailto:{{u.email}}" title="Last log in {{u.last_login}}">{{u.label}}</a></td>
+                             <td>{{u.role | enum:'role'}}</td>
+                             <td>{{u.role >= book_role ? u.out : ''}}</td>
+                             <td>{{u.role >= book_role ? u.booked : ''}}</td>
+                             <td>{{u.role >= book_role ? u.overdue : ''}}</td>
                            </tr>
                          </tbody>
                        </table>
@@ -189,12 +192,30 @@ declare var $;
                    </div>
                  </div>
                </form>
+             </div>
+             <div id="deleteUserModal" class="modal fade" role="dialog">
+               <div class="modal-dialog">
+                 <div class="modal-content">
+                   <div class="modal-header">
+                     <button type="button" class="close" data-dismiss="modal" data-target="#deleteUserModal">&times;</button>
+                     <h4 class="modal-title">Confirm delete</h4>
+                   </div>
+                   <div class="modal-body">
+                     Do you really want to delete <b>{{deleteUser.label}}</b>, along with all their future bookings and their booking history?
+                   </div>
+                   <div class="modal-footer">
+                     <button type="button" class="btn btn-default" data-dismiss="modal" data-target="#deleteUserModal" (click)="onDelete()">Delete</button>
+                     <button type="button" class="btn btn-default" data-dismiss="modal" data-target="#deleteUserModal">Cancel</button>
+                   </div>
+                 </div>
+               </div>
              </div>`,
   styles: ['table.login label { width: 90px }',
            'table.login input { width: 150px }',
            '.login td { text-align: right; padding: 2px }',
            'th.assets { background: lightgrey; text-align: center }',
-           '.sh { width: 100px }']
+           '.sh { width: 100px }',
+           '.glyphicon { cursor: pointer }']
 })
 export class LoginComponent {
   @Input('users') users: User[];
@@ -208,6 +229,7 @@ export class LoginComponent {
   formUser: User;
   newUser: User = new User(BOOK_ROLE);
   error: any = {};
+  deleteUser: User = new User();
 
   book_role: string = BOOK_ROLE;
 
@@ -225,6 +247,18 @@ export class LoginComponent {
   //FIXME these very similar - method on User, or make a user.service?
   loggedIn(): boolean {
     return this.user != undefined && this.user.role != ANONYMOUS;
+  }
+
+  canDelete(): boolean {
+    return this.user != undefined && this.user.role == ADMIN_ROLE;
+  }
+
+  onDelete() {
+    this.dataService.deleteUser(this.deleteUser.user_id)
+                    .subscribe(() => {
+                      let index = this.users.findIndex(u => u.user_id == this.deleteUser.user_id);
+                      this.users.splice(index, 1);
+                    });
   }
 
   onLogin() {

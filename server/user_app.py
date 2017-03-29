@@ -171,6 +171,15 @@ class UserApplication(SqlApplication):
             sql.insert("INSERT INTO enum_entry VALUES (NULL, (SELECT enum_id FROM enum WHERE field='user'), :value, :value, :label)", user_dict, value=user_id)
         return True
 
+    def delete_user(self, user_id):
+        """ Delete the user with given user id. A user can not delete themselves.
+        """
+        with self.db.cursor() as sql:
+            ok = sql.delete("DELETE FROM user WHERE user_id=:user_id AND user_id != :current", user_id=user_id, current=current_user.user_id) > 0
+            if ok:
+                enum_id = sql.selectSingle("SELECT enum_id FROM enum WHERE field=:field", field='user')
+                sql.delete("DELETE FROM enum_entry WHERE enum_id=:enum_id AND value=:value", enum_id=enum_id, value=user_id)
+            return ok
 
 if __name__ == '__main__':
     if len(sys.argv) != 5:

@@ -234,6 +234,10 @@ export class DataService {
     return this.post(`user/admin`, JSON.stringify(user));
   }
 
+  deleteUser(user_id: string): Observable<void> {
+    return this.delete(`user/admin/${user_id}`);
+  }
+
   login(username: string, password: string): Observable<User> {
     let params: URLSearchParams = new URLSearchParams();
     params.set('username', username);

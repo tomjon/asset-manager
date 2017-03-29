@@ -15,7 +15,7 @@ import { User, ADMIN_ROLE } from './user';
                    <div class="modal-content">
                      <div class="modal-header">
                        <button type="button" class="close" data-dismiss="modal">&times;</button>
-                       <h4 class="modal-title">Enumerations Manager</h4>
+                       <h4 class="modal-title">Enumeration Manager</h4>
                      </div>
                      <div class="modal-body">
                        <div class="form-group">

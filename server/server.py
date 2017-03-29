@@ -173,8 +173,9 @@ def user_endpoint():
     return json.dumps({})
 
 @application.route('/user/admin', methods=['GET', 'POST'])
+@application.route('/user/admin/<user_id>', methods=['DELETE'])
 @application.role_required([ADMIN_ROLE])
-def user_admin_endpoint():
+def user_admin_endpoint(user_id=None):
     """ Endpoint for an admin to get a list of all users, or add a new user.
     """
     if request.method == 'GET':
@@ -183,7 +184,7 @@ def user_admin_endpoint():
             # number of assets 'out' (i.e. have been taken out and not returned),
             # number of assets 'overdue' (i.e. should have been returned by today, but hasn't been) 
             return json.dumps(sql.selectAllDict(USER_BOOKING_SUMMARY_SQL))
-    else:
+    elif request.method == 'POST':
         new_user = request.get_json()
         if not current_user.check_password(new_user['password']):
             return "Bad credentials", 401
@@ -193,7 +194,12 @@ def user_admin_endpoint():
         except KeyError:
             return "Bad user details", 400
         return json.dumps({})
-
+    elif request.method == 'DELETE':
+        if not application.delete_user(user_id):
+            return "Bad request", 400
+        with application.db.cursor() as sql:
+            sql.delete("DELETE FROM booking WHERE user_id=:user_id", user_id=user_id)
+        return json.dumps({})
 
 @application.errorhandler(SolrError)
 def handle_solr_error(error):
