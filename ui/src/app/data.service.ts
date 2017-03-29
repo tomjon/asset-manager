@@ -266,9 +266,9 @@ export class DataService {
                .map(res => this.bookingArray(res.json(), Bookings.ASSET_TYPE, asset.id));
   }
 
-  getUserBookings(user: User, range: DateRange): Observable<Bookings> {
+  getUserBookings(user_id: string, range: DateRange): Observable<Bookings> {
     let params: URLSearchParams = new URLSearchParams();
-    params.set('user_id', user.user_id);
+    params.set('user_id', user_id);
     if (range != undefined && range.use) {
       params.set('fromDate', range.from);
       params.set('toDate', range.to);

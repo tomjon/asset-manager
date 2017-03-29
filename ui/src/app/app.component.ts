@@ -15,10 +15,11 @@ import { Booking, Bookings } from './booking';
                <div class="row">
                  <div class="col-lg-12">
                    <h1><img src="assets/ofcom.gif"/> Baldock Asset Database and Scheduling System</h1>
-                   <badass-login [user]="user" (login)="onLogin($event)"></badass-login>
+                   <badass-login [user]="user" [users]="users" (login)="onLogin($event)"></badass-login>
                    <button *ngIf="showEnumerations()" class="btn" data-toggle="modal" data-target="#enumerationsModal">Enumerations</button>
                    <button *ngIf="showNotifications()" class="btn" data-toggle="modal" data-target="#notificationsModal" (click)="loadNotifications()">Notifications</button>
-                   <button *ngIf="showUserBookings()" class="btn" data-toggle="modal" data-target="#userBookingsModal" (click)="loadUserBookings()">My Bookings</button>
+                   <button *ngIf="showUserBookings()" class="btn" data-toggle="modal" data-target="#userBookingsModal" (click)="loadUserBookings(); loadUsers()">Bookings</button>
+                   <button *ngIf="showUsers()" class="btn" data-toggle="modal" data-target="#usersModal" (click)="loadUsers()">Users</button>
                    <badass-asset [user]="user" [asset]="asset" [search]="search" [range]="range" [bookings]="assetBookings" (event)="onEvent($event)"></badass-asset>
                    <div *ngIf="error" class="alert alert-danger">{{error.message}}</div>
                    <badass-table [user]="user" [assets]="results" [search]="search" [selected]="asset" (event)="onEvent($event)"></badass-table>
@@ -28,7 +29,7 @@ import { Booking, Bookings } from './booking';
              <badass-booking [user]="user" [asset]="asset" [booking]="booking" (event)="onEvent($event)"></badass-booking>
              <badass-notification [notifications]="notifications"></badass-notification>
              <badass-enumerations #enumerations [search]="search"></badass-enumerations>
-             <badass-user-bookings [user]="user" [range]="range" [bookings]="userBookings" (event)="onEvent($event)"></badass-user-bookings>
+             <badass-user-bookings [user]="user" [users]="users" [range]="range" [bookings]="userBookings" (event)="onEvent($event)"></badass-user-bookings>
              <badass-booking-condition [user]="user" [search]="search" [booking]="booking" (event)="onEvent($event)"></badass-booking-condition>
              <div id="blocker"></div>`,
   styles: ['div.container-fluid { margin-top: 10px }',
@@ -40,6 +41,7 @@ import { Booking, Bookings } from './booking';
 })
 export class AppComponent {
   user: User = new User(); // start with an anonymous user
+  users: User[] = []; // all users, only populated when user is an Admin
   booking: Booking = new Booking(); // the booking currently being edited (or selection of condition)
   notifications: any[];
   assetBookings: Bookings;
@@ -57,6 +59,13 @@ export class AppComponent {
     this.loadAssetBookings();
   }
 
+  loadUsers() {
+    if (this.user.role == ADMIN_ROLE) {
+      this.dataService.getBookingSummary()
+                      .subscribe(users => this.users = users);
+    }
+  }
+
   loadAssetBookings() {
     if (this.asset && this.asset.id && this.showBookings()) {
       this.dataService.getAssetBookings(this.asset, this.range)
@@ -69,7 +78,7 @@ export class AppComponent {
   }
 
   loadUserBookings() {
-    this.dataService.getUserBookings(this.user, this.range).subscribe(userBookings => this.userBookings = userBookings);
+    this.dataService.getUserBookings(this.user.user_id, this.range).subscribe(userBookings => this.userBookings = userBookings);
   }
 
   error: any;
@@ -89,6 +98,7 @@ export class AppComponent {
   showNotifications(): boolean {
     return this.user != undefined && this.user.role == ADMIN_ROLE;
   }
+
   showEnumerations(): boolean {
     return this.user != undefined && this.user.role == ADMIN_ROLE;
   }
@@ -99,6 +109,10 @@ export class AppComponent {
 
   showBookings(): boolean {
     return this.user != undefined && this.user.role >= VIEW_ROLE;
+  }
+
+  showUsers(): boolean {
+    return this.user != undefined && this.user.role == ADMIN_ROLE;
   }
 
   loadNotifications() {
@@ -206,6 +220,7 @@ export class AppComponent {
     }
     else if (event.range) {
       this._updateBookings(event.range.asset_id, event.range.user);
+      this.range = Object.assign({}, this.range); //FIXME: force change event for range inputs
     }
     else {
       console.log("Bad event", event);

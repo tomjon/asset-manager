@@ -12,7 +12,6 @@ declare var $;
   template: `<div *ngIf="loggedIn()">
                {{user.label}} ({{user.roleLabel}})
                <button class="btn" data-toggle="modal" data-target="#detailsModal" (click)="clearDetails()">Details</button>
-               <button *ngIf="showUsers()" class="btn" data-toggle="modal" data-target="#usersModal" (click)="loadUsers()">Users</button>
                <button class="btn btn-default" (click)="onLogout()">Log out</button>
              </div>
              <div *ngIf="! loggedIn()">
@@ -198,6 +197,8 @@ declare var $;
            '.sh { width: 100px }']
 })
 export class LoginComponent {
+  @Input('users') users: User[];
+
   @Output('login') userEmitter = new EventEmitter<User>();
 
   private username: string;
@@ -208,7 +209,6 @@ export class LoginComponent {
   newUser: User = new User(BOOK_ROLE);
   error: any = {};
 
-  users: User[];
   book_role: string = BOOK_ROLE;
 
   @ViewChild('detailsForm') detailsForm;
@@ -225,10 +225,6 @@ export class LoginComponent {
   //FIXME these very similar - method on User, or make a user.service?
   loggedIn(): boolean {
     return this.user != undefined && this.user.role != ANONYMOUS;
-  }
-
-  showUsers(): boolean {
-    return this.user != undefined && this.user.role == ADMIN_ROLE;
   }
 
   onLogin() {
@@ -287,14 +283,5 @@ export class LoginComponent {
     this.error = {};
     this.newUser = new User(BOOK_ROLE);
     pristine(this.addUserForm);
-  }
-
-  loadUsers() {
-    if (this.user.role == ADMIN_ROLE) {
-      this.dataService.getBookingSummary()
-                      .subscribe(users => this.users = users);
-    } else {
-      this.users = [];
-    }
   }
 }
