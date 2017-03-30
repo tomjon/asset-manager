@@ -82,7 +82,7 @@ CHECK_CLASH_SQL = """
 
 CHECK_OUT_SQL = """
   UPDATE booking
-     SET out_date=date('now')
+     SET out_date=date('now'), out_user_id=:user_id
    WHERE asset_id=:asset_id
          AND (user_id=:user_id OR (SELECT COUNT(*) FROM user WHERE user_id=:user_id AND role={0})=1)
          AND date('now') >= due_out_date AND date('now') <= due_in_date
@@ -92,7 +92,7 @@ CHECK_OUT_SQL = """
 # also check that the condition value is valid
 CHECK_IN_SQL = """
   UPDATE booking
-     SET in_date=date('now')
+     SET in_date=date('now'), in_user_id=:user_id
    WHERE asset_id=:asset_id
          AND (user_id=:user_id OR (SELECT COUNT(*) FROM user WHERE user_id=:user_id AND role={0})=1)
          AND date('now') >= due_out_date
@@ -537,7 +537,7 @@ def booking_endpoint(booking_id=None):
                 return json.dumps(booking), 409
             except NoResult:
                 pass
-            args['booking_id'] = sql.insert("INSERT INTO booking VALUES (NULL, :asset_id, :user_id, datetime('now'), :due_out_date, :due_in_date, NULL, NULL, :project, :notes)", args, notes=request.get_data(), user_id=current_user.user_id)
+            args['booking_id'] = sql.insert("INSERT INTO booking VALUES (NULL, :asset_id, :user_id, datetime('now'), :due_out_date, :due_in_date, NULL, NULL, NULL, NULL, :project, :notes)", args, notes=request.get_data(), user_id=current_user.user_id)
             return json.dumps(args)
         if request.method == 'PUT':
             # update an existing booking by id

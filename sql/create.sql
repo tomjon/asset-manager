@@ -64,7 +64,9 @@ CREATE TABLE booking(
 	due_out_date DATE,
 	due_in_date DATE,
 	out_date DATE,
+	out_user_id INTEGER,
 	in_date DATE,
+	in_user_id INTEGER,
 	project INTEGER,
 	notes TEXT
 );
