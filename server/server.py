@@ -523,7 +523,7 @@ def booking_endpoint(booking_id=None):
                     if xjoin_key is not None:
                         # talk to SOLR to get some asset details
                         assets_dict = application.solr.assets_dict_xjoin(xjoin_key, args[column])
-                        update_booking = lambda b: b.update(assets_dict[b['asset_id']]) or b
+                        update_booking = lambda b: b.update(assets_dict.get(b['asset_id'], {})) or b
                         bookings = [update_booking(booking) for booking in bookings]
                     return json.dumps(bookings)
             return 'Missing argument', 400

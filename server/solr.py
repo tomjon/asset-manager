@@ -34,7 +34,7 @@ class AssetIndex(object):
         """ Get a dictionary keyed by asset_id whose values are the asset details to be displayed
             for the user or project bookings table.
         """
-        docs = self.search({'q': '*', 'fl': 'id,barcode,manufacturer,model,condition', 'xjoin_{0}'.format(key): 'true', 'xjoin_{0}.external.{0}'.format(key): value, 'fq': '{{!xjoin}}xjoin_{0}'.format(key)})['response']['docs']
+        docs = self.search({'q': '*', 'rows': 1000000, 'fl': 'id,barcode,manufacturer,model,condition', 'xjoin_{0}'.format(key): 'true', 'xjoin_{0}.external.{0}'.format(key): value, 'fq': '{{!xjoin}}xjoin_{0}'.format(key)})['response']['docs']
         return dict((doc['id'], doc) for doc in docs)
 
     def new_id(self):
