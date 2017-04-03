@@ -69,6 +69,14 @@ export class BookingComponent {
   booking: Booking;
 
   @Input('booking') set _booking(booking: Booking) {
+    // default some values to their previous values
+    if (booking != undefined && this.booking != undefined) {
+      for (let field of ['project', 'due_in_date', 'due_out_date', 'notes']) {
+        if (booking[field] == undefined || booking[field] == '') {
+          booking[field] = this.booking[field];
+        }
+      }
+    }
     this.booking = booking;
     this.editing = booking.booking_id != '';
     this.clash = undefined;
