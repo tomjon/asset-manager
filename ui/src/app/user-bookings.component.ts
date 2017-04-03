@@ -23,7 +23,7 @@ import { DateRange } from './date-range';
                    </div>
                  </div>
              </div>`,
-  styles: ['.modal-dialog { width: 60% }',
+  styles: ['.modal-content { position: absolute; left: 50%; transform: translate(-50%, 0) }',
            '.info { float: left }']
 })
 export class UserBookingsComponent {
