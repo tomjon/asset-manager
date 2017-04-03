@@ -2,7 +2,7 @@ import { Component, Input, Output, EventEmitter, ViewChildren, ElementRef, Query
 import { EnumService } from './enum.service';
 import { DataService } from './data.service';
 import { FieldMap } from './field-map';
-import { User } from './user';
+import { User, ADMIN_ROLE } from './user';
 import { Booking } from './booking';
 import { LAST_OPTION } from './enum';
 import { Observable } from 'rxjs/Observable';
@@ -115,7 +115,7 @@ export class BookingComponent {
 
   //FIXME the following three methods are similar as those in asset.component.ts
   options(field: string) {
-    return this.enumService.get(field).options(false, true);
+    return this.enumService.get(field).options(false, this.user.role == ADMIN_ROLE);
   }
 
   onEnumChange(input) {
