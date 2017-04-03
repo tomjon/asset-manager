@@ -27,6 +27,10 @@ var URLS = {'field': 'url', 'label': 'URL', 'type': 'url'};
 
 var FREQ_RANGE = {'field': '', 'label': 'Frequency', 'type': 'freq', 'range': [START_FREQ, STOP_FREQ]};
 
+// enum definitions
+var PROJECT = {'field': 'project', 'label': 'Project', 'type': 'enum'};
+var USER = {'field': 'user', 'label': 'User', 'type': 'enum'};
+
 // booking filters
 export var BOOKING_PROJECT = {'type': 'xjoin', 'component': 'project', 'field': 'project', 'label': 'Project', 'value': '*'};
 var BOOKING_USER = {'type': 'xjoin', 'component': 'user', 'field': 'user', 'label': 'User', 'value': '*'};
@@ -109,6 +113,8 @@ export class FieldMap {
       if (input.type == 'date') this.triggerInputs.push(input);
       if (input.type != 'enum') this.filterInputs.push(input); // FIXME if you want enums, you have to provide labels in the UI
     }
+    this.enumInputs.push(PROJECT);
+    this.enumInputs.push(USER);
   }
 
   public get(field: string): any {

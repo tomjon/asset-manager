@@ -245,9 +245,13 @@ def enums_endpoint(field=None):
                     sql.insert("INSERT INTO enum_entry VALUES (NULL, :enum_id, :order, :value, :label)", entry)
                 return json.dumps(entry)
             elif action == 'prune':
-                r = application.solr.search([('q', '*'), ('rows', 0), ('facet', 'true'), ('facet.field', field)])
-                facets = r['facet_counts']['facet_fields'][field]
-                counts = dict(zip(facets[::2], facets[1::2]))
+                if field == 'project':
+                    # treat project specially, as it's a booking field, not a SOLR field
+                    counts = dict((str(d['project']), d['count']) for d in sql.selectAllDict("SELECT project, COUNT(*) AS count FROM booking GROUP BY project"))
+                else:
+                    r = application.solr.search([('q', '*'), ('rows', 0), ('facet', 'true'), ('facet.field', field)])
+                    facets = r['facet_counts']['facet_fields'][field]
+                    counts = dict(zip(facets[::2], facets[1::2]))
                 for entry in sql.selectAllDict("SELECT entry_id, value FROM enum_entry WHERE enum_id=:enum_id", enum_id=enum_id):
                     if counts.get(str(entry['value']), 0) == 0:
                         sql.delete("DELETE FROM enum_entry WHERE entry_id=:entry_id", entry_id=entry['entry_id'])

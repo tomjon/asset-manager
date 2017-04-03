@@ -37,7 +37,7 @@ import { User, ADMIN_ROLE } from './user';
                        </div>
                      </div>
                      <div class="modal-footer">
-                       <button type="button" class="btn btn-default" (click)="onPrune()" [disabled]="field == undefined">Prune</button>
+                       <button type="button" class="btn btn-default" (click)="onPrune()" [disabled]="field == undefined || field == 'user'">Prune</button>
                        <button type="button" class="btn btn-default" (click)="onSort()" [disabled]="field == undefined">Sort</button>
                        <button type="button" class="btn btn-default" (click)="onSave()" [disabled]="field == undefined || pristine">Save</button>
                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
