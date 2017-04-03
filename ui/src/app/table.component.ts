@@ -15,7 +15,7 @@ import { Frequency } from './frequency';
                  <table class="col-lg-12 table table-responsive">
                    <thead>
                      <tr>
-                       <td colspan="6">
+                       <td colspan="7">
                          <div *ngIf="showBookingFilters" class="booking-filters">
                            <div *ngFor="let input of fieldMap.bookingFilters">
                              <label *ngIf="! input.glyph" [htmlFor]="input.field">{{input.label}}</label>
@@ -30,7 +30,7 @@ import { Frequency } from './frequency';
                          </div>
                        </td>
                        <td colspan="3" class="calibration header">Calibration</td>
-                       <td colspan="2"></td>
+                       <td>&nbsp;</td>
                      </tr>
                      <tr>
                        <td *ngFor="let input of fieldMap.tableInputs">
