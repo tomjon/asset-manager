@@ -11,7 +11,7 @@ declare var $;
                  Attachments
                  <span class="glyphicon glyphicon-chevron-left" [ngClass]="{disabled: file_index <= 0}" (click)="onNavigate(-1)"></span>
                  <span class="glyphicon glyphicon-chevron-right" [ngClass]="{disabled: file_index >= files.length - 1}" (click)="onNavigate(+1)"></span>
-                 <span class="glyphicon glyphicon-th" [ngClass]="{disabled: ! canUpload}" (click)="onThumbnails()" data-toggle="modal" data-target="#thumbnailsModal"></span>
+                 <span class="glyphicon glyphicon-th" [ngClass]="{disabled: ! canAttach}" (click)="onThumbnails()" data-toggle="modal" data-target="#thumbnailsModal"></span>
                </h3>
                <div class="attachment" *ngFor="let file of files; let i = index" [hidden]="file_index != i">
                  <img *ngIf="isImage(file.name)" src="{{base_url}}/file/{{file.attachment_id}}" title="{{file.name}}"/>
@@ -44,12 +44,13 @@ declare var $;
                        <p>
                          <span *ngIf="rename != file" (click)="onRename(file)">{{file.name}}</span>
                          <input *ngIf="rename == file" type="text" [(ngModel)]="rename.name" (blur)="onRename()"/>
-                         <span *ngIf="file.count == 0" class="glyphicon glyphicon-trash" [ngClass]="{disabled: ! canUpload}" (click)="onDelete($event, file)"></span>
+                         <span *ngIf="file.count == 0" class="glyphicon glyphicon-trash" [ngClass]="{disabled: ! canFileOp}" (click)="onDelete($event, file)"></span>
                        </p>
                      </div>
                    </div>
                    <div class="modal-footer">
-                     <input #upload type="file" (change)="setFileCount()"/>
+                     <input #upload type="file" (change)="setFileCount()" [disabled]="! canFileOp"/>
+                     <span class="alert alert-danger" *ngIf="conflict && canFileOp" (click)="conflict = false">Your attachment has already been uploaded</span>
                      <button type="button" class="btn btn-default" [ngClass]="{disabled: folder.folder_id == undefined}" (click)="onFolderUp()">Up</button>
                      <button type="button" class="btn btn-default" [ngClass]="{disabled: ! canDoFolder}" (click)="onAddFolder()">New Folder</button>
                      <button type="button" class="btn btn-default" [ngClass]="{disabled: ! canDeleteFolder}" (click)="onDeleteFolder()">Delete Folder</button>
@@ -70,7 +71,7 @@ declare var $;
            '.container p { overflow-wrap: break-word; margin-top: 5px }',
            '.container p .glyphicon { float: right }',
            '.thumbnails-dialog { width: 80% }',
-           '.modal-footer input { float: left }',
+           '.modal-footer input, .modal-footer .alert { float: left; margin-bottom: 0 }',
            '.selected { background: lightblue }',
            '.glyphicon-file { color: grey }',
            '.glyphicon-folder-open { color: brown }']
@@ -87,6 +88,7 @@ export class AttachmentComponent {
   private folders: any[] = [];
 
   private fileCount: number = 0;
+  private conflict: boolean = false;
 
   // base URL for file links
   private base_url: string = window.location.protocol + '//' + window.location.hostname + ":3389";
@@ -112,6 +114,7 @@ export class AttachmentComponent {
   constructor(private dataService: DataService) {}
 
   onRename(item: any=undefined) {
+    if (! this.canFileOp) return;
     if (item != undefined) {
       this.rename = item;
     } else {
@@ -124,15 +127,19 @@ export class AttachmentComponent {
     }
   }
 
-  get canUpload(): boolean {
+  get canAttach(): boolean {
     return this.user.role >= BOOK_ROLE;
   }
 
   get canAddNew(): boolean {
-    return this.fileCount > 0;
+    return this.canFileOp && this.fileCount > 0;
   }
 
   get canDoFolder(): boolean {
+    return this.user.role == ADMIN_ROLE;
+  }
+
+  get canFileOp(): boolean {
     return this.user.role == ADMIN_ROLE;
   }
 
@@ -220,13 +227,15 @@ export class AttachmentComponent {
       let i = Math.max(name.lastIndexOf('/'), name.lastIndexOf('\\')) + 1;
       if (i >= name.length) return;
       name = name.substring(i);
+      this.conflict = false;
       this.dataService.uploadAttachment(name, inputEl.files[0], this.folder.folder_id)
                       .subscribe(data => {
+                        this.conflict = data.conflict;
                         if (! data.conflict) {
                           data.count = 0;
                           this.thumbnails.push(data);
                         }
-                        if (this.asset) {
+                        if (this.asset && this.asset.id != undefined) {
                           let file: any = this.thumbnails.find(file => file.attachment_id == data.attachment_id);
                           if (! this.isSelected(file)) {
                             this.onClick(file); // add association if not already selected
@@ -252,6 +261,9 @@ export class AttachmentComponent {
                       .subscribe(() => {
                         ++file.count;
                         this.files.push(file);
+                        if (this.file_index == -1) {
+                          this.file_index = 0;
+                        }
                       });
     }
   }

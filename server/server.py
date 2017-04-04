@@ -437,7 +437,7 @@ def file_endpoint(attachment_id=None, filename=None):
                 attachment_id, name = sql.selectOne("SELECT attachment_id, name FROM attachment WHERE hash=:hash", values)
                 conflict = True
             except NoResult:
-                attachment_id = sql.insert("INSERT INTO attachment VALUES (NULL, :name, :data, :hash, :folder_id)", values)
+                attachment_id = sql.insert("INSERT INTO attachment VALUES (NULL, :name, :folder_id, :data, :hash)", values)
             return json.dumps({'attachment_id': attachment_id, 'name': name, 'conflict': conflict})
         if request.method == 'PUT':
             # rename attachment

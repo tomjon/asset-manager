@@ -42,26 +42,34 @@ export class DataService {
     }.bind(self);
   }
 
-  private get(path: string, args: RequestOptionsArgs={}): Observable<any> {
-    args.headers = new Headers({'Content-Type': 'application/json'});
+  private get(path: string, args: RequestOptionsArgs={}, type: string='application/json'): Observable<any> {
+    if (type != null) {
+      args.headers = new Headers({'Content-Type': type});
+    }
     args.withCredentials = true;
     return this.busy(this.http.get(`${this.base_url}/${path}`, args).catch(this.handleError));
   }
 
-  private put(path: string, body: any, args: RequestOptionsArgs={}): Observable<any> {
-    args.headers = new Headers({'Content-Type': 'application/json'});
+  private put(path: string, body: any, args: RequestOptionsArgs={}, type: string='application/json'): Observable<any> {
+    if (type != null) {
+      args.headers = new Headers({'Content-Type': type});
+    }
     args.withCredentials = true;
     return this.busy(this.http.put(`${this.base_url}/${path}`, body, args).catch(this.handleError));
   }
 
-  private delete(path: string, args: RequestOptionsArgs={}): Observable<any> {
-    args.headers = new Headers({'Content-Type': 'application/json'});
+  private delete(path: string, args: RequestOptionsArgs={}, type: string='application/json'): Observable<any> {
+    if (type != null) {
+      args.headers = new Headers({'Content-Type': type});
+    }
     args.withCredentials = true;
     return this.busy(this.http.delete(`${this.base_url}/${path}`, args).catch(this.handleError));
   }
 
-  private post(path: string, body: any, args: RequestOptionsArgs={}): Observable<any> {
-    args.headers = new Headers({'Content-Type': 'application/json'});
+  private post(path: string, body: any, args: RequestOptionsArgs={}, type: string='application/json'): Observable<any> {
+    if (type != null) {
+      args.headers = new Headers({'Content-Type': type});
+    }
     args.withCredentials = true;
     return this.busy(this.http.post(`${this.base_url}/${path}`, body, args).catch(this.handleError));
   }
@@ -226,7 +234,7 @@ export class DataService {
       params.set('folder_id', `${folder_id}`);
     }
     params.set('name', name);
-    return this.post(`file`, file, {search: params})
+    return this.post(`file`, file, {search: params}, null)
                .map(res => res.json());
   }
 
