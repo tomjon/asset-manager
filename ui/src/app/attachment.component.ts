@@ -1,6 +1,6 @@
 import { Component, Input, Output, ViewChild, ViewChildren, EventEmitter, ElementRef, QueryList } from '@angular/core';
 import { DataService } from './data.service';
-import { User, BOOK_ROLE } from './user';
+import { User, BOOK_ROLE, ADMIN_ROLE } from './user';
 
 declare var $;
 
@@ -51,7 +51,7 @@ declare var $;
                    <div class="modal-footer">
                      <input #upload type="file" (change)="setFileCount()"/>
                      <button type="button" class="btn btn-default" [ngClass]="{disabled: folder.folder_id == undefined}" (click)="onFolderUp()">Up</button>
-                     <button type="button" class="btn btn-default" (click)="onAddFolder()">New Folder</button>
+                     <button type="button" class="btn btn-default" [ngClass]="{disabled: ! canDoFolder}" (click)="onAddFolder()">New Folder</button>
                      <button type="button" class="btn btn-default" [ngClass]="{disabled: ! canDeleteFolder}" (click)="onDeleteFolder()">Delete Folder</button>
                      <button type="button" class="btn btn-default" [ngClass]="{disabled: ! canAddNew}" (click)="onAddNew()">Upload</button>
                      <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
@@ -132,6 +132,10 @@ export class AttachmentComponent {
     return this.fileCount > 0;
   }
 
+  get canDoFolder(): boolean {
+    return this.user.role == ADMIN_ROLE;
+  }
+
   isSelectable(): boolean {
     return this.asset.id != undefined;
   }
@@ -166,7 +170,7 @@ export class AttachmentComponent {
   }
 
   get canDeleteFolder(): boolean {
-    return this.thumbnails.length + this.folders.length == 0;
+    return this.canDoFolder && (this.thumbnails.length + this.folders.length == 0);
   }
 
   onFolder(folder: any) {
@@ -181,6 +185,7 @@ export class AttachmentComponent {
   }
 
   onAddFolder() {
+    if (! this.canDoFolder) return;
     let name = "Folder";
     this.dataService.addFolder(name, this.folder.folder_id)
                     .subscribe(folder_id => {
@@ -190,6 +195,7 @@ export class AttachmentComponent {
   }
 
   onDeleteFolder() {
+    if (! this.canDoFolder) return;
     this.dataService.deleteFolder(this.folder.folder_id)
                     .subscribe(() => this.onFolderUp());
   }
