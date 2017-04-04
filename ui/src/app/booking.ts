@@ -27,6 +27,11 @@ export class Booking {
     return this.out_date && ! this.in_date;
   }
 
+  canCheckIn(user: User): boolean {
+    if (user.user_id != this.user_id && user.role != ADMIN_ROLE) return false;
+    return this.isOut;
+  }
+
   // asset is 'back in' if it has been returned before the due in date
   get backIn(): boolean {
     return this.in_date && this.in_date <= this.due_in_date;
@@ -106,7 +111,8 @@ export class Bookings extends Array<Booking> {
     return this.type == Bookings.PROJECT_TYPE;
   }
 
-  canCheckOut(booking: Booking): boolean {
+  canCheckOut(user: User, booking: Booking): boolean {
+    if (user.user_id != booking.user_id && user.role != ADMIN_ROLE) return false;
     return this.out_asset_ids[booking.asset_id] == undefined && booking.out_date == null && booking.in_date == null && today() >= booking.due_out_date && today() <= booking.due_in_date;
   }
 }
