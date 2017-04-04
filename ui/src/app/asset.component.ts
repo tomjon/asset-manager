@@ -36,8 +36,8 @@ import { DateRange } from './date-range';
                        <span *ngIf="asset.url == undefined">Asset</span>
                        <span class="glyphicon glyphicon-arrow-left" (click)="onReset()" [ngClass]="{disabled: ! canReset}"></span>
                        <span class="glyphicon glyphicon-floppy-disk" (click)="onSave()" [ngClass]="{disabled: ! canSave}"></span>
-                       <span class="glyphicon glyphicon-trash"  [attr.data-toggle]="canDelete ? 'modal' : null" [attr.data-target]="canDelete ? '#confirmModal' : null" [ngClass]="{disabled: ! canDelete}"></span>
-                       <span class="glyphicon glyphicon-plus-sign" (click)="onAdd()" [ngClass]="{disabled: ! canAdd}"></span>
+                       <span class="glyphicon glyphicon-trash" [attr.data-toggle]="canDelete ? 'modal' : null" [attr.data-target]="canDelete ? '#confirmModal' : null" (click)="openDelete()" [ngClass]="{disabled: ! canDelete}"></span>
+                       <span class="glyphicon glyphicon-plus-sign" (click)="openAdd()" [attr.data-toggle]="canAdd ? 'modal' : null" [attr.data-target]="canAdd ? '#confirmModal' : null" (click)="openAdd()" [ngClass]="{disabled: ! canAdd}"></span>
                        <span class="glyphicon glyphicon-book" [ngClass]="{disabled: ! canBook}" (click)="onBook()" [attr.data-toggle]="canBook ? 'modal' : null" [attr.data-target]="canBook ? '#bookingModal' : null"></span>
                      </h3>
                    </div>
@@ -89,13 +89,13 @@ import { DateRange } from './date-range';
                  <div class="modal-content">
                    <div class="modal-header">
                      <button type="button" class="close" data-dismiss="modal">&times;</button>
-                     <h4 class="modal-title">Confirm delete</h4>
+                     <h4 class="modal-title">{{confirm.title}}</h4>
                    </div>
                    <div class="modal-body">
-                     Do you really want to delete the asset <i *ngIf="asset.manufacturer != undefined">{{asset.manufacturer | enum:'manufacturer'}} </i>{{asset.model}} {{asset.serial}}?
+                     {{confirm.body}}
                    </div>
                    <div class="modal-footer">
-                     <button type="button" class="btn btn-default" data-dismiss="modal" (click)="onDelete()">Delete</button>
+                     <button type="button" class="btn btn-default" data-dismiss="modal" (click)="confirm.onClick()">{{confirm.button}}</button>
                      <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
                    </div>
                  </div>
@@ -117,6 +117,7 @@ export class AssetComponent {
   private freqs: any = {};
   private addNew: any = {};
   private url: any = {};
+  private confirm: any = {};
 
   @ViewChild('form') form: HTMLFormElement;
   @ViewChildren('addNew') addNewInput: QueryList<ElementRef>;
@@ -187,23 +188,35 @@ export class AssetComponent {
     this.event.emit({save: this.asset});
   }
 
-  get canDelete() {
+  get canDelete(): boolean {
     return this.hasRole(true) && this.original != undefined;
   }
 
-  onDelete() {
+  openDelete() {
     if (! this.canDelete) return;
-    this.event.emit({delete: this.original.id});
+    this.confirm.title = "Confirm delete";
+    let manufacturer = this.asset.manufacturer != undefined ? this.enumService.get('manufacturer').label(this.asset.manufacturer) : '';
+    this.confirm.body = `Do you really want to delete the asset ${manufacturer} ${this.asset.model} ${this.asset.serial}?`;
+    this.confirm.button = 'Delete';
+    this.confirm.onClick = () => {
+      this.event.emit({delete: this.original.id});
+    }
   }
 
   get canAdd() {
     return this.hasRole(true);
   }
 
-  onAdd() {
-    if (! this.canAdd) return;
-    this.event.emit({add: this.asset});
-    pristine(this.form, false);
+  openAdd() {
+    if (! this.canDelete) return;
+    this.confirm.title = "Confirm add new asset";
+    let manufacturer = this.asset.manufacturer != undefined ? this.enumService.get('manufacturer').label(this.asset.manufacturer) : '';
+    this.confirm.body = `Do you really want create a new asset ${manufacturer} ${this.asset.model} ${this.asset.serial}?`;
+    this.confirm.button = 'Add New Asset';
+    this.confirm.onClick = () => {
+      this.event.emit({add: this.asset});
+      pristine(this.form, false);
+    }
   }
 
   get canBook() {
