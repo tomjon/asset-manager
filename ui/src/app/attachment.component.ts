@@ -26,24 +26,25 @@ declare var $;
                      <h3 class="modal-title">Attachments</h3>
                    </div>
                    <div class="modal-body">
-                     <h4 *ngIf="folder.name != undefined">{{folder.name}}</h4>
-                     <div class="folder container" *ngFor="let f of folders">
-                       <div class="thumbnail-img" (click)="onFolder(f)">
+                     <h4 *ngIf="folder.name != undefined">{{folder.name}} <span class="glyphicon glyphicon-arrow-left" (click)="onFolderUp()"></span>
+</h4>
+                     <div class="thumbnail container" *ngFor="let f of folders" (click)="onClick(f)" [ngClass]="{selected: isSelected(f)}">
+                       <div class="thumbnail-img">
                          <span class="glyphicon glyphicon-folder-open" title="{{f.name}}"></span>
                        </div>
                        <p>
-                         <span *ngIf="rename != f" (click)="onRename(f)">{{f.name}}</span>
-                         <input *ngIf="rename == f" type="text" [(ngModel)]="rename.name" (blur)="onRename()"/>
+                         <span>{{f.name}}</span>
+                         <span class="glyphicon glyphicon-arrow-right" (click)="onFolder(f)"></span>
                        </p>
                      </div>
-                     <div class="thumbnail container" *ngFor="let file of thumbnails" [ngClass]="{selected: isSelected(file), selectable: isSelectable()}">
-                       <div class="thumbnail-img" (click)="onClick(file)">
+                     <div class="thumbnail container" *ngFor="let file of thumbnails" (click)="onClick(file)" [ngClass]="{selected: isSelected(file)}">
+                       <div class="thumbnail-img">
                          <img *ngIf="isImage(file.name)" src="{{base_url}}/file/{{file.attachment_id}}" title="{{file.name}}"/>
                          <span *ngIf="! isImage(file.name)" class="glyphicon glyphicon-file" title="{{file.name}}"></span>
                        </div>
                        <p>
-                         <span *ngIf="rename != file" (click)="onRename(file)">{{file.name}}</span>
-                         <input *ngIf="rename == file" type="text" [(ngModel)]="rename.name" (blur)="onRename()"/>
+                         <span>{{file.name}}</span>
+                         <span *ngIf="isAttached(file)" class="glyphicon glyphicon-ok"></span>
                          <span *ngIf="file.count == 0" class="glyphicon glyphicon-trash" [ngClass]="{disabled: ! canFileOp}" (click)="onDelete($event, file)"></span>
                        </p>
                      </div>
@@ -51,20 +52,62 @@ declare var $;
                    <div class="modal-footer">
                      <input #upload type="file" (change)="setFileCount()" [disabled]="! canFileOp"/>
                      <span class="alert alert-danger" *ngIf="conflict && canFileOp" (click)="conflict = false">Your attachment has already been uploaded</span>
-                     <button type="button" class="btn btn-default" [ngClass]="{disabled: folder.folder_id == undefined}" (click)="onFolderUp()">Up</button>
                      <button type="button" class="btn btn-default" [ngClass]="{disabled: ! canDoFolder}" (click)="onAddFolder()">New Folder</button>
                      <button type="button" class="btn btn-default" [ngClass]="{disabled: ! canDeleteFolder}" (click)="onDeleteFolder()">Delete Folder</button>
                      <button type="button" class="btn btn-default" [ngClass]="{disabled: ! canAddNew}" (click)="onAddNew()">Upload</button>
+                     <button type="button" class="btn btn-default" [ngClass]="{disabled: ! canAttachAll(true)}" (click)="onAttachAll(true)">Attach</button>
+                     <button type="button" class="btn btn-default" [ngClass]="{disabled: ! canAttachAll(false)}" (click)="onAttachAll(false)">Unattach</button>
+                     <button type="button" class="btn btn-default" [ngClass]="{disabled: ! canMove}" (click)="onMoveClick()" data-toggle="modal" data-target="#moveModal">Move</button>
+                     <button type="button" class="btn btn-default" [ngClass]="{disabled: ! canRename}" (click)="onRenameClick()" data-toggle="modal" data-target="#renameModal">Rename</button>
                      <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                   </div>
+                 </div>
+               </div>
+             </div>
+             <div id="moveModal" class="modal fade" role="dialog">
+               <div class="modal-dialog">
+                 <div class="modal-content">
+                   <div class="modal-header">
+                     <button type="button" class="close" data-dismiss="modal">&times;</button>
+                     <h4 class="modal-title">Move selection</h4>
+                   </div>
+                   <div class="modal-body">
+                     <label for="destination_id">Destination folder</label>
+                     <select class="form-control" name="destination_id" [(ngModel)]="destination_id">
+                       <option [value]="undefined" *ngIf="folder.parent != undefined">Parent folder</option>
+                       <option *ngFor="let f of moveFolders" [value]="f.folder_id">{{f.name}}</option>
+                     </select>
+                   </div>
+                   <div class="modal-footer">
+                     <button type="button" class="btn btn-default" data-dismiss="modal" (click)="onMove()">Move</button>
+                     <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                   </div>
+                 </div>
+               </div>
+             </div>
+             <div id="renameModal" class="modal fade" role="dialog">
+               <div class="modal-dialog">
+                 <div class="modal-content">
+                   <div class="modal-header">
+                     <button type="button" class="close" data-dismiss="modal">&times;</button>
+                     <h4 class="modal-title">Rename item</h4>
+                   </div>
+                   <div class="modal-body">
+                     <label for="name">New name</label>
+                     <input type="text" name="name" class="form-control" [(ngModel)]="newName">
+                   </div>
+                   <div class="modal-footer">
+                     <button type="button" class="btn btn-default" data-dismiss="modal" [disabled]="! canRenameItem" (click)="onRename()">Rename</button>
+                     <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
                    </div>
                  </div>
                </div>
              </div>`,
   styles: ['.attachments { height: 350px }',
            '.attachment img { max-width: 100%; max-height: 100% }',
-           '.glyphicon:not(.disabled):not(.glyphicon-file), .selectable { cursor: pointer }',
+           '.glyphicon:not(.disabled) { cursor: pointer }',
            '.disabled { color: lightgrey }',
-           '.container { display: inline-block; vertical-align: top; margin: 5px; width: 210px; height: 150px }',
+           '.container { display: inline-block; vertical-align: top; margin: 5px; width: 210px; height: 150px; cursor: pointer }',
            '.thumbnail-img { height: 100px }',
            '.thumbnail-img img { max-width: 200px; max-height: 100px }',
            '.thumbnail-img span { font-size: 80px }',
@@ -80,12 +123,14 @@ export class AttachmentComponent {
   private files: any[] = [];
   private file_index: number = -1;
 
-  private rename: any;
-
   // all attachments - not thumbnails, but attachment id, name and reference count
   private folder: any = {};
   private thumbnails: any[] = [];
   private folders: any[] = [];
+
+  private selection: any[] = [];
+  private newName: string = '';
+  private destination_id: any;
 
   private fileCount: number = 0;
   private conflict: boolean = false;
@@ -113,20 +158,6 @@ export class AttachmentComponent {
 
   constructor(private dataService: DataService) {}
 
-  onRename(item: any=undefined) {
-    if (! this.canFileOp) return;
-    if (item != undefined) {
-      this.rename = item;
-    } else {
-      if (this.rename.folder_id) {
-        this.dataService.renameFolder(this.rename.folder_id, this.rename.name).subscribe();
-      } else {
-        this.dataService.renameAttachment(this.rename.attachment_id, this.rename.name).subscribe();
-      }
-      this.rename = undefined;
-    }
-  }
-
   get canAttach(): boolean {
     return this.user.role >= BOOK_ROLE;
   }
@@ -143,11 +174,7 @@ export class AttachmentComponent {
     return this.user.role == ADMIN_ROLE;
   }
 
-  isSelectable(): boolean {
-    return this.asset.id != undefined;
-  }
-
-  isSelected(file): boolean {
+  isAttached(file): boolean {
     return this.files.find(f => f.attachment_id == file.attachment_id) != undefined;
   }
 
@@ -184,11 +211,13 @@ export class AttachmentComponent {
     folder.parent = this.folder;
     this.folder = folder;
     this.onThumbnails(this.folder.folder_id);
+    this.selection = [];
   }
 
   onFolderUp() {
     this.folder = this.folder.parent;
     this.onThumbnails(this.folder.folder_id);
+    this.selection = [];
   }
 
   onAddFolder() {
@@ -237,18 +266,46 @@ export class AttachmentComponent {
                         }
                         if (this.asset && this.asset.id != undefined) {
                           let file: any = this.thumbnails.find(file => file.attachment_id == data.attachment_id);
-                          if (! this.isSelected(file)) {
-                            this.onClick(file); // add association if not already selected
+                          if (! this.isAttached(file)) {
+                            this.onAttach(file, true); // add association if not already selected
                           }
                         }
                       });
     }
   }
 
-  // add/remove association
+  isSelected(file: any): boolean {
+    return this.selection.indexOf(file) != -1;
+  }
+
+  canAttachAll(which: boolean): boolean {
+    for (let f of this.selection) {
+      if (f.folder_id != undefined) continue;
+      if (which && ! this.isAttached(f)) return true;
+      else if (! which && this.isAttached(f)) return true;
+    }
+    return false;
+  }
+
   onClick(file: any) {
-    if (! this.asset) return;
-    if (this.isSelected(file)) {
+    let index = this.selection.indexOf(file);
+    if (index == -1) {
+      this.selection.push(file);
+    } else {
+      this.selection.splice(index, 1);
+    }
+  }
+
+  onAttachAll(which: boolean) {
+    for (let f of this.selection) {
+      if (f.folder_id != undefined) continue;
+      this.onAttach(f, which);
+    }
+  }
+
+  // add/remove association
+  onAttach(file: any, which: boolean) {
+    if (! which) {
       this.dataService.removeAssociation(this.asset, file.attachment_id)
                       .subscribe(() => {
                         --file.count;
@@ -265,6 +322,59 @@ export class AttachmentComponent {
                           this.file_index = 0;
                         }
                       });
+    }
+  }
+
+  get canMove(): boolean {
+    return this.selection.length > 0 && (this.moveFolders.length > 0 || this.folder.folder_id != undefined);
+  }
+
+  get canRename(): boolean {
+    return this.selection.length == 1;
+  }
+
+  get canRenameItem(): boolean {
+    return this.newName.length > 0 && this.selection.length > 0 && this.newName != this.selection[0].name;
+  }
+
+  onMoveClick() {
+    this.destination_id = this.folder.parent == undefined ? this.folders[0].folder_id : undefined;
+  }
+
+  get moveFolders(): any[] {
+    return this.folders.filter(f => this.selection.indexOf(f) == -1);
+  }
+
+  onRenameClick() {
+    let item = this.selection[0];
+    this.newName = item.name;
+  }
+
+  onMove() {
+    let folders = [];
+    let attachments = [];
+    for (let f of this.selection) {
+      if (f.folder_id != undefined) {
+        folders.push(f.folder_id);
+      } else {
+        attachments.push(f.attachment_id);
+      }
+    }
+    this.dataService.moveItems(this.destination_id, folders, attachments)
+                    .subscribe(() => {
+                      this.onThumbnails(this.folder ? this.folder.folder_id : undefined);
+                      this.selection = [];
+                    });
+  }
+
+  onRename() {
+    let item = this.selection[0];
+    if (item.folder_id) {
+      this.dataService.renameFolder(item.folder_id, this.newName)
+                      .subscribe(() => item.name = this.newName);
+    } else {
+      this.dataService.renameAttachment(item.attachment_id, this.newName)
+                      .subscribe(() => item.name = this.newName);
     }
   }
 }

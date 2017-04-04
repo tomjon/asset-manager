@@ -228,6 +228,15 @@ export class DataService {
     return this.delete(`folder/${folder_id}`);
   }
 
+  // move folders and attachments to the specified folder
+  moveItems(folder_id: string, folders: number[], attachments: number[]) {
+    if (folder_id == undefined) {
+      folder_id = '-'; // for this endpoint only, root folder is identified by '-'
+    }
+    let body = JSON.stringify({folders: folders, attachments: attachments});
+    return this.post(`folder/${folder_id}`, body);
+  }
+
   uploadAttachment(name: string, file: FileList, folder_id: number): Observable<any> {
     let params: URLSearchParams = new URLSearchParams();
     if (folder_id != undefined) {

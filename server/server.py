@@ -452,7 +452,7 @@ def file_endpoint(attachment_id=None, filename=None):
             return json.dumps({})
 
 @application.route('/folder', methods=['POST'])
-@application.route('/folder/<folder_id>', methods=['PUT', 'DELETE'])
+@application.route('/folder/<folder_id>', methods=['PUT', 'DELETE', 'POST'])
 @application.role_required([ADMIN_ROLE])
 def folder_endpoint(folder_id=None):
     """ Create or delete attachment folders.
@@ -463,7 +463,7 @@ def folder_endpoint(folder_id=None):
             if sql.update("UPDATE attachment_folder SET name=:name WHERE folder_id=:folder_id", folder_id=folder_id, name=request.args['name']) == 0:
                 return "No such folder", 404
             return json.dumps({})
-        if request.method == 'POST':
+        if request.method == 'POST' and folder_id is None:
             # create folder, need the name and parent, and return the new id
             parent_id = request.args.get('parent_id', None)
             if parent_id is not None and sql.selectSingle("SELECT COUNT(*) FROM attachment_folder WHERE folder_id=:parent_id", parent_id=parent_id) == 0:
@@ -475,6 +475,20 @@ def folder_endpoint(folder_id=None):
             # delete folder by id
             if sql.delete("DELETE FROM attachment_folder WHERE folder_id=:folder_id", folder_id=folder_id) == 0:
                 return "No such folder", 404
+            return json.dumps({})
+        if request.method == 'POST' and folder_id is not None:
+            # move items into the folder (or to root, which for this method has special id '-')
+            items = request.get_json()
+            if not isinstance(items, dict):
+                return "Bad request", 400
+            if folder_id == '-':
+                folder_id = None
+            for target_id in items.get('folders', []):
+                if sql.update("UPDATE attachment_folder SET parent_id=:parent_id WHERE folder_id=:folder_id", folder_id=target_id, parent_id=folder_id) == 0:
+                    return "Bad folder id", 404
+            for target_id in items.get('attachments', []):
+                if sql.update("UPDATE attachment SET folder_id=:folder_id WHERE attachment_id=:attachment_id", folder_id=folder_id, attachment_id=target_id) == 0:
+                    return "Bad attachment id", 404
             return json.dumps({})
 
 @application.route('/attachment/<asset_id>')
