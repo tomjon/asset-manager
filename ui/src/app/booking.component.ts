@@ -28,16 +28,20 @@ declare var $;
                          <input #addNew type="text" *ngIf="addNew.field == fieldMap.projectInput.field" class="form-control" [(ngModel)]="addNew.label" [name]="fieldMap.projectInput.field" (blur)="onAddNew(fieldMap.projectInput, addNew.label)" (change)="onAddNew(fieldMap.projectInput, addNew.label)"/>
                        </div>
                        <div class="form-group">
+                         <label for="oneday">One day booking</label>
+                         <input type="checkbox" [disabled]="editing && (! booking.canEditDueOutDate(user) || ! booking.canEditDueInDate(user))" [(ngModel)]="oneday" name="oneday">
+                       </div>
+                       <div class="form-group">
                          <label for="dueOutDate">Due Out Date</label>
-                         <input type="date" required min="{{today}}" [disabled]="editing && ! booking.canEditDueOutDate(user)" class="form-control" [(ngModel)]="booking.due_out_date" name="dueOutDate" #f_dueOutDate="ngModel">
-                         <div [hidden]="! booking.canEditDueOutDate(user) || f_dueOutDate.valid" class="alert alert-danger">
+                         <input type="date" required min="{{today}}" [disabled]="oneday || (editing && ! booking.canEditDueOutDate(user))" class="form-control" [(ngModel)]="booking.due_out_date" name="dueOutDate" #f_dueOutDate="ngModel">
+                         <div [hidden]="oneday || (! booking.canEditDueOutDate(user) || f_dueOutDate.valid)" class="alert alert-danger">
                            Due out date is required
                          </div>
                        </div>
                        <div class="form-group">
                          <label for="dueInDate">Due In Date</label>
-                         <input type="date" required min="{{booking.due_out_date}}" [disabled]="editing && ! booking.canEditDueInDate(user)" class="form-control" [(ngModel)]="booking.due_in_date" name="dueInDate" #f_dueInDate="ngModel">
-                         <div [hidden]="! booking.canEditDueInDate(user) || (f_dueInDate.valid && booking.due_in_date >= booking.due_out_date)" class="alert alert-danger">
+                         <input type="date" required min="{{booking.due_out_date}}" [disabled]="oneday || (editing && ! booking.canEditDueInDate(user))" class="form-control" [(ngModel)]="booking.due_in_date" name="dueInDate" #f_dueInDate="ngModel">
+                         <div [hidden]="oneday || (! booking.canEditDueInDate(user) || (f_dueInDate.valid && booking.due_in_date >= booking.due_out_date))" class="alert alert-danger">
                            Due in date is required, and should be the same or after the due out date
                          </div>
                        </div>
@@ -67,6 +71,17 @@ export class BookingComponent {
 
   // collects form input values
   booking: Booking;
+  _oneday: boolean = false;
+
+  set oneday(value: boolean) {
+    this._oneday = value;
+    this.booking.due_out_date = this.today;
+    this.booking.due_in_date = this.today;
+  }
+  
+  get oneday(): boolean {
+    return this._oneday;
+  }
 
   @Input('booking') set _booking(booking: Booking) {
     // default some values to their previous values
