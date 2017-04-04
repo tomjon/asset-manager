@@ -47,7 +47,7 @@ import { DateRange } from './date-range';
                          <div *ngFor="let input of group" [ngClass]="{'col-lg-6': group.length > 1, 'my-input-group': group.length > 1}">
                            <div *ngIf="input.type != 'area' && input.type != 'enum' && input.type != 'freq'">
                              <label htmlFor="{{input.field}}">{{input.label}}</label>
-                             <input [type]="text" class="form-control" required [(ngModel)]="asset[input.field]" [name]="input.field" />
+                             <input [type]="input.type" class="form-control" required [(ngModel)]="asset[input.field]" [name]="input.field" />
                            </div>
                            <div *ngIf="input.type == 'freq'">
                              <label htmlFor="{{input.field}}">{{input.label}}</label>
