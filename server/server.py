@@ -189,8 +189,11 @@ def user_admin_endpoint(user_id=None):
         with application.db.cursor() as sql:
             # returns number of assets 'booked' (i.e. the booking lasts until after today - except for early returns - or the asset is still out),
             # number of assets 'out' (i.e. have been taken out and not returned),
-            # number of assets 'overdue' (i.e. should have been returned by today, but hasn't been) 
-            return json.dumps(sql.selectAllDict(USER_BOOKING_SUMMARY_SQL))
+            # number of assets 'overdue' (i.e. should have been returned by today, but hasn't been)
+            users = sql.selectAllDict(USER_BOOKING_SUMMARY_SQL)
+            for user in users:
+                user['logged_in'] = user['user_id'] in application.logged_in_users
+            return json.dumps(users)
     elif request.method == 'POST':
         new_user = request.get_json()
         if not current_user.check_password(new_user['password']):

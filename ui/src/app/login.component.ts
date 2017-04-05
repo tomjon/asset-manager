@@ -121,6 +121,7 @@ declare var $;
                        </table>
                      </div>
                      <div class="modal-footer">
+                       <span>{{loggedInCount}} user{{loggedInCount == 1 ? '' : 's'}} logged in</span>
                        <button type="button" class="btn btn-default" data-toggle="modal" data-target="#addUserModal" (click)="clearAddUser()">Add New User</button>
                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                      </div>
@@ -215,7 +216,8 @@ declare var $;
            '.login td { text-align: right; padding: 2px }',
            'th.assets { background: lightgrey; text-align: center }',
            '.sh { width: 100px }',
-           '.glyphicon { cursor: pointer }']
+           '.glyphicon { cursor: pointer }',
+           '.modal-footer span { float: left }']
 })
 export class LoginComponent {
   @Input('users') users: User[];
@@ -247,6 +249,10 @@ export class LoginComponent {
   //FIXME these very similar - method on User, or make a user.service?
   loggedIn(): boolean {
     return this.user != undefined && this.user.role != ANONYMOUS;
+  }
+
+  get loggedInCount(): number {
+    return this.users.filter(u => u.logged_in).length;
   }
 
   canDelete(): boolean {

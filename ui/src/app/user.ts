@@ -11,6 +11,7 @@ export class User {
   public email: string;
   public label: string;
   public last_login: string;
+  public logged_in: boolean;
 
   // only set when changing details
   public password: string;
