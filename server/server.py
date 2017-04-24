@@ -379,7 +379,7 @@ def asset_endpoint(asset_id=None):
         asset = request.get_json()
         asset['id'] = asset_id
 
-        if request.method == 'PUT' and not application.solr.id_exists(asset_id) and not application.user_has_role([ADMIN_ROLE]):
+        if request.method == 'PUT' and not application.user_has_role([ADMIN_ROLE]):
             return "Not authorized", 403
 
         # validate doc - not much to do at present, but FIXME should validate enum values are in range

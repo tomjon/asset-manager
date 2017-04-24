@@ -180,7 +180,7 @@ export class AssetComponent {
 
   get canSave() {
     let form: any = this.form;
-    return this.hasRole() && ! form.pristine && this.original != undefined;
+    return this.hasRole(true) && ! form.pristine && this.original != undefined;
   }
 
   onSave() {
