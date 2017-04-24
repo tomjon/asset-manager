@@ -44,13 +44,13 @@ import { Booking, Bookings } from './booking';
 export class AppComponent {
   user: User = new User(); // start with an anonymous user
   users: User[] = []; // all users, only populated when user is an Admin
-  booking: Booking = new Booking(); // the booking currently being edited (or selection of condition)
+  booking: Booking; // the booking currently being edited (or selection of condition)
   notifications: any[];
   assetBookings: Bookings;
   userBookings: Bookings;
-  results: Results = new Results();
-  search: Search = new Search();
-  range: DateRange = new DateRange();
+  results: Results;
+  search: Search;
+  range: DateRange;
 
   _asset: any; // the asset currently being viewed
   get asset(): any {
@@ -59,6 +59,19 @@ export class AppComponent {
   set asset(asset: any) {
     this._asset = asset;
     this.loadAssetBookings();
+  }
+
+  error: any;
+
+  constructor(private dataService: DataService, private enumService: EnumService) {
+    this.reset();
+  }
+
+  private reset() {
+    this.results = new Results();
+    this.search = new Search();
+    this.range = new DateRange();
+    this.booking = new Booking();
   }
 
   loadUsers() {
@@ -82,10 +95,6 @@ export class AppComponent {
   loadUserBookings() {
     this.dataService.getUserBookings(this.user.user_id, this.range).subscribe(userBookings => this.userBookings = userBookings);
   }
-
-  error: any;
-
-  constructor(private dataService: DataService, private enumService: EnumService) { }
 
   ngOnInit() {
     this.dataService.getCurrentUser()
@@ -127,6 +136,9 @@ export class AppComponent {
 
   onLogin(user) {
     this.user = user;
+    if (user.user_id == undefined) {
+      this.reset();
+    }
   }
 
   doSearch() {
