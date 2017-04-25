@@ -6,6 +6,7 @@ import { Results } from './results';
 import { DateRange } from './date-range';
 import { User, ADMIN_ROLE, BOOK_ROLE, VIEW_ROLE } from './user';
 import { Booking, Bookings } from './booking';
+import { FieldMap } from './field-map';
 
 //FIXME instance of Search to live in DataService? tidies up some dependencies. There are now several 'globals'! :P :(
 
@@ -14,7 +15,7 @@ import { Booking, Bookings } from './booking';
   template: `<div class="container-fluid">
                <div class="row">
                  <div class="col-lg-12">
-                   <h1><img src="assets/ofcom.gif"/> Baldock Asset Database and Scheduling System</h1>
+                   <h1><img src="assets/ofcom.gif"/> Baldock Asset System</h1>
                    <badass-login [user]="user" [users]="users" (login)="onLogin($event)"></badass-login>
                    <button *ngIf="showEnumerations()" class="btn" data-toggle="modal" data-target="#enumerationsModal">Enumerations</button>
                    <button *ngIf="showNotifications()" class="btn" data-toggle="modal" data-target="#notificationsModal" (click)="loadNotifications()">Notifications</button>
@@ -63,13 +64,13 @@ export class AppComponent {
 
   error: any;
 
-  constructor(private dataService: DataService, private enumService: EnumService) {
+  constructor(private fieldMap: FieldMap, private dataService: DataService, private enumService: EnumService) {
     this.reset();
   }
 
   private reset() {
     this.results = new Results();
-    this.search = new Search();
+    this.search = new Search(this.fieldMap);
     this.range = new DateRange();
     this.booking = new Booking();
   }
@@ -138,6 +139,7 @@ export class AppComponent {
     this.user = user;
     if (user.user_id == undefined) {
       this.reset();
+      this.doSearch();
     }
   }
 
@@ -203,6 +205,10 @@ export class AppComponent {
       this.asset = event.asset || undefined;
     }
     else if (event.search) {
+      this.doSearch();
+    }
+    else if (event.reset) {
+      this.reset();
       this.doSearch();
     }
     else if (event.addUpdateBooking) {

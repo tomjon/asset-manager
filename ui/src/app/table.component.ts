@@ -30,7 +30,9 @@ import { Frequency } from './frequency';
                          </div>
                        </td>
                        <td colspan="3" class="calibration header">Calibration</td>
-                       <td>&nbsp;</td>
+                       <td>
+                         <span class="glyphicon glyphicon-arrow-left right" title="Reset search filters" [ngClass]="{disabled: ! search.isResettable}" (click)="onReset()"></span>
+                       </td>
                      </tr>
                      <tr>
                        <td *ngFor="let input of fieldMap.tableInputs">
@@ -88,6 +90,7 @@ import { Frequency } from './frequency';
            '.glyphicon:hover:not(.disabled) { color: blue }',
            '.glyphicon.selected { color: black }',
            '.glyphicon.disabled { color: lightgrey }',
+           '.glyphicon.right { float: right }',
            'input.filter { width: 100px }',
            'input.freq { width: 60px }',
            'div.filter { position: absolute; z-index: 1 }',
@@ -128,9 +131,6 @@ export class TableComponent {
   constructor(private fieldMap: FieldMap, private enumService: EnumService, private dataService: DataService) {}
 
   ngOnInit() {
-    this.search.facets = this.fieldMap.enumFields;
-    this.search.filters.push(this.fieldMap.bookingFilters[0]); // project filter
-    this.search.filters.push(this.fieldMap.bookingFilters[1]); // user filter
     this.doSearch();
   }
 
@@ -254,6 +254,12 @@ export class TableComponent {
     this.search.order = {};
     if (! reset) this.search.order[asc ? 'asc' : 'desc'] = input;
     this.doSearch();
+  }
+
+  onReset() {
+    if (this.search.isResettable) {
+      this.eventEmitter.emit({reset: true});
+    }
   }
 
   // return the display value for a text input
