@@ -9,7 +9,7 @@ from sql import NoResult
 from sql_app import SqlApplication, SqlDatabase, DATABASE
 from flask import request
 from flask_login import LoginManager, login_required, current_user, login_user, logout_user
-from config import ROUNDS
+from config import ROUNDS, USER_TIMEOUT_SECS
 
 try:
     from hashlib import pbkdf2_hmac
@@ -62,6 +62,7 @@ class UserApplication(SqlApplication):
         self.secret_key = os.urandom(32)
         self.request_times = {}
         self.logged_in_users = []
+        self.before_request(self.check_user_timeout)
         login_manager = LoginManager()
         login_manager.init_app(self)
         login_manager.user_loader(self.load_user)
@@ -100,9 +101,11 @@ class UserApplication(SqlApplication):
     def check_user_timeout(self):
         """ Check for user timeout since last request.
         """
+        if USER_TIMEOUT_SECS is None:
+            return None
         # check for user timeouts
         for user_id in self.logged_in_users:
-            if not self.debug and time() > self.request_times[user_id] + self.user_timeout_secs:
+            if not self.debug and time() > self.request_times[user_id] + USER_TIMEOUT_SECS:
                 self.logged_in_users.remove(user_id)
         # check whether current user has been logged out?
         if not hasattr(current_user, 'role'):
