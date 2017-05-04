@@ -34,6 +34,7 @@ import { User, ADMIN_ROLE } from './user';
                          <span class="glyphicon glyphicon-arrow-down" [ngClass]="{disabled: values.length != 1 || index + 1 >= options.length}" (click)="shift(1)"></span>
                          <span class="glyphicon glyphicon-refresh" [ngClass]="{disabled: values.length <= 1}" (click)="rotate(1)"></span>
                          <span class="glyphicon glyphicon-refresh flip" [ngClass]="{disabled: values.length <= 1}" (click)="rotate(-1)"></span>
+                         <span class="glyphicon glyphicon-pencil" [ngClass]="{disabled: values.length != 1}" data-toggle="modal" data-target="#editModal" (click)="onEdit()"></span>
                        </div>
                      </div>
                      <div class="modal-footer">
@@ -45,7 +46,32 @@ import { User, ADMIN_ROLE } from './user';
                    </div>
                  </div>
                </form>
-             </div>`,
+             </div>
+             <div id="editModal" class="modal fade" role="dialog">
+               <form role="form" #form="ngForm">
+                 <div class="modal-dialog">
+                   <div class="modal-content">
+                     <div class="modal-header">
+                       <button type="button" class="close" data-dismiss="modal">&times;</button>
+                       <h4 class="modal-title">Edit Label</h4>
+                    </div>
+                    <div class="modal-body">
+                      <div class="form-group">
+                        <label for="label">Label</label>
+                        <input type="text" class="form-control" [(ngModel)]="label" name="label"/>
+                      </div>
+                      <div *ngIf="clash" class="alert alert-danger">
+                        That label already exists
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-default" data-dismiss="modal" (click)="onSubmit()" [disabled]="! form.form.valid || clash">Submit</button>
+                      <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>`,
   styles: ['.flip { transform: scale(-1, 1) }',
            'select { margin-bottom: 10px }',
            '.glyphicon:not(.disabled) { cursor: pointer }',
@@ -59,13 +85,44 @@ export class EnumerationsComponent {
   pristine: boolean;
   field: string;
   options: any[] = [];
-  values: number[] = [];
+  values: number[] = []; // selected values
+  label: string; // label currently being edited
 
   constructor(private dataService: DataService, private enumService: EnumService, private fieldMap: FieldMap) {}
 
   onSelect() {
     this.options = this.enumService.get(this.field).options(false, false);
     this.pristine = true;
+  }
+
+  onEdit() {
+    for (let option of this.options) {
+      if (option.value == this.values[0]) {
+        this.label = option.label;
+        break;
+      }
+    }
+  }
+
+  onSubmit() {
+    for (let option of this.options) {
+      if (option.value == this.values[0]) {
+        if (option.label != this.label) {
+          this.pristine = false;
+        }
+        option.label = this.label;
+        break;
+      }
+    }
+  }
+
+  get clash(): boolean {
+    for (let option of this.options) {
+      if (option.value != this.values[0] && option.label == this.label) {
+        return true;
+      }
+    }
+    return false;
   }
 
   get size(): number {
