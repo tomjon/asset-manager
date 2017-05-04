@@ -15,7 +15,7 @@ declare var $;
                </h3>
                <div class="attachment" *ngFor="let file of files; let i = index" [hidden]="file_index != i">
                  <img *ngIf="isImage(file.name)" src="{{base_url}}/file/{{file.attachment_id}}" title="{{file.name}}"/>
-                 <a *ngIf="! isImage(file.name)" target="attachment" href="/file/{{file.attachment_id}}/{{file.name}}" title="{{file.name}}">{{file.name}}</a>
+                 <a *ngIf="! isImage(file.name)" target="attachment" href="{{base_url}}/file/{{file.attachment_id}}/{{file.name}}" title="{{file.name}}">{{file.name}}</a>
                </div>
              </div>
              <div id="thumbnailsModal" class="modal fade" role="dialog">
