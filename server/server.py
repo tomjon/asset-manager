@@ -217,6 +217,18 @@ def handle_solr_error(error):
     """
     return "SOLR Error", error.status_code
 
+
+def get_counts(field):
+    """ Get usage counts of values for a given field.
+    """
+    if field == 'project':
+        # treat project specially, as it's a booking field, not a SOLR field
+        return dict((str(d['project']), d['count']) for d in sql.selectAllDict("SELECT project, COUNT(*) AS count FROM booking GROUP BY project"))
+    else:
+        r = application.solr.search([('q', '*'), ('rows', 0), ('facet', 'true'), ('facet.field', field)])
+        facets = r['facet_counts']['facet_fields'][field]
+        return dict(zip(facets[::2], facets[1::2]))
+
 @application.route('/enum/<field>', methods=['PUT', 'POST'])
 @application.role_required([ADMIN_ROLE])
 def enums_endpoint(field=None):
@@ -228,8 +240,15 @@ def enums_endpoint(field=None):
         except NoResult:
             return "No such enum", 404
         if request.method == 'PUT':
-            # update all values
+            # update all values - but first, check we aren't deleting labels/values that are in use
+            counts = get_counts(field)
             values = request.get_json()
+            for value in values:
+                if str(value['value']) in counts:
+                    del counts[str(value['value'])]
+            for value in counts: # anything left in counts is going to be deleted, so check they have 0 count
+                if counts[value] > 0:
+                    return "Bad options", 400
             sql.delete("DELETE FROM enum_entry WHERE enum_id=:enum_id", enum_id=enum_id)
             for value in values:
                 sql.insert("INSERT INTO enum_entry VALUES (NULL, :enum_id, :order, :value, :label)", value, enum_id=enum_id)
@@ -248,13 +267,7 @@ def enums_endpoint(field=None):
                     sql.insert("INSERT INTO enum_entry VALUES (NULL, :enum_id, :order, :value, :label)", entry)
                 return json.dumps(entry)
             elif action == 'prune':
-                if field == 'project':
-                    # treat project specially, as it's a booking field, not a SOLR field
-                    counts = dict((str(d['project']), d['count']) for d in sql.selectAllDict("SELECT project, COUNT(*) AS count FROM booking GROUP BY project"))
-                else:
-                    r = application.solr.search([('q', '*'), ('rows', 0), ('facet', 'true'), ('facet.field', field)])
-                    facets = r['facet_counts']['facet_fields'][field]
-                    counts = dict(zip(facets[::2], facets[1::2]))
+                counts = get_counts(field)
                 for entry in sql.selectAllDict("SELECT entry_id, value FROM enum_entry WHERE enum_id=:enum_id", enum_id=enum_id):
                     if counts.get(str(entry['value']), 0) == 0:
                         sql.delete("DELETE FROM enum_entry WHERE entry_id=:entry_id", entry_id=entry['entry_id'])

@@ -30,7 +30,7 @@ import { FieldMap } from './field-map';
              </div>
              <badass-booking [user]="user" [asset]="asset" [booking]="booking" (event)="onEvent($event)"></badass-booking>
              <badass-notification [notifications]="notifications"></badass-notification>
-             <badass-enumerations #enumerations [search]="search"></badass-enumerations>
+             <badass-enumerations [search]="search" [results]="results"></badass-enumerations>
              <badass-user-bookings [user]="user" [users]="users" [range]="range" [bookings]="userBookings" (event)="onEvent($event)"></badass-user-bookings>
              <badass-project-bookings [user]="user" [range]="range" (event)="onEvent($event)"></badass-project-bookings>
              <badass-booking-condition [user]="user" [search]="search" [booking]="booking" (event)="onEvent($event)"></badass-booking-condition>

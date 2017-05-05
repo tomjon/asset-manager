@@ -5,6 +5,7 @@ import { FieldMap } from './field-map';
 import { EnumPipe } from './enum.pipe';
 import { Enum } from './enum';
 import { Search } from './search';
+import { Results } from './results';
 import { User, ADMIN_ROLE } from './user';
 
 @Component({
@@ -28,13 +29,14 @@ import { User, ADMIN_ROLE } from './user';
                        <div class="form-group" [ngClass]="{disabled: field == undefined}">
                          <label for="values">Values <span *ngIf="field != undefined">({{size}})</span></label>
                          <select multiple class="form-control" name="values" [size]="size" [(ngModel)]="values">
-                           <option *ngFor="let o of options" [value]="o.value">{{o.label}}</option>
+                           <option *ngFor="let o of undeletedOptions" [value]="o.value">{{o.label}} ({{results.facets[field][o.value] || '0'}})</option>
                          </select>
                          <span class="glyphicon glyphicon-arrow-up" [ngClass]="{disabled: values.length != 1 || index < 1}" (click)="shift(-1)"></span>
                          <span class="glyphicon glyphicon-arrow-down" [ngClass]="{disabled: values.length != 1 || index + 1 >= options.length}" (click)="shift(1)"></span>
                          <span class="glyphicon glyphicon-refresh" [ngClass]="{disabled: values.length <= 1}" (click)="rotate(1)"></span>
                          <span class="glyphicon glyphicon-refresh flip" [ngClass]="{disabled: values.length <= 1}" (click)="rotate(-1)"></span>
                          <span class="glyphicon glyphicon-pencil" [ngClass]="{disabled: values.length != 1}" [attr.data-toggle]="values.length == 1 ? 'modal' : null" [attr.data-target]="values.length == 1 ? '#editModal' : null" (click)="onEdit()"></span>
+                         <span class="glyphicon glyphicon-trash" [ngClass]="{disabled: ! canDelete}" (click)="onDelete()"></span>
                          <span class="glyphicon glyphicon-plus-sign" [ngClass]="{disabled: field == undefined}" [attr.data-toggle]="field != undefined ? 'modal' : null" [attr.data-target]="field != undefined ? '#editModal' : null" (click)="onNew()"></span>
                        </div>
                      </div>
@@ -86,6 +88,7 @@ import { User, ADMIN_ROLE } from './user';
 })
 export class EnumerationsComponent {
   @Input('search') search: Search;
+  @Input('results') results: Results;
 
   @ViewChild('form') form: HTMLFormElement;
 
@@ -97,6 +100,10 @@ export class EnumerationsComponent {
   isNew: boolean; // whether to show 'New Label' dialog (true), or 'Edit Label' (false)
 
   constructor(private dataService: DataService, private enumService: EnumService, private fieldMap: FieldMap) {}
+
+  get undeletedOptions(): any[] {
+    return this.options.filter(o => ! o.deleted);
+  }
 
   onSelect() {
     this.options = this.enumService.get(this.field).options(false, false);
@@ -140,6 +147,17 @@ export class EnumerationsComponent {
         break;
       }
     }
+  }
+
+  get canDelete(): boolean {
+    return this.field != undefined && this.values.length == 1 && ! this.results.facets[this.field][this.values[0]];
+  }
+
+  onDelete() {
+    if (! this.canDelete) return;
+    this.options.find(o => o.value == this.values[0]).deleted = true;
+    this.values = [];
+    this.pristine = false;
   }
 
   get clash(): boolean {
@@ -202,6 +220,7 @@ export class EnumerationsComponent {
   }
 
   onSave() {
+    this.options = this.undeletedOptions;
     let e: Enum = this.enumService.get(this.field);
     e.orderFromOptions(this.options);
     this.dataService.saveEnumeration(this.field, e.values)
