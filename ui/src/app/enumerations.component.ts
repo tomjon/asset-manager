@@ -31,8 +31,8 @@ import { User, ADMIN_ROLE } from './user';
                          <select multiple class="form-control" name="values" [size]="size" [(ngModel)]="values">
                            <option *ngFor="let o of undeletedOptions" [value]="o.value">{{o.label}} ({{results.facets[field][o.value] || '0'}})</option>
                          </select>
-                         <span class="glyphicon glyphicon-arrow-up" [ngClass]="{disabled: values.length != 1 || index < 1}" (click)="shift(-1)"></span>
-                         <span class="glyphicon glyphicon-arrow-down" [ngClass]="{disabled: values.length != 1 || index + 1 >= options.length}" (click)="shift(1)"></span>
+                         <span class="glyphicon glyphicon-arrow-up" [ngClass]="{disabled: range(-1) == undefined}" (click)="shift(-1)"></span>
+                         <span class="glyphicon glyphicon-arrow-down" [ngClass]="{disabled: range(1) == undefined}" (click)="shift(1)"></span>
                          <span class="glyphicon glyphicon-refresh" [ngClass]="{disabled: values.length <= 1}" (click)="rotate(1)"></span>
                          <span class="glyphicon glyphicon-refresh flip" [ngClass]="{disabled: values.length <= 1}" (click)="rotate(-1)"></span>
                          <span class="glyphicon glyphicon-pencil" [ngClass]="{disabled: values.length != 1}" [attr.data-toggle]="values.length == 1 ? 'modal' : null" [attr.data-target]="values.length == 1 ? '#editModal' : null" (click)="onEdit()"></span>
@@ -173,16 +173,21 @@ export class EnumerationsComponent {
     return this.options.length;
   }
 
-  get index(): number {
-    return this.options.findIndex(o => o.value == this.values[0]);
+  range(offset): number[] {
+    if (this.values.length < 1) return undefined;
+    let indices = this.values.map(v => this.options.findIndex(o => o.value == v));
+    let min = Math.min(...indices);
+    let max = Math.max(...indices);
+    let len = max - min + 1;
+    if (min + offset < 0 || max + offset >= this.options.length) return;
+    return len == indices.length ? [min, max, len] : undefined;
   }
 
   shift(offset: number): void {
-    if (this.values.length != 1) return;
-    let index = this.index;
-    if (index + offset < 0 || index + offset >= this.options.length) return;
-    let option = this.options.splice(index, 1)[0];
-    this.options.splice(index + offset, 0, option);
+    let range = this.range(offset);
+    if (range == undefined) return;
+    let options = this.options.splice(range[0], range[2]);
+    this.options.splice(range[0] + offset, 0, ...options);
     this.pristine = false;
   }
 
