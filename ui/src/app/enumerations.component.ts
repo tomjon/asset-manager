@@ -36,6 +36,7 @@ import { User, ADMIN_ROLE } from './user';
                          <span class="glyphicon glyphicon-refresh" [ngClass]="{disabled: values.length <= 1}" (click)="rotate(1)"></span>
                          <span class="glyphicon glyphicon-refresh flip" [ngClass]="{disabled: values.length <= 1}" (click)="rotate(-1)"></span>
                          <span class="glyphicon glyphicon-pencil" [ngClass]="{disabled: values.length != 1}" [attr.data-toggle]="values.length == 1 ? 'modal' : null" [attr.data-target]="values.length == 1 ? '#editModal' : null" (click)="onEdit()"></span>
+                         <span class="glyphicon glyphicon-resize-small" [ngClass]="{disabled: ! canMerge}" [attr.data-toggle]="canMerge ? 'modal' : null" [attr.data-target]="canMerge ? '#mergeModal' : null"></span>
                          <span class="glyphicon glyphicon-trash" [ngClass]="{disabled: ! canDelete}" (click)="onDelete()"></span>
                          <span class="glyphicon glyphicon-plus-sign" [ngClass]="{disabled: field == undefined}" [attr.data-toggle]="field != undefined ? 'modal' : null" [attr.data-target]="field != undefined ? '#editModal' : null" (click)="onNew()"></span>
                        </div>
@@ -79,7 +80,32 @@ import { User, ADMIN_ROLE } from './user';
                   </div>
                 </div>
               </form>
-            </div>`,
+            </div>
+            <div id="mergeModal" class="modal fade" role="dialog">
+              <form role="form" #form="ngForm">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <button type="button" class="close" data-dismiss="modal">&times;</button>
+                      <h4 class="modal-title">Merge Value {{option(mergeSource).label}}</h4>
+                   </div>
+                   <div class="modal-body">
+                     <div class="form-group">
+                       <label for="target">Target Value</label>
+                       <select class="form-control" name="target" [(ngModel)]="mergeTarget">
+                         <option *ngFor="let o of mergeOptions" [value]="o.value">{{o.label}}</option>
+                       </select>
+                     </div>
+                   </div>
+                   <div class="modal-footer">
+                     <p class="info"><span class="glyphicon glyphicon-info-sign"></span> Value <i>{{option(mergeSource).label}}</i> will be deleted</p>
+                     <button type="button" class="btn btn-default" data-dismiss="modal" (click)="onMerge()" [disabled]="! form.form.valid">Merge</button>
+                     <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                   </div>
+                 </div>
+               </div>
+             </form>
+           </div>`,
   styles: ['.flip { transform: scale(-1, 1) }',
            'select { margin-bottom: 10px }',
            '.glyphicon:not(.disabled) { cursor: pointer }',
@@ -98,11 +124,24 @@ export class EnumerationsComponent {
   values: number[] = []; // selected values
   label: string; // label currently being edited
   isNew: boolean; // whether to show 'New Label' dialog (true), or 'Edit Label' (false)
+  mergeTarget: number; // target for the merge source
 
   constructor(private dataService: DataService, private enumService: EnumService, private fieldMap: FieldMap) {}
 
+  get mergeSource(): number {
+    return this.values.length > 0 ? this.values[0] : 0;
+  }
+
   get undeletedOptions(): any[] {
     return this.options.filter(o => ! o.deleted);
+  }
+
+  get mergeOptions(): any[] {
+    return this.options.filter(o => o.value != this.mergeSource);
+  }
+
+  option(value: number): any { //FIXME another method for an Options class
+    return this.options.find(o => o.value == value) || {};
   }
 
   onSelect() {
@@ -147,6 +186,22 @@ export class EnumerationsComponent {
         break;
       }
     }
+  }
+
+  get canMerge(): boolean {
+    return this.field != undefined && this.values.length == 1 && this.results.facets[this.field][this.values[0]] > 0;
+  }
+
+  onMerge() {
+    this.dataService.mergeEnumeration(this.field, this.mergeSource, this.mergeTarget)
+                    .subscribe(values => {
+                      this.enumService.get(this.field).update(values);
+                      this.onSelect();
+                      this.search.reload_enums = true;
+                      let sourceCount = this.results.facets[this.field][this.mergeSource];
+                      this.results.facets[this.field][this.mergeTarget] += sourceCount;
+                    });
+    this.pristine = true;
   }
 
   get canDelete(): boolean {

@@ -418,6 +418,13 @@ export class DataService {
                .map(res => res.json());
   }
 
+  mergeEnumeration(field: string, source: number, target: number): Observable<any[]> {
+    let params: URLSearchParams = new URLSearchParams();
+    params.set('action', 'merge');
+    return this.post(`enum/${field}`, JSON.stringify({source: source, target: target}), {search: params})
+               .map(res => res.json());
+  }
+
   private handleError(error: Response | any) {
     let errMsg: string;
     if (error instanceof Response) {

@@ -29,6 +29,8 @@ CONDITION_FIELD = 'condition'
 
 XJOIN_PREFIX = 'xjoin_'
 
+MERGE_ROWS = 10
+
 USER_BOOKING_SUMMARY_SQL = """
   SELECT user.user_id, username, label, role, email, last_login,
          COUNT(CASE WHEN IFNULL(in_date, due_in_date) >= date('now') OR (out_date IS NOT NULL AND in_date IS NULL) THEN 1 ELSE NULL END) AS booked,
@@ -279,6 +281,19 @@ def enums_endpoint(field=None):
                     entries[index]['order'] = index + 1
                     sql.update("UPDATE enum_entry SET `order`=:order WHERE entry_id=:entry_id", entries[index])
                 return json.dumps(entries)
+            elif action == 'merge':
+                spec = request.get_json()
+                sql.delete("DELETE FROM enum_entry WHERE enum_id=:enum_id AND value=:value", enum_id=enum_id, value=spec['source'])
+                if field == 'project':
+                    # treat project specially, as it's a booking field, not a SOLR field
+                    sql.update("UPDATE booking SET project=:target WHERE project=:source", spec)
+                else:
+                    while True:
+                        r = application.solr.search([('q', '{0}:{1}'.format(field, spec['source'])), ('rows', MERGE_ROWS), ('fl', 'id')])
+                        application.solr.update_field([doc['id'] for doc in r['response']['docs']], field, spec['target'])
+                        if r['response']['numFound'] < MERGE_ROWS:
+                            break
+                return json.dumps(sql.selectAllDict("SELECT value, label, `order` FROM enum_entry WHERE enum_id=:enum_id", enum_id=enum_id))
             else:
                 return "Bad action", 400
         
@@ -369,6 +384,12 @@ def search_endpoint(path=None):
             enums[field] = sql.selectAllDict(stmt, enum_id=enum_id)
 
     data = {'solr': application.solr.search(params), 'enums': enums}
+
+    # add project values to SOLR facet counts
+    with application.db.cursor() as sql:
+        counts = [(row['project'], row['n']) for row in sql.selectAllDict("SELECT project, count(*) AS n FROM booking GROUP BY project")]
+        data['solr']['facet_counts']['facet_fields']['project'] = [x for c in counts for x in c]
+
     return Response(json.dumps(data), mimetype='application/json')
 
 

@@ -65,8 +65,11 @@ class AssetIndex(object):
             del data['add']['doc']['_version_']
         self._update(data)
 
-    def update_field(self, asset_id, field, value):
-        self._update([{'id': asset_id, field: {'set': value}}])
+    def update_field(self, asset_id_or_list, field, value):
+        try:
+            self._update([{'id': asset_id, field: {'set': value}} for asset_id in asset_id_or_list])
+        except TypeError:
+            self._update([{'id': asset_id_or_list, field: {'set': value}}])
 
     def get(self, asset_id):
         r = requests.get(self.query_url, params={'q': 'id:{0}'.format(asset_id)})
