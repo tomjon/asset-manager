@@ -168,7 +168,11 @@ export class DataService {
                      }
                    }
                  }
-                 return new Results(start, total, assets, facets, json['enums']);
+                 let projects = {};
+                 for (let project of json.projects) {
+                   projects[project.project_id] = project;
+                 }
+                 return new Results(start, total, assets, facets, json.enums, projects);
                });
   }
 
@@ -318,7 +322,7 @@ export class DataService {
       params.set('toDate', range.to);
     }
     return this.get(`booking`, {search: params})
-               .map(res => this.bookingArray(res.json(), Bookings.ASSET_TYPE, asset.id));
+               .map(res => this.bookingArray(res.json().bookings, Bookings.ASSET_TYPE, asset.id));
   }
 
   getUserBookings(user_id: string, range: DateRange): Observable<Bookings> {
@@ -329,10 +333,10 @@ export class DataService {
       params.set('toDate', range.to);
     }
     return this.get(`booking`, {search: params})
-               .map(res => this.bookingArray(res.json(), Bookings.USER_TYPE));
+               .map(res => this.bookingArray(res.json().bookings, Bookings.USER_TYPE));
   }
 
-  getProjectBookings(project_id: string, range: DateRange): Observable<Bookings> {
+  getProject(project_id: string, range: DateRange): Observable<{project: any, bookings: Bookings}> {
     let params: URLSearchParams = new URLSearchParams();
     params.set('project', project_id);
     if (range != undefined && range.use) {
@@ -340,7 +344,15 @@ export class DataService {
       params.set('toDate', range.to);
     }
     return this.get(`booking`, {search: params})
-               .map(res => this.bookingArray(res.json(), Bookings.PROJECT_TYPE));
+               .map(res => {
+                 let values = res.json();
+                 values.bookings = this.bookingArray(values.bookings, Bookings.PROJECT_TYPE);
+                 return values;
+               });
+  }
+
+  disactivateProject(project_id: string): Observable<void> {
+    return this.delete(`project/${project_id}`);
   }
 
   deleteBooking(booking: Booking): Observable<void> {

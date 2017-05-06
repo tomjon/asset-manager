@@ -6,8 +6,7 @@
  * must start at 0 and be contiguous (otherwise the UI breaks).
  *
  * The table 'user' augments user values described by the user enum (i.e. the enum with field
- * value 'user'), adding role and login credentials. A similar table 'project' might be created
- * to fulfill a similar function, etc.
+ * value 'user'), adding role and login credentials. The table 'project' plays a similar role.
  *
  * Other tables 'attachment' and 'booking' are not associated with an enum and describe the
  * corresponding entities in the system.
@@ -54,6 +53,13 @@ CREATE TABLE attachment_asset_pivot(
 	pivot_id INTEGER PRIMARY KEY,
 	attachment_id INTEGER,
 	asset_id INTEGER
+);
+
+CREATE TABLE project(
+    project_id INTEGER PRIMARY KEY,
+    active BOOLEAN,
+    tpr VARCHAR(64),
+    close_date DATE
 );
 
 CREATE TABLE booking(

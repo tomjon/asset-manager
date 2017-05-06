@@ -5,10 +5,11 @@ export class Results {
   public next: number;
   public prev: number;
 
-  constructor(public start: number=0, public total: number=0, assets: any[]=[], public facets: any={}, public enums: any={}) {
+  constructor(public start: number=0, public total: number=0, assets: any[]=[], public facets: any={}, public enums: any={}, public projects: any={}) {
     this.next = assets.length == PAGE_SIZE + 1 ? this.start + PAGE_SIZE : undefined;
     this.prev = this.start > 0 ? Math.max(this.start - PAGE_SIZE, 0) : undefined;
     this.assets = assets.slice(0, PAGE_SIZE);
+    this.projects = projects;
   }
 
   pages(): any[] {

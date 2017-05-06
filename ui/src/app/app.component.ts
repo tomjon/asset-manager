@@ -28,7 +28,7 @@ import { FieldMap } from './field-map';
                  </div>
                </div>
              </div>
-             <badass-booking [user]="user" [asset]="asset" [booking]="booking" (event)="onEvent($event)"></badass-booking>
+             <badass-booking [user]="user" [asset]="asset" [booking]="booking" [results]="results" (event)="onEvent($event)"></badass-booking>
              <badass-notification [notifications]="notifications"></badass-notification>
              <badass-enumerations [search]="search" [results]="results"></badass-enumerations>
              <badass-user-bookings [user]="user" [users]="users" [range]="range" [bookings]="userBookings" (event)="onEvent($event)"></badass-user-bookings>

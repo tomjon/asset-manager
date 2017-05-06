@@ -5,6 +5,7 @@ import { FieldMap } from './field-map';
 import { User, ADMIN_ROLE } from './user';
 import { Booking } from './booking';
 import { LAST_OPTION } from './enum';
+import { Results } from './results';
 import { Observable } from 'rxjs/Observable';
 
 declare var $;
@@ -23,7 +24,7 @@ declare var $;
                        <div class="form-group">
                          <label for="project">{{fieldMap.projectInput.label}}</label>
                          <select *ngIf="addNew.field != fieldMap.projectInput.field" [disabled]="editing && ! booking.canEditProject(user)" class="form-control" [(ngModel)]="booking.project" [name]="fieldMap.projectInput.field" (ngModelChange)="onEnumChange(fieldMap.projectInput)">
-                           <option *ngFor="let o of options(fieldMap.projectInput.field)" [value]="o.value">{{o.label}}</option>
+                           <option *ngFor="let o of projectOptions" [value]="o.value">{{o.label}}</option>
                          </select>
                          <input #addNew type="text" *ngIf="addNew.field == fieldMap.projectInput.field" class="form-control" [(ngModel)]="addNew.label" [name]="fieldMap.projectInput.field" (blur)="onAddNew(fieldMap.projectInput, addNew.label)" (change)="onAddNew(fieldMap.projectInput, addNew.label)"/>
                        </div>
@@ -68,6 +69,7 @@ export class BookingComponent {
 
   @Input('user') user: User;
   @Input('asset') asset: any;
+  @Input('results') results: Results;
 
   // collects form input values
   booking: Booking;
@@ -78,7 +80,7 @@ export class BookingComponent {
     this.booking.due_out_date = this.today;
     this.booking.due_in_date = this.today;
   }
-  
+
   get oneday(): boolean {
     return this._oneday;
   }
@@ -139,6 +141,10 @@ export class BookingComponent {
   //FIXME the following three methods are similar as those in asset.component.ts
   options(field: string) {
     return this.enumService.get(field).options(false, this.user.role == ADMIN_ROLE);
+  }
+
+  get projectOptions(): any[] {
+    return this.options(this.fieldMap.projectInput.field).filter(o => (this.results.projects[o.value] || {}).active);
   }
 
   onEnumChange(input) {

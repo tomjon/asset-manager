@@ -389,6 +389,7 @@ def search_endpoint(path=None):
     with application.db.cursor() as sql:
         counts = [(row['project'], row['n']) for row in sql.selectAllDict("SELECT project, count(*) AS n FROM booking GROUP BY project")]
         data['solr']['facet_counts']['facet_fields']['project'] = [x for c in counts for x in c]
+        data['projects'] = sql.selectAllDict("SELECT * FROM project")
 
     return Response(json.dumps(data), mimetype='application/json')
 
@@ -580,7 +581,14 @@ def booking_endpoint(booking_id=None):
                         assets_dict = application.solr.assets_dict_xjoin(xjoin_key, args[column])
                         update_booking = lambda b: b.update(assets_dict.get(b['asset_id'], {})) or b
                         bookings = [update_booking(booking) for booking in bookings]
-                    return json.dumps(bookings)
+                    values = {'bookings': bookings}
+                    if column == 'project':
+                        # add project details
+                        try:
+                            values['project'] = sql.selectOneDict("SELECT tpr, active, close_date FROM project WHERE project_id=:project_id", project_id=int(args[column]))
+                        except NoResult:
+                            return "No project", 400
+                    return json.dumps(values)
             return 'Missing argument', 400
         if request.method == 'POST':
             # add a booking for an asset for the current user - returns a clashing booking if one exists (and doesn't add the submitted booking)
@@ -636,6 +644,15 @@ def booking_endpoint(booking_id=None):
                 return "No deletable booking", 400
             return json.dumps({})
 
+@application.route('/project/<project_id>', methods=['DELETE'])
+@application.role_required([ADMIN_ROLE])
+def project_endpoint(project_id):
+    """ Endpoint for projects. DELETE method disactivates a project.
+    """
+    with application.db.cursor() as sql:
+        if sql.update("UPDATE project SET active=0 WHERE project_id=:project_id", project_id=project_id) == 0:
+            return "No project", 404
+        return json.dumps({})
 
 @application.route('/check/<asset_id>', methods=['PUT'])
 @application.role_required([ADMIN_ROLE, BOOK_ROLE])
