@@ -29,7 +29,7 @@ import { User, ADMIN_ROLE } from './user';
                        <div class="form-group" [ngClass]="{disabled: field == undefined}">
                          <label for="values">Values <span *ngIf="field != undefined">({{size}})</span></label>
                          <select multiple class="form-control" name="values" [size]="size" [(ngModel)]="values">
-                           <option *ngFor="let o of undeletedOptions" [value]="o.value">{{o.label}} ({{results.facets[field][o.value] || '0'}})</option>
+                           <option *ngFor="let o of undeletedOptions" [value]="o.value">{{optionLabel(o)}}</option>
                          </select>
                          <span class="glyphicon glyphicon-arrow-up" [ngClass]="{disabled: range(-1) == undefined}" (click)="shift(-1)"></span>
                          <span class="glyphicon glyphicon-arrow-down" [ngClass]="{disabled: range(1) == undefined}" (click)="shift(1)"></span>
@@ -38,7 +38,7 @@ import { User, ADMIN_ROLE } from './user';
                          <span class="glyphicon glyphicon-pencil" [ngClass]="{disabled: values.length != 1}" [attr.data-toggle]="values.length == 1 ? 'modal' : null" [attr.data-target]="values.length == 1 ? '#editModal' : null" (click)="onEdit()"></span>
                          <span class="glyphicon glyphicon-resize-small" [ngClass]="{disabled: ! canMerge}" [attr.data-toggle]="canMerge ? 'modal' : null" [attr.data-target]="canMerge ? '#mergeModal' : null"></span>
                          <span class="glyphicon glyphicon-trash" [ngClass]="{disabled: ! canDelete}" (click)="onDelete()"></span>
-                         <span class="glyphicon glyphicon-plus-sign" [ngClass]="{disabled: field == undefined}" [attr.data-toggle]="field != undefined ? 'modal' : null" [attr.data-target]="field != undefined ? '#editModal' : null" (click)="onNew()"></span>
+                         <span class="glyphicon glyphicon-plus-sign" [ngClass]="{disabled: ! canAddNew}" [attr.data-toggle]="field != undefined ? 'modal' : null" [attr.data-target]="field != undefined ? '#editModal' : null" (click)="onNew()"></span>
                        </div>
                      </div>
                      <div class="modal-footer">
@@ -144,6 +144,11 @@ export class EnumerationsComponent {
     return this.options.find(o => o.value == value) || {};
   }
 
+  optionLabel(option): string {
+    let count = this.field == 'user' ? '' : ` (${this.results.facets[this.field][option.value] || '0'})`;
+    return `${option.label}${count}`;
+  }
+
   onSelect() {
     this.options = this.enumService.get(this.field).options(false, false);
     this.pristine = true;
@@ -158,6 +163,10 @@ export class EnumerationsComponent {
         break;
       }
     }
+  }
+
+  get canAddNew(): boolean {
+    return this.field != undefined && this.field != 'user';
   }
 
   onNew() {
@@ -189,7 +198,8 @@ export class EnumerationsComponent {
   }
 
   get canMerge(): boolean {
-    return this.field != undefined && this.values.length == 1 && this.results.facets[this.field][this.values[0]] > 0;
+    if (this.field == undefined || this.field == 'user') return false;
+    return this.values.length == 1 && this.results.facets[this.field][this.values[0]] > 0;
   }
 
   onMerge() {
@@ -205,7 +215,8 @@ export class EnumerationsComponent {
   }
 
   get canDelete(): boolean {
-    return this.field != undefined && this.values.length == 1 && ! this.results.facets[this.field][this.values[0]];
+    if (this.field == undefined || this.field == 'user') return false;
+    return this.values.length == 1 && ! this.results.facets[this.field][this.values[0]];
   }
 
   onDelete() {

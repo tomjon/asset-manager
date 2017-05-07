@@ -23,10 +23,9 @@ declare var $;
                      <div class="modal-body">
                        <div class="form-group">
                          <label for="project">{{fieldMap.projectInput.label}}</label>
-                         <select *ngIf="addNew.field != fieldMap.projectInput.field" [disabled]="editing && ! booking.canEditProject(user)" class="form-control" [(ngModel)]="booking.project" [name]="fieldMap.projectInput.field" (ngModelChange)="onEnumChange(fieldMap.projectInput)">
+                         <select [disabled]="editing && ! booking.canEditProject(user)" class="form-control" [(ngModel)]="booking.project" [name]="fieldMap.projectInput.field">
                            <option *ngFor="let o of projectOptions" [value]="o.value">{{o.label}}</option>
                          </select>
-                         <input #addNew type="text" *ngIf="addNew.field == fieldMap.projectInput.field" class="form-control" [(ngModel)]="addNew.label" [name]="fieldMap.projectInput.field" (blur)="onAddNew(fieldMap.projectInput, addNew.label)" (change)="onAddNew(fieldMap.projectInput, addNew.label)"/>
                        </div>
                        <div class="form-group">
                          <label for="oneday">One day booking</label>
@@ -101,9 +100,6 @@ export class BookingComponent {
 
   @Output('event') event = new EventEmitter<any>();
 
-  addNew: any = {};
-  @ViewChildren('addNew') addNewInput: QueryList<ElementRef>;
-
   get today(): string {
     return new Date().toISOString().substring(0, 10);
   }
@@ -145,26 +141,5 @@ export class BookingComponent {
 
   get projectOptions(): any[] {
     return this.options(this.fieldMap.projectInput.field).filter(o => (this.results.projects[o.value] || {}).active);
-  }
-
-  onEnumChange(input) {
-    if (this.booking.project == LAST_OPTION.value) {
-      this.addNew.field = input.field;
-      this.addNew.label = undefined;
-      setTimeout(() => this.addNewInput.first.nativeElement.focus());
-    }
-  }
-
-  onAddNew(input, label) {
-    if (label) {
-      this.enumService.addNewLabel(input.field, label)
-                      .subscribe(enumValue => {
-                        this.booking.project = enumValue.value;
-                        delete this.addNew.field;
-                      });
-    } else {
-      this.booking.project = undefined;
-      delete this.addNew.field;
-    }
   }
 }

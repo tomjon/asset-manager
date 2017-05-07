@@ -57,11 +57,11 @@ export class Booking {
   }
 
   canEditProject(user: User): boolean {
-    return this.canDelete(user);
+    return user.role == ADMIN_ROLE || this.canDelete(user);
   }
 
   canEditDueOutDate(user: User): boolean {
-    return this.canDelete(user);
+    return user.role == ADMIN_ROLE || this.canDelete(user);
   }
 
   canEditDueInDate(user: User): boolean {
@@ -69,8 +69,7 @@ export class Booking {
   }
 
   canEdit(user: User): boolean {
-    let role: boolean = user.role == ADMIN_ROLE || user.user_id == this.user_id;
-    return this.in_date == undefined && role;
+    return user.role == ADMIN_ROLE || (user.user_id == this.user_id && this.in_date == undefined);
   }
 
   canDelete(user: User): boolean {
