@@ -16,7 +16,7 @@ import { DateRange } from './date-range';
                      <h4 class="modal-title">Project <select [(ngModel)]="project_id" (ngModelChange)="onSelect()"><option *ngFor="let o of options('project')" [value]="o.value">{{o.label}}</option></select></h4>
                    </div>
                    <div class="modal-body" *ngIf="project_id != undefined">
-                     <h4>{{active ? "Active" : "Inactive"}} <span *ngIf="showDisactivate" class="glyphicon glyphicon-minus-sign" title="Disactivate" (click)="onDisactivate()"></span></h4>
+                     <h4>{{active ? "Active" : "Inactive"}} <span *ngIf="showDisactivate" class="glyphicon glyphicon-minus-sign" title="Deactivate" (click)="onDisactivate()"></span></h4>
                      <badass-booking-table [user]="user" [range]="range" [bookings]="bookings" (event)="onBookingEvent($event)"></badass-booking-table>
                    </div>
                    <div class="modal-footer">
