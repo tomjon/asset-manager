@@ -30,7 +30,7 @@ import { Frequency } from './frequency';
                          </div>
                        </td>
                        <td colspan="3" class="calibration header">Calibration</td>
-                       <td>
+                       <td colspan="3">
                          <span class="glyphicon glyphicon-arrow-left right" title="Reset search filters" [ngClass]="{disabled: ! search.isResettable}" (click)="onReset()"></span>
                        </td>
                      </tr>
