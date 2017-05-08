@@ -243,9 +243,9 @@ def enums_endpoint(field=None):
             return "No such enum", 404
         if request.method == 'PUT':
             # update all values - but check we aren't deleting labels/values that are in use
+            values = request.get_json()
             if field != 'user':
                 counts = get_counts(sql, field)
-                values = request.get_json()
                 for value in values:
                     if str(value['value']) in counts:
                         del counts[str(value['value'])]
