@@ -243,15 +243,16 @@ def enums_endpoint(field=None):
             return "No such enum", 404
         if request.method == 'PUT':
             # update all values - but check we aren't deleting labels/values that are in use
-            counts = get_counts(sql, field)
-            values = request.get_json()
-            for value in values:
-                if str(value['value']) in counts:
-                    del counts[str(value['value'])]
-            # anything left in counts is going to be deleted, so check they have 0 count
-            for value in counts:
-                if counts[value] > 0:
-                    return "Bad options", 400
+            if field != 'user':
+                counts = get_counts(sql, field)
+                values = request.get_json()
+                for value in values:
+                    if str(value['value']) in counts:
+                        del counts[str(value['value'])]
+                # anything left in counts is going to be deleted, so check they have 0 count
+                for value in counts:
+                    if counts[value] > 0:
+                        return "Bad options", 400
             # all counts are 0 if we got here. Need to do more if we are adding or deleting projects
             if field == 'project':
                 for value in values:
@@ -259,6 +260,7 @@ def enums_endpoint(field=None):
                         sql.insert("INSERT INTO project VALUES (:project_id, 1, NULL, NULL)", project_id=value['value'])
                 for value in counts:
                     sql.delete("DELETE FROM project WHERE project_id=:project_id", project_id=value)
+            # finally, delete and reinstate the enum entries
             sql.delete("DELETE FROM enum_entry WHERE enum_id=:enum_id", enum_id=enum_id)
             for value in values:
                 sql.insert("INSERT INTO enum_entry VALUES (NULL, :enum_id, :order, :value, :label)", value, enum_id=enum_id)
