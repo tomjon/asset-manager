@@ -149,9 +149,11 @@ export class EnumerationsComponent {
     return `${option.label}${count}`;
   }
 
-  onSelect() {
-    this.options = this.enumService.get(this.field).options(false, false);
-    this.pristine = true;
+  public onSelect() {
+    if (this.field != undefined) {
+      this.options = this.enumService.get(this.field).options(false, false);
+      this.pristine = true;
+    }
   }
 
   onEdit() {

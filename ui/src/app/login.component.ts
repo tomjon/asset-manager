@@ -2,6 +2,7 @@ import { Component, Input, Output, ViewChild, ViewChildren, EventEmitter, Elemen
 import { DataService } from './data.service';
 import { EnumService } from './enum.service';
 import { EnumPipe } from './enum.pipe';
+import { EnumValue } from './enum';
 import { pristine } from './pristine';
 import { User, ANONYMOUS, ADMIN_ROLE, BOOK_ROLE } from './user';
 
@@ -264,6 +265,7 @@ export class LoginComponent {
                     .subscribe(() => {
                       let index = this.users.findIndex(u => u.user_id == this.deleteUser.user_id);
                       this.users.splice(index, 1);
+                      this.enumService.get('user').removeValue(this.deleteUser.user_id);
                     });
   }
 
@@ -302,10 +304,12 @@ export class LoginComponent {
 
   onAddUser() {
     this.dataService.addUser(this.newUser)
-                    .subscribe(() => {
+                    .subscribe(value => {
                       this.users.push(Object.assign({out: 0, booked: 0, overdue: 0}, this.newUser));
                       $('#addUserModal').modal('hide');
                       this.clearAddUser();
+                      let enumValue = new EnumValue(value, this.newUser.label, +value);
+                      this.enumService.get('user').addEnumValue(enumValue);
                     },
                     error => {
                       this.error = error;

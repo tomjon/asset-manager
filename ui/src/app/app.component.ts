@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { DataService } from './data.service';
 import { EnumService } from './enum.service';
 import { Search } from './search';
@@ -7,6 +7,7 @@ import { DateRange } from './date-range';
 import { User, ADMIN_ROLE, BOOK_ROLE, VIEW_ROLE } from './user';
 import { Booking, Bookings } from './booking';
 import { FieldMap } from './field-map';
+import { EnumerationsComponent } from './enumerations.component';
 
 //FIXME instance of Search to live in DataService? tidies up some dependencies. There are now several 'globals'! :P :(
 
@@ -17,7 +18,7 @@ import { FieldMap } from './field-map';
                  <div class="col-lg-12">
                    <h1><img src="assets/ofcom.gif"/> Baldock Asset Scheduling System</h1>
                    <badass-login [user]="user" [users]="users" (login)="onLogin($event)"></badass-login>
-                   <button *ngIf="showEnumerations()" class="btn" data-toggle="modal" data-target="#enumerationsModal">Enumerations</button>
+                   <button *ngIf="showEnumerations()" class="btn" data-toggle="modal" data-target="#enumerationsModal" (click)="enumComponent.onSelect()">Enumerations</button>
                    <button *ngIf="showNotifications()" class="btn" data-toggle="modal" data-target="#notificationsModal" (click)="loadNotifications()">Notifications</button>
                    <button *ngIf="showUserBookings()" class="btn" data-toggle="modal" data-target="#userBookingsModal" (click)="loadUserBookings(); loadUsers()">Bookings</button>
                    <button *ngIf="showProjectBookings()" class="btn" data-toggle="modal" data-target="#projectBookingsModal">Projects</button>
@@ -43,6 +44,8 @@ import { FieldMap } from './field-map';
            '#blocker { position: fixed; left: 0; top: 0; width: 100%; height: 100%; background: black; opacity: 0.1 }']
 })
 export class AppComponent {
+  @ViewChild(EnumerationsComponent) enumComponent: EnumerationsComponent;
+
   user: User = new User(); // start with an anonymous user
   users: User[] = []; // all users, only populated when user is an Admin
   booking: Booking; // the booking currently being edited (or selection of condition)

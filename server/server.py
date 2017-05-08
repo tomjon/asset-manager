@@ -201,11 +201,12 @@ def user_admin_endpoint(user_id=None):
         if not current_user.check_password(new_user['password']):
             return "Bad credentials", 401
         try:
-            if not application.add_user(new_user):
+            user_id = application.add_user(new_user)
+            if user_id is None:
                 return "User already exists", 409
         except KeyError:
             return "Bad user details", 400
-        return json.dumps({})
+        return json.dumps({'value': user_id})
     elif request.method == 'DELETE':
         if not application.delete_user(user_id):
             return "Bad request", 400

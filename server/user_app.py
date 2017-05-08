@@ -164,7 +164,7 @@ class UserApplication(SqlApplication):
         with self.db.cursor() as sql:
             try:
                 sql.selectOne("SELECT user_id FROM user WHERE username=:username", username=user_dict['username'])
-                return False
+                return None
             except NoResult:
                 pass
             user = User(None, user_dict['role'], user_dict['username'], user_dict['email'], user_dict['label'], None, None)
@@ -172,7 +172,7 @@ class UserApplication(SqlApplication):
             user_dict = user.to_dict(self.db)
             user_id = sql.insert("INSERT INTO user VALUES (NULL, :role, :username, :email, :salt, :hash, NULL)", user_dict, salt=buffer(user.password_salt), hash=buffer(user.password_hash))
             sql.insert("INSERT INTO enum_entry VALUES (NULL, (SELECT enum_id FROM enum WHERE field='user'), :value, :value, :label)", user_dict, value=user_id)
-        return True
+        return user_id
 
     def delete_user(self, user_id):
         """ Delete the user with given user id. A user can not delete themselves.

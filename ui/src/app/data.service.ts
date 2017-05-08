@@ -285,8 +285,9 @@ export class DataService {
     return this.put(`user`, JSON.stringify(user));
   }
 
-  addUser(user: User): Observable<void> {
-    return this.post(`user/admin`, JSON.stringify(user));
+  addUser(user: User): Observable<string> {
+    return this.post(`user/admin`, JSON.stringify(user))
+               .map(res => res.json().value);
   }
 
   deleteUser(user_id: string): Observable<void> {

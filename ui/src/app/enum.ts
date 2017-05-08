@@ -34,6 +34,11 @@ export class Enum {
     return enumValue;
   }
 
+  public removeValue(value: string) {
+    let index = this.values.findIndex(v => v.value == value);
+    this.values.splice(index, 1);
+  }
+
   public label(value: string): string {
     for (let e of this.values) {
       if (e.value == value) return e.label;
