@@ -47,16 +47,16 @@ import { DateRange } from './date-range';
                          <div *ngFor="let input of group" [ngClass]="{'col-lg-6': group.length > 1, 'my-input-group': group.length > 1}">
                            <div *ngIf="input.type != 'area' && input.type != 'enum' && input.type != 'freq'">
                              <label htmlFor="{{input.field}}">{{input.label}}</label>
-                             <input [type]="input.type" class="form-control" required [(ngModel)]="asset[input.field]" [name]="input.field" />
+                             <input [type]="input.type" class="form-control" [(ngModel)]="asset[input.field]" [name]="input.field" />
                            </div>
                            <div *ngIf="input.type == 'freq'">
                              <label htmlFor="{{input.field}}">{{input.label}}</label>
                              <div>
                                <div class="col-lg-7 my-input-group">
-                                 <input class="form-control" [type]="input.type" required [(ngModel)]="freqs[input.field].value" [name]="input.field" />
+                                 <input class="form-control" [type]="input.type" [(ngModel)]="freqs[input.field].value" [name]="input.field" />
                                </div>
                                <div class="col-lg-5 my-input-group">
-                                 <select class="form-control" required [name]="input.field + '-units'" [(ngModel)]="freqs[input.field].units">
+                                 <select class="form-control" [name]="input.field + '-units'" [(ngModel)]="freqs[input.field].units">
                                    <option *ngFor="let o of unitOptions()" [value]="o.value">{{o.label}}</option>
                                  </select>
                                </div>
@@ -64,7 +64,7 @@ import { DateRange } from './date-range';
                            </div>
                            <div *ngIf="input.type == 'area'">
                              <label htmlFor="{{input.field}}">{{input.label}}</label>
-                             <textarea class="form-control" required [(ngModel)]="asset[input.field]" [name]="input.field" rows="7"></textarea>
+                             <textarea class="form-control" [(ngModel)]="asset[input.field]" [name]="input.field" rows="7"></textarea>
                            </div>
                            <div *ngIf="input.type == 'enum'">
                              <label htmlFor="{{input.field}}">{{input.label}}</label>
@@ -208,15 +208,20 @@ export class AssetComponent {
   }
 
   openAdd() {
-    if (! this.canDelete) return;
+    if (! this.canAdd) return;
     this.confirm.title = "Confirm add new asset";
-    let manufacturer = this.asset.manufacturer != undefined ? this.enumService.get('manufacturer').label(this.asset.manufacturer) : '';
-    this.confirm.body = `Do you really want create a new asset ${manufacturer} ${this.asset.model} ${this.asset.serial}?`;
+    if (this.asset.model == undefined && this.asset.serial == undefined) {
+      this.confirm.body = 'Do you really want create a new blank asset?';
+    } else {
+      let manufacturer = this.asset.manufacturer != undefined ? this.enumService.get('manufacturer').label(this.asset.manufacturer) : '';
+      this.confirm.body = `Do you really want create a new asset ${manufacturer} ${this.asset.model} ${this.asset.serial}?`;
+    }
     this.confirm.button = 'Add New Asset';
     this.confirm.onClick = () => {
       this.event.emit({add: this.asset});
       pristine(this.form, false);
     }
+    console.log(this.confirm);
   }
 
   get canBook() {
