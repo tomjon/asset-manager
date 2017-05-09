@@ -658,13 +658,14 @@ def booking_endpoint(booking_id=None):
                 return "No deletable booking", 400
             return json.dumps({})
 
-@application.route('/project/<project_id>', methods=['DELETE'])
+@application.route('/project/<project_id>', methods=['DELETE', 'PUT'])
 @application.role_required([ADMIN_ROLE])
 def project_endpoint(project_id):
-    """ Endpoint for projects. DELETE method disactivates a project.
+    """ Endpoint for projects. DELETE method deactivates a project. PUT activates a project.
     """
     with application.db.cursor() as sql:
-        if sql.update("UPDATE project SET active=0 WHERE project_id=:project_id", project_id=project_id) == 0:
+        state = 1 if request.method == 'PUT' else 0
+        if sql.update("UPDATE project SET active=:state WHERE project_id=:project_id", project_id=project_id, state=state) == 0:
             return "No project", 404
         return json.dumps({})
 

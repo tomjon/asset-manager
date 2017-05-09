@@ -352,8 +352,12 @@ export class DataService {
                });
   }
 
-  disactivateProject(project_id: string): Observable<void> {
-    return this.delete(`project/${project_id}`);
+  setProjectActiveState(project_id: string, state: boolean): Observable<void> {
+    if (state) {
+      return this.put(`project/${project_id}`, null);
+    } else {
+      return this.delete(`project/${project_id}`);
+    }
   }
 
   deleteBooking(booking: Booking): Observable<void> {

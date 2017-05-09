@@ -16,7 +16,11 @@ import { DateRange } from './date-range';
                      <h4 class="modal-title">Project <select [(ngModel)]="project_id" (ngModelChange)="onSelect()"><option *ngFor="let o of options('project')" [value]="o.value">{{o.label}}</option></select></h4>
                    </div>
                    <div class="modal-body" *ngIf="project_id != undefined">
-                     <h4>{{active ? "Active" : "Inactive"}} <span *ngIf="showDisactivate" class="glyphicon glyphicon-minus-sign" title="Deactivate" (click)="onDisactivate()"></span></h4>
+                     <h4 *ngIf="showActive">
+                       {{active ? "Active" : "Inactive"}}
+                       <span class="glyphicon glyphicon-plus-sign" [ngClass]="{disabled: active}" title="Activate" (click)="onActiveState(true)"></span>
+                       <span class="glyphicon glyphicon-minus-sign" [ngClass]="{disabled: ! active}" title="Deactivate" (click)="onActiveState(false)"></span>
+                     </h4>
                      <badass-booking-table [user]="user" [range]="range" [bookings]="bookings" (event)="onBookingEvent($event)"></badass-booking-table>
                    </div>
                    <div class="modal-footer">
@@ -29,7 +33,8 @@ import { DateRange } from './date-range';
   styles: ['.modal-dialog { width: 60% }',
            'h4 { margin-left: 20px; margin-bottom: 20px }',
            '.info { float: left }',
-           '.glyphicon { cursor: pointer }']
+           '.glyphicon:not(.disabled) { cursor: pointer }',
+           '.glyphicon.disabled { color: grey }']
 })
 export class ProjectBookingsComponent {
   private project_id: string;
@@ -67,13 +72,13 @@ export class ProjectBookingsComponent {
     this.event.emit(event);
   }
 
-  get showDisactivate(): boolean {
-    return this.active && this.user.role == ADMIN_ROLE;
+  get showActive(): boolean {
+    return this.user.role == ADMIN_ROLE;
   }
 
-  onDisactivate() {
+  onActiveState(state: boolean) {
     if (this.user.role != ADMIN_ROLE) return;
-    this.dataService.disactivateProject(this.project_id)
-                    .subscribe(() => this.active = false);
+    this.dataService.setProjectActiveState(this.project_id, state)
+                    .subscribe(() => this.active = state);
   }
 }
