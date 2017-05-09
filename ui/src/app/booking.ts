@@ -61,7 +61,7 @@ export class Booking {
   }
 
   canEditDueOutDate(user: User): boolean {
-    return user.role == ADMIN_ROLE || this.canDelete(user);
+    return this.canDelete(user);
   }
 
   canEditDueInDate(user: User): boolean {

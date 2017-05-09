@@ -638,9 +638,11 @@ def booking_endpoint(booking_id=None):
                 return "No update arguments", 400
             set_fields = ', '.join(["{0}=:{0}".format(field) for field in fields])
             clauses = ["booking_id=:booking_id"]
-            if 'project' in fields or 'due_out_date' in fields:
+            if 'project' in fields and not application.user_has_role([ADMIN_ROLE]):
+                return "Role required", 403
+            if 'due_out_date' in fields:
                 clauses.append("out_date IS NULL")
-            if 'project' in fields or 'due_out_date' in fields or 'due_in_date' in fields:
+            if 'due_out_date' in fields or 'due_in_date' in fields:
                 clauses.append("in_date IS NULL")
             if not application.user_has_role([ADMIN_ROLE]):
                 clauses.append("user_id=:user_id")
