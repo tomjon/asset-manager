@@ -30,7 +30,7 @@ import { DateRange } from './date-range';
                  </div>
                </div>
              </div>`,
-  styles: ['h4 { margin-left: 20px; margin-bottom: 20px }']
+  styles: ['h4 { margin-left: 20px; margin-bottom: 20px; white-space: nowrap; margin-right: 20px }']
 })
 export class ProjectBookingsComponent {
   private project_id: string;
