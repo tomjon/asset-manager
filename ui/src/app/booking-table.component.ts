@@ -73,7 +73,7 @@ import { DateRange } from './date-range';
            '.good { color: green }',
            '.overdue { color: red }',
            '.current td:not(.icons) { background: lightblue }',
-           '.glyphicon, td a { cursor: pointer }',
+           'td a { cursor: pointer }',
            '.overdue { color: red }',
            '.controls { margin-bottom: 10px }',
            '.controls input[type=checkbox] { margin-right: 20px }',

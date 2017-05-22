@@ -122,7 +122,7 @@ declare var $;
                        </table>
                      </div>
                      <div class="modal-footer">
-                       <span>{{loggedInCount}} user{{loggedInCount == 1 ? '' : 's'}} logged in</span>
+                       <span class="info">{{loggedInCount}} user{{loggedInCount == 1 ? '' : 's'}} logged in</span>
                        <button type="button" class="btn btn-default" data-toggle="modal" data-target="#addUserModal" (click)="clearAddUser()">Add New User</button>
                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                      </div>
@@ -216,9 +216,7 @@ declare var $;
            'table.login input { width: 150px }',
            '.login td { text-align: right; padding: 2px }',
            'th.assets { background: lightgrey; text-align: center }',
-           '.sh { width: 100px }',
-           '.glyphicon { cursor: pointer }',
-           '.modal-footer span { float: left }']
+           '.sh { width: 100px }']
 })
 export class LoginComponent {
   @Input('users') users: User[];

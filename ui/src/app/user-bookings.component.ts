@@ -22,9 +22,7 @@ import { DateRange } from './date-range';
                      </div>
                    </div>
                  </div>
-             </div>`,
-  styles: ['.modal-content { position: absolute; left: 50%; transform: translate(-50%, 0) }',
-           '.info { float: left }']
+             </div>`
 })
 export class UserBookingsComponent {
   private user_id: string; // id of selected user, can only change if admin

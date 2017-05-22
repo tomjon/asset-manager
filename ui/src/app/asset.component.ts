@@ -105,10 +105,8 @@ import { DateRange } from './date-range';
            '.my-input-group { padding: 0 5px 10px 0 }',
            '.my-input-group:last-child { padding-right: 0 }',
            'textarea { resize: none }',
-           '.glyphicon:not(.disabled) { cursor: pointer }',
            '.checkOut { margin-left: 20px }',
            '.overdue { color: red }',
-           '.disabled { color: lightgrey }',
            'badass-booking { display: block; height: 177px; overflow: auto }']
 })
 export class AssetComponent {

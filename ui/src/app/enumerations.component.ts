@@ -88,29 +88,27 @@ import { User, ADMIN_ROLE } from './user';
                     <div class="modal-header">
                       <button type="button" class="close" data-dismiss="modal">&times;</button>
                       <h4 class="modal-title">Merge Value {{option(mergeSource).label}}</h4>
-                   </div>
-                   <div class="modal-body">
-                     <div class="form-group">
-                       <label for="target">Target Value</label>
-                       <select class="form-control" name="target" [(ngModel)]="mergeTarget">
-                         <option *ngFor="let o of mergeOptions" [value]="o.value">{{o.label}}</option>
-                       </select>
-                     </div>
-                   </div>
-                   <div class="modal-footer">
-                     <p class="info"><span class="glyphicon glyphicon-info-sign"></span> Value <i>{{option(mergeSource).label}}</i> will be deleted</p>
-                     <button type="button" class="btn btn-default" data-dismiss="modal" (click)="onMerge()" [disabled]="! form.form.valid">Merge</button>
-                     <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                   </div>
+                    </div>
+                    <div class="modal-body">
+                      <div class="form-group">
+                        <label for="target">Target Value</label>
+                        <select class="form-control" name="target" [(ngModel)]="mergeTarget">
+                          <option *ngFor="let o of mergeOptions" [value]="o.value">{{o.label}}</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <p class="info"><span class="glyphicon glyphicon-info-sign"></span> Value <i>{{option(mergeSource).label}}</i> will be deleted</p>
+                      <button type="button" class="btn btn-default" data-dismiss="modal" (click)="onMerge()" [disabled]="! form.form.valid">Merge</button>
+                      <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    </div>
                  </div>
-               </div>
-             </form>
-           </div>`,
+                 </div>
+              </form>
+            </div>`,
   styles: ['.flip { transform: scale(-1, 1) }',
            'select { margin-bottom: 10px }',
-           '.glyphicon:not(.disabled) { cursor: pointer }',
-           '.disabled { color: lightgrey }',
-           '.info { float: left }']
+           '.disabled { color: lightgrey }']
 })
 export class EnumerationsComponent {
   @Input('search') search: Search;

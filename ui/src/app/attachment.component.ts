@@ -103,9 +103,9 @@ declare var $;
                  </div>
                </div>
              </div>`,
-  styles: ['.attachments { height: 350px }',
+  styles: ['.modal-content { width: 100% }',
+           '.attachments { height: 350px }',
            '.attachment img { max-width: 100%; max-height: 100% }',
-           '.glyphicon:not(.disabled) { cursor: pointer }',
            '.disabled { color: lightgrey }',
            '.container { display: inline-block; vertical-align: top; margin: 5px; width: 210px; height: 150px; cursor: pointer }',
            '.thumbnail-img { height: 100px }',

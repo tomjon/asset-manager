@@ -149,7 +149,6 @@ import { pristine } from './pristine';
            '.my-input-group { padding: 0 5px 10px 0 }',
            '.my-input-group:last-child { padding-right: 0 }',
            'label span { margin-left: 30px }',
-           '.glyphicon { cursor: pointer }',
            '.disabled { color: lightgrey; cursor: default }',
            '.blanker.disabled input { color: white }']
 })

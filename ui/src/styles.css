@@ -1,1 +1,19 @@
 /* You can add global styles to this file, and also import other style files */
+
+.glyphicon:not(.disabled) {
+  cursor: pointer;
+}
+
+.glyphicon.disabled {
+  color: grey;
+}
+
+.modal-content {
+  position: absolute;
+  left: 50%; transform: translate(-50%, 0);
+  min-width: 100%;
+}
+
+.info {
+  float: left;
+}
