@@ -165,7 +165,7 @@ export class AppComponent {
   }
 
   onEvent(event: any) {
-    if (event.save) {
+    if (event.save != undefined) {
       this.dataService.updateAsset(event.save)
                       .subscribe(() => {
                         this.asset = event.save;
@@ -175,7 +175,7 @@ export class AppComponent {
                         this.error = error;
                       });
     }
-    else if (event.delete) {
+    else if (event.delete != undefined) {
       this.dataService.deleteById(event.delete)
                       .subscribe(() => {
                         this.asset = undefined;
@@ -185,7 +185,7 @@ export class AppComponent {
                         this.error = error;
                       });
     }
-    else if (event.add) {
+    else if (event.add != undefined) {
       this.dataService.addAsset(event.add)
                       .subscribe(id => {
                         let asset = Object.assign({}, event.add);
@@ -197,24 +197,24 @@ export class AppComponent {
                         this.error = error;
                       });
     }
-    else if (event.book) {
+    else if (event.book != undefined) {
       this.booking = new Booking();
     }
-    else if (event.editBooking) {
+    else if (event.editBooking != undefined) {
       this.booking = event.editBooking;
     }
     else if (event.asset !== undefined) {
       // event.asset == null indicates unselected table row
       this.asset = event.asset || undefined;
     }
-    else if (event.search) {
+    else if (event.search != undefined) {
       this.doSearch();
     }
-    else if (event.reset) {
+    else if (event.reset != undefined) {
       this.reset();
       this.doSearch();
     }
-    else if (event.addUpdateBooking) {
+    else if (event.addUpdateBooking != undefined) {
       if (this.assetBookings) {
         let index = this.assetBookings.findIndex(booking => booking.booking_id == event.addUpdateBooking.booking_id);
         if (index != -1) {
@@ -224,7 +224,7 @@ export class AppComponent {
         }
       }
     }
-    else if (event.check) {
+    else if (event.check != undefined) {
       if (event.check.out === true) {
         this.dataService.check(event.check.booking.asset_id)
                         .subscribe(() => this._updateBookings(event.check.booking.asset_id, event.check.user));
@@ -245,7 +245,7 @@ export class AppComponent {
                         });
       }
     }
-    else if (event.range) {
+    else if (event.range != undefined) {
       this._updateBookings(event.range.asset_id, event.range.user);
       this.range = Object.assign({}, this.range); //FIXME: force change event for range inputs
     }
