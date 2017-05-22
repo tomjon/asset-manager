@@ -16,7 +16,7 @@ import { EnumerationsComponent } from './enumerations.component';
   template: `<div class="container-fluid">
                <div class="row">
                  <div class="col-lg-12">
-                   <h1><img src="assets/ofcom.gif"/> Baldock Asset Scheduling System</h1>
+                   <h1><a href="help.html" target="help"><span class="glyphicon glyphicon-info-sign"></span></a>&nbsp;<img src="assets/ofcom.gif"/> Baldock Asset Scheduling System</h1>
                    <badass-login [user]="user" [users]="users" (login)="onLogin($event)"></badass-login>
                    <button *ngIf="showEnumerations()" class="btn" data-toggle="modal" data-target="#enumerationsModal" (click)="enumComponent.onSelect()">Enumerations</button>
                    <button *ngIf="showNotifications()" class="btn" data-toggle="modal" data-target="#notificationsModal" (click)="loadNotifications()">Notifications</button>

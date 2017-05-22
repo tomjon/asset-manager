@@ -1,8 +1,8 @@
-# project fules
+# project files
 solr-6*
 solr/conf/core.properties
 solr/data
-files
+/files
 enums
 static/app/*.js*
 static/node_modules
