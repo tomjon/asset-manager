@@ -47,7 +47,7 @@ import { DateRange } from './date-range';
                      <td *ngIf="! bookings.isByAsset">{{booking.manufacturer | enum:"manufacturer"}}</td>
                      <td *ngIf="! bookings.isByAsset">{{booking.model}}</td>
                      <td *ngIf="! bookings.isByAsset">{{booking.barcode}}</td>
-                     <td *ngIf="! bookings.isByProject">{{booking.project | enum:"project"}}</td>
+                     <td *ngIf="! bookings.isByProject" class="project">{{booking.project | enum:"project"}}</td>
                      <td>
                        <span [ngClass]="{good: booking.isOut || booking.backIn, overdue: booking.overdueOut}">{{booking.due_out_date | date:'dd/MM/yyyy'}}</span>
                        <span *ngIf="bookings.isByAsset && booking.out_date > booking.due_out_date"><br>({{booking.out_date | date:'dd/MM/yyyy'}})</span>
@@ -78,7 +78,8 @@ import { DateRange } from './date-range';
            '.controls { margin-bottom: 10px }',
            '.controls input[type=checkbox] { margin-right: 20px }',
            '.controls input[type=date] { width: 130px }',
-           '.disabled { color: lightgrey }']
+           '.disabled { color: lightgrey }',
+           '.project { max-width: 250px; overflow: hidden }']
 })
 export class BookingTableComponent {
   @Input('bookings') bookings: Bookings;
