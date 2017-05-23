@@ -9,7 +9,7 @@ export class Booking {
               public manufacturer: string='',
               public model: string='',
               public user_id: string='',
-              public project: string='0',
+              public project: string=undefined,
               public condition: string=undefined,
               public due_out_date: string=undefined,
               public due_in_date: string=undefined,
