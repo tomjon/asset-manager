@@ -8,7 +8,7 @@ import { Frequency } from './frequency';
 import { Booking, Bookings } from './booking';
 import { User, BOOK_ROLE, VIEW_ROLE, ADMIN_ROLE } from './user';
 import { pristine } from './pristine';
-import { Enum, LAST_OPTION } from './enum';
+import { Enum, FIRST_OPTION, LAST_OPTION } from './enum';
 import { DateRange } from './date-range';
 
 /**
@@ -219,7 +219,6 @@ export class AssetComponent {
       this.event.emit({add: this.asset});
       pristine(this.form, false);
     }
-    console.log(this.confirm);
   }
 
   get canBook() {
@@ -238,7 +237,11 @@ export class AssetComponent {
   }
 
   onEnumChange(input) {
-    if (this.asset[input.field] == LAST_OPTION.value) {
+    if (this.asset[input.field] == String(FIRST_OPTION.value)) {
+      // need this because although on 'input' the select converts values to strings,
+      // it doesn't convert back for the model value
+      this.asset[input.field] = FIRST_OPTION.value;
+    } else if (this.asset[input.field] == LAST_OPTION.value) {
       this.addNew.field = input.field;
       this.addNew.label = undefined;
       setTimeout(() => this.addNewInput.first.nativeElement.focus());
