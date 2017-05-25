@@ -40,7 +40,6 @@ class SqlCursor(object):
         values.update(kwargs)
         if self.debug:
             print stmt, values
-        print stmt, values
         self.cursor.execute(stmt, values)
 
     def selectOne(self, stmt, values=None, **kwargs):
