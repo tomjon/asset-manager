@@ -46,13 +46,13 @@ import { Frequency } from './frequency';
                            <select #filter *ngIf="input.type == 'enum'" [(ngModel)]="input.value" (ngModelChange)="onFilter(input)" (blur)="checkFilter(input)">
                              <option *ngFor="let o of options(input)" [value]="o.value">{{o.label}} ({{o.count}})</option>
                            </select>
+                           <input #filter class="date" *ngIf="input.type == 'date'" type="date" [(ngModel)]="showInput.value" (ngModelChange)="onFilter(input)" (blur)="checkFilter(input)"/>
                          </div>
                          <div *ngIf="showInput != input">
                            <span class="glyphicon glyphicon-chevron-up" [ngClass]="{selected: orderSelected(input, true)}" (click)="onOrderClick(input, true)"></span>
                            <span class="glyphicon glyphicon-chevron-down" [ngClass]="{selected: orderSelected(input, false)}" (click)="onOrderClick(input, false)"></span>
-                           <span class="glyphicon glyphicon-list" [ngClass]="{selected: filterSelected(input)}" (click)="onFilterClick(input)"></span>
+                           <span class="glyphicon glyphicon-list" [ngClass]="{selected: filterSelected(input)}" (click)="onFilterClick(input)" [title]="tipLabel(input)"></span>
                            <span class="glyphicon glyphicon-ban-circle" [ngClass]="{selected: emptySelected(input)}" (click)="onEmptyClick(input)"></span>
-                           <span *ngIf="input.type == 'freq' && filterSelected(input)">({{freqLabel(input)}})</span>
                          </div>
                        </td>
                      </tr>
@@ -91,6 +91,7 @@ import { Frequency } from './frequency';
            '.glyphicon.right { float: right }',
            'input.filter { width: 100px }',
            'input.freq { width: 60px }',
+           'input.date { width: 90px }',
            'div.filter { position: absolute; z-index: 1 }',
            'input.freq { width: 80 }',
            'select.freq { width: 60 }',
@@ -141,8 +142,12 @@ export class TableComponent {
     return Frequency.unitOptions(false);
   }
 
-  freqLabel(input: any) {
-    return Frequency.label(input.value, input.units);
+  tipLabel(input: any) {
+    if (input.tip == undefined || ! this.filterSelected(input)) {
+      return '';
+    }
+    let label = input.type == 'freq' ? Frequency.label(input.value, input.units) : input.value;
+    return `${input.tip} ${label}`;
   }
 
   onRowClick(asset: any) {
@@ -168,8 +173,19 @@ export class TableComponent {
     return this.search.filters.indexOf(input) != -1 && input.value == '-';
   }
 
+  isOrderedBy(input: any) {
+    return this.search.order.asc == input || this.search.order.desc == input;
+  }
+
   // click on input's filter icon - either remove filter or show select/text input
   onFilterClick(input: any) {
+    if (input.range != undefined) {
+      if (this.isOrderedBy(input.range[0]) || this.isOrderedBy(input.range[1])) {
+        this.search.order = {};
+      }
+    } else if (this.isOrderedBy(input)) {
+      this.search.order = {};
+    }
     let index = this.search.filters.indexOf(input);
     if (index != -1 && input.value != '-') {
       this.search.filters.splice(index, 1);
@@ -257,6 +273,7 @@ export class TableComponent {
   onReset() {
     if (this.search.isResettable) {
       this.eventEmitter.emit({reset: true});
+      this.showInput = {};
     }
   }
 

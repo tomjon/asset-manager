@@ -140,6 +140,14 @@ export class DataService {
         }
         continue;
       }
+      if (input.type == 'date') {
+        // date filter: path component looks like /[FIELD]:VALUE
+        // where the square brackets indicate a date field, and the value can
+        // start with '<' or '>' to indicate before or after (inclusive)
+        // (if omitted, equality is implied)
+        path += `/[${input.field}]:${input.date_range}${input.value}`;
+        continue;
+      }
       if (input.field == undefined || input.value == '') continue;
       let field = input.field;
       if (input.type == 'text') {

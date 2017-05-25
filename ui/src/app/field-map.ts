@@ -10,9 +10,11 @@ var SAP_ID = {'field': 'sap_id', 'label': 'SAP ID', 'type': 'text'};
 //FIXME should be type: barcode and display an actual barcode
 var BARCODE = {'field': 'barcode', 'label': 'Bar Code', 'type': 'text'};
 
-var CALIBRATION_DATE = {'field': 'calibration_date', 'label': 'Last Calibration', 'short': 'Last', 'type': 'date'};
-var CALIBRATION_DUE = {'field': 'calibration_due', 'label': 'Calibration Due', 'short': 'Due', 'type': 'date'};
+// date_range value '<' means filter for dates before the input value, '>' means filter for dates after the input value
+var CALIBRATION_DATE = {'field': 'calibration_date', 'label': 'Last Calibration', 'short': 'Last', 'type': 'date', 'date_range': '<', 'tip': 'On or before'};
+var CALIBRATION_DUE = {'field': 'calibration_due', 'label': 'Calibration Due', 'short': 'Due', 'type': 'date', 'date_range': '>', 'tip': 'On or after'};
 var CALIBRATION_TYPE = {'field': 'calibration_type', 'label': 'Calibration Type', 'short': 'Type', 'type': 'enum'};
+
 var LOCATION = {'field': 'location', 'label': 'Location', 'type': 'enum'};
 var RACK = {'field': 'rack', 'label': 'Rack', 'type': 'enum'};
 var SHELF = {'field': 'shelf', 'label': 'Shelf', 'type': 'enum'};
@@ -25,7 +27,7 @@ var AUDIT_DATE = {'field': 'audit_date', 'label': 'Audit Date', 'type': 'date'};
 var PAT_DUE_DATE = {'field': 'pat_due_date', 'label': 'PAT Test Due', 'type': 'date'};
 var URLS = {'field': 'url', 'label': 'URL', 'type': 'url'};
 
-var FREQ_RANGE = {'field': '', 'label': 'Frequency', 'type': 'freq', 'range': [START_FREQ, STOP_FREQ]};
+var FREQ_RANGE = {'field': '', 'label': 'Frequency', 'type': 'freq', 'range': [START_FREQ, STOP_FREQ], 'tip': 'Range includes'};
 
 // enum definitions
 var PROJECT = {'field': 'project', 'label': 'Project', 'type': 'enum'};

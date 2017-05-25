@@ -29,6 +29,9 @@ CONDITION_FIELD = 'condition'
 
 XJOIN_PREFIX = 'xjoin_'
 
+DATE_BRACKETS = ['[', ']']
+DIRECTION_CHARS = ['<', '>']
+
 MERGE_ROWS = 10
 
 USER_BOOKING_SUMMARY_SQL = """
@@ -379,6 +382,24 @@ def search_endpoint(path=None):
                 params.append(('xjoin_{0}'.format(component), 'true'))
                 params.append(('xjoin_{0}.external.{1}'.format(component, field), value))
                 params.append(('fq', '{1}{{!xjoin}}xjoin_{0}'.format(component, '-' if neg else '')))
+            elif field.startswith(DATE_BRACKETS[0]) and field.endswith(DATE_BRACKETS[1]):
+                # the date brackets indicate the field is of type date, and we must convert the value
+                # to the SOLR date format. Also, the value could start with one of DIRECTION_CHARS
+                # in which case we do a date range filter (otherwise we do a date range of one day)
+                solr_date = lambda date: '{}T00:00:00Z'.format(date)
+                if value[0] == DIRECTION_CHARS[0]:
+                    # date range meaning before (or including) the given date
+                    from_date = '*'
+                    to_date = solr_date(value[1:])
+                elif value[0] == DIRECTION_CHARS[1]:
+                    # date range meaning after (or including) the given date
+                    from_date = solr_date(value[1:])
+                    to_date = '*'
+                else:
+                    # date range meaning on the given date
+                    from_date = solr_date(value)
+                    to_date = solr_date(value)
+                params.append(('fq', '{0}:[{1} TO {2}]'.format(field[1:-1], from_date, to_date)))
             else:
                 if value != '*':
                     value = '"{0}"'.format(value)
