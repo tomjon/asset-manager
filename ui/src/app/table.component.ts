@@ -5,7 +5,7 @@ import { User, BOOK_ROLE } from './user';
 import { EnumPipe } from './enum.pipe';
 import { EnumService } from './enum.service';
 import { DataService } from './data.service';
-import { FieldMap } from './field-map';
+import { FieldMap, CALIBRATION_FILTER } from './field-map';
 import { Frequency } from './frequency';
 
 @Component({
@@ -23,13 +23,13 @@ import { Frequency } from './frequency';
                                <option value="*">-- all assets --</option>
                                <option *ngFor="let o of options(input, false)" [value]="o.value">{{o.label}}</option>
                              </select>
-                             <span *ngIf="input.glyph" title="{{input.description}}" class="glyphicon glyphicon-{{input.glyph}}" [ngClass]="{selected: filterSelected(input)}" (click)="onBookingFilterClick(input)"></span>
+                             <span *ngIf="input.glyph" title="{{input.tip}}" class="glyphicon glyphicon-{{input.glyph}}" [ngClass]="{selected: filterSelected(input)}" (click)="onBookingFilterClick(input)"></span>
                              <input *ngIf="showInput == input" type="date" min="{{today}}" [(ngModel)]="showInput.value" (change)="doDateBookingFilter(showInput)" (blur)="doDateBookingFilter(showInput)" />
                              <span *ngIf="input.date && filterSelected(input) && showInput != input">{{input.value}}</span>
                            </div>
                          </div>
                        </td>
-                       <td colspan="3" class="calibration header">Calibration</td>
+                       <td colspan="3" class="calibration header">Calibration <span title="{{dueInput.tip}}" class="glyphicon glyphicon-{{dueInput.glyph}}" [ngClass]="{selected: filterSelected(dueInput)}" (click)="onFilterClick(dueInput)"></span></td>
                        <td colspan="3">
                          <span class="glyphicon glyphicon-arrow-left right" title="Reset search filters" [ngClass]="{disabled: ! search.isResettable}" (click)="onReset()"></span>
                        </td>
@@ -83,6 +83,7 @@ import { Frequency } from './frequency';
               </div>`,
   styles: ['table { white-space: nowrap }',
            '.calibration { background: lightgrey; text-align: center }',
+           '.calibration .glyphicon { float: right; margin-top: 2px; margin-right: 2px }',
            'li { cursor: pointer }',
            'ul li:first-child a { cursor: default }',
            'tr.normal:hover { background: lightgrey }',
@@ -101,6 +102,7 @@ import { Frequency } from './frequency';
 })
 export class TableComponent {
   showInput: any = {};
+  dueInput: any = CALIBRATION_FILTER;
 
   @ViewChildren('filter') filters: QueryList<ElementRef>;
 
@@ -194,14 +196,18 @@ export class TableComponent {
       delete input.value;
       delete input.units;
       if (index == -1) this.search.filters.push(input);
-      this.showInput = input;
-      setTimeout(() => {
-        let el = this.filters.first.nativeElement;
-        el.focus();
-        if (input.type == 'enum') {
-          el.size = Math.min(el.options.length, 10);
-        }
-      });
+      if (input.type != 'due') { // currently, only this filter type requires no input
+        this.showInput = input;
+        setTimeout(() => {
+          let el = this.filters.first.nativeElement;
+          el.focus();
+          if (input.type == 'enum') {
+            el.size = Math.min(el.options.length, 10);
+          }
+        });
+      } else {
+        this.doSearch();
+      }
     }
   }
 

@@ -14,6 +14,7 @@ var BARCODE = {'field': 'barcode', 'label': 'Bar Code', 'type': 'text'};
 var CALIBRATION_DATE = {'field': 'calibration_date', 'label': 'Last Calibration', 'short': 'Last', 'type': 'date', 'date_range': '<', 'tip': 'On or before'};
 var CALIBRATION_DUE = {'field': 'calibration_due', 'label': 'Calibration Due', 'short': 'Due', 'type': 'date', 'date_range': '>', 'tip': 'On or after'};
 var CALIBRATION_TYPE = {'field': 'calibration_type', 'label': 'Calibration Type', 'short': 'Type', 'type': 'enum'};
+export var CALIBRATION_FILTER = {'type': 'due', 'field': 'calibration_due', 'days': 7, 'tip': 'Show only assets due for calibration within 7 days, or overdue', 'glyph': 'warning-sign'};
 
 var LOCATION = {'field': 'location', 'label': 'Location', 'type': 'enum'};
 var RACK = {'field': 'rack', 'label': 'Rack', 'type': 'enum'};
@@ -36,10 +37,10 @@ var USER = {'field': 'user', 'label': 'User', 'type': 'enum'};
 // booking filters
 export var BOOKING_PROJECT = {'type': 'xjoin', 'component': 'project', 'field': 'project', 'label': 'Project', 'value': '*'};
 var BOOKING_USER = {'type': 'xjoin', 'component': 'user', 'field': 'user', 'label': 'User', 'value': '*'};
-var BOOKING_OUT = {'type': 'xjoin', 'component': 'booking', 'field': 'out', 'glyph': 'export', 'value': 'now', 'description': 'Show only assets that are currently out'}
-var BOOKING_DUE_OUT = {'type': 'xjoin', 'component': 'booking', 'field': 'due', 'glyph': 'share', 'value': 'out', 'description': 'Show only assets that are currently due to be taken out'}
-var BOOKING_OVERDUE_IN = {'type': 'xjoin', 'component': 'booking', 'field': 'due', 'glyph': 'warning-sign', 'value': 'in', 'description': 'Show only assets that are currently overdue to be returned'}
-var BOOKING_AVAILABLE = {'type': 'xjoin', 'component': 'booking', 'field': 'unavailable', 'negative': true, 'glyph': 'ok-circle', 'date': true, 'value': 'now', 'description': 'Show only assets that are available to book on the specified date'}
+var BOOKING_OUT = {'type': 'xjoin', 'component': 'booking', 'field': 'out', 'glyph': 'export', 'value': 'now', 'tip': 'Show only assets that are currently out'}
+var BOOKING_DUE_OUT = {'type': 'xjoin', 'component': 'booking', 'field': 'due', 'glyph': 'share', 'value': 'out', 'tip': 'Show only assets that are currently due to be taken out'}
+var BOOKING_OVERDUE_IN = {'type': 'xjoin', 'component': 'booking', 'field': 'due', 'glyph': 'warning-sign', 'value': 'in', 'tip': 'Show only assets that are currently overdue to be returned'}
+var BOOKING_AVAILABLE = {'type': 'xjoin', 'component': 'booking', 'field': 'unavailable', 'negative': true, 'glyph': 'ok-circle', 'date': true, 'value': 'now', 'tip': 'Show only assets that are available to book on the specified date'}
 
 // allowed notification trigger and filter columns
 export var BOOKED_DATE = {'column': 'booked_date', 'label': 'Booked Date'};

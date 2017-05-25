@@ -30,7 +30,7 @@ CONDITION_FIELD = 'condition'
 XJOIN_PREFIX = 'xjoin_'
 
 DATE_BRACKETS = ['[', ']']
-DIRECTION_CHARS = ['<', '>']
+DIRECTION_CHARS = ['<', '>', '@']
 
 MERGE_ROWS = 10
 
@@ -395,6 +395,10 @@ def search_endpoint(path=None):
                     # date range meaning after (or including) the given date
                     from_date = solr_date(value[1:])
                     to_date = '*'
+                elif value[0] == DIRECTION_CHARS[2]:
+                    # date range meaning before N days from now
+                    from_date = '*'
+                    to_date = 'NOW/DAY+{}DAY'.format(value[1:])
                 else:
                     # date range meaning on the given date
                     from_date = solr_date(value)

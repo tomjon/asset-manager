@@ -148,6 +148,11 @@ export class DataService {
         path += `/[${input.field}]:${input.date_range}${input.value}`;
         continue;
       }
+      if (input.type == 'due') {
+        // date filter meaning range before now + input.days
+        path += `/[${input.field}]:@${input.days}`;
+        continue;
+      }
       if (input.field == undefined || input.value == '') continue;
       let field = input.field;
       if (input.type == 'text') {
