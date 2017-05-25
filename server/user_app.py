@@ -174,6 +174,24 @@ class UserApplication(SqlApplication):
             sql.insert("INSERT INTO enum_entry VALUES (NULL, (SELECT enum_id FROM enum WHERE field='user'), :value, :value, :label)", user_dict, value=user_id)
         return user_id
 
+    def edit_user(self, user_id, user_dict):
+        """ Edit a user with values from the given user dictionary. Raises a KeyError if necessary
+            values are missing from the user_dict. Returns None if a user with given id does not
+            exist.
+        """
+        with self.db.cursor() as sql:
+            user = User(None, user_dict['role'], user_dict['username'], user_dict['email'], user_dict['label'], None, None)
+            if 'new_password' in user_dict:
+                user.set_password(user_dict['new_password'])
+                user_dict = user.to_dict(self.db)
+                stmt = "UPDATE user SET role=:role, email=:email, password_salt=:salt, password_hash=:hash WHERE user_id=:user_id"
+            else:
+                stmt = "UPDATE user SET role=:role, email=:email WHERE user_id=:user_id"
+            if sql.update(stmt, user_dict, salt=buffer(user.password_salt), hash=buffer(user.password_hash), user_id=user_id) == 0:
+                return None
+            sql.update("UPDATE enum_entry SET label=:label WHERE enum_id=(SELECT enum_id FROM enum WHERE field='user') AND value=:user_id", user_dict, user_id=user_id)
+            return user_id
+
     def delete_user(self, user_id):
         """ Delete the user with given user id. A user can not delete themselves.
         """

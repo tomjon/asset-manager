@@ -185,7 +185,7 @@ def user_endpoint():
     return json.dumps({})
 
 @application.route('/user/admin', methods=['GET', 'POST'])
-@application.route('/user/admin/<user_id>', methods=['DELETE'])
+@application.route('/user/admin/<user_id>', methods=['PUT', 'DELETE'])
 @application.role_required([ADMIN_ROLE])
 def user_admin_endpoint(user_id=None):
     """ Endpoint for an admin to get a list of all users, or add a new user.
@@ -210,6 +210,17 @@ def user_admin_endpoint(user_id=None):
         except KeyError:
             return "Bad user details", 400
         return json.dumps({'value': user_id})
+    elif request.method == 'PUT':
+        user = request.get_json()
+        if not current_user.check_password(user['password']):
+            return "Bad credentials", 401
+        try:
+            user_id = application.edit_user(user_id, user)
+            if user_id is None:
+                return "User does not exist", 404
+        except KeyError:
+            return "Bad user details", 400
+        return json.dumps({})
     elif request.method == 'DELETE':
         if not application.delete_user(user_id):
             return "Bad request", 400

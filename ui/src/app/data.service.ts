@@ -298,9 +298,17 @@ export class DataService {
     return this.put(`user`, JSON.stringify(user));
   }
 
-  addUser(user: User): Observable<string> {
-    return this.post(`user/admin`, JSON.stringify(user))
-               .map(res => res.json().value);
+  editUser(user: User, newUser: boolean): Observable<string> {
+    if (newUser) {
+      return this.post(`user/admin`, JSON.stringify(user))
+                 .map(res => res.json().value);
+    } else {
+      if (user.new_password == '') {
+        delete user.new_password;
+      }
+      return this.put(`user/admin/${user.user_id}`, JSON.stringify(user))
+                 .map(res => res.json().value);
+    }
   }
 
   deleteUser(user_id: string): Observable<void> {
