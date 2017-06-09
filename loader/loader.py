@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-""" Script for loading Asset data from an XML dump.
+""" Script for loading Asset data.
 """
 import sys
 import requests
@@ -61,10 +61,12 @@ if __name__ == '__main__':
     sql_conn = sqlite3.connect(sys.argv[3])
     sql = sql_conn.cursor()
 
-    sql.execute("SELECT enum_id FROM enum WHERE field != 'role' AND field != 'user' AND field != 'project'")
-    enum_ids = [str(x[0]) for x in sql.fetchall()]
-    sql.execute("DELETE FROM enum_entry WHERE enum_id IN ({0})".format(','.join(enum_ids))) 
-    sql.execute("DELETE FROM enum WHERE enum_id IN ({0})".format(','.join(enum_ids)))
+#    sql.execute("SELECT enum_id FROM enum WHERE field != 'role' AND field != 'user' AND field != 'project'")
+#    enum_ids = [str(x[0]) for x in sql.fetchall()]
+#    sql.execute("DELETE FROM enum_entry WHERE enum_id IN ({0})".format(','.join(enum_ids))) 
+#    sql.execute("DELETE FROM enum WHERE enum_id IN ({0})".format(','.join(enum_ids)))
+
+#FIXME load up enums, we'll delete them all, then add them back later. Oh dear - don't delete until later! in case of error ;)
 
     enums = {}
     for field in field_map._enum_fields:
@@ -73,9 +75,10 @@ if __name__ == '__main__':
     count = 0
     try:
         with codecs.open(sys.argv[2], encoding=ENCODING) as f:
-            f.seek(2)
+            f.seek(1)
             reader = csv.DictReader(file_encoder(f))
             for row in reader:
+		print row
                 process_row(row, field_map, enums, sys.argv[4])
                 count += 1
     except function.FunctionError as e:

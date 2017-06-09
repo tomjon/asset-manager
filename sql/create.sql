@@ -56,10 +56,10 @@ CREATE TABLE attachment_asset_pivot(
 );
 
 CREATE TABLE project(
-    project_id INTEGER PRIMARY KEY,
-    active BOOLEAN,
-    tpr VARCHAR(64),
-    close_date DATE
+	project_id INTEGER PRIMARY KEY,
+	active BOOLEAN,
+	tpr VARCHAR(64),
+	close_date DATE
 );
 
 CREATE TABLE booking(
