@@ -26,11 +26,12 @@ def map_enum(name, value, doc, enums):
     """ We want to store this field as an integer, adding the string value to an
         enumeration for the field that is stored in JSON format (as a list).
     """
-    if name not in enums:
-        enums[name] = [value]
-    elif value not in enums[name]:
-        enums[name].append(value)
-    return [enums[name].index(value)]
+    for n, label in enums[name]:
+        if label == value:
+            return [n]
+    n = max(enums[name], key=lambda entry: entry[0])[0] + 1
+    enums[name].append((n, value))
+    return [n]
 
 # parse a range like 10hz-15ghz into start/stop freqs in Hz
 def _parse_freq_range(value):
