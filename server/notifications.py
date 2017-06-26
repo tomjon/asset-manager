@@ -185,6 +185,9 @@ class Notification(object):
             if trigger.column is not None:
                 for values in sql.selectAllDict("SELECT * FROM booking, user, enum, enum_entry WHERE DATE(:now) >= date(booking.{0}, '{1} DAYS') AND booking.user_id=user.user_id AND enum.field='user' AND enum.enum_id=enum_entry.enum_id AND enum_entry.value=user.user_id".format(trigger.column, trigger.days), now=now):
                     asset = index.get(values['asset_id'])
+                    if asset is None:
+                        log.debug("Asset with id %d no longer exists - skipping", values['asset_id'])
+                        continue
                     self._insert_sent(now, sql, values['asset_id'])
                     if trigger._filter(values, asset):
                         yield self._mail(sql, values, asset)
@@ -218,7 +221,12 @@ if __name__ == "__main__":
 
     debug = len(sys.argv) > 1 and sys.argv[1].lower() == 'debug'
     log = get_logger(logging.DEBUG if debug else logging.INFO)
-    db = SqlDatabase(DATABASE)
-    index = AssetIndex(SOLR_COLLECTION)
-    for mail in run_notifications('now', db, index):
-        mail.send()
+
+    try:
+        db = SqlDatabase(DATABASE)
+        index = AssetIndex(SOLR_COLLECTION)
+        for mail in run_notifications('now', db, index):
+            mail.send()
+    except Exception as e:
+        log.exception(e)
+
