@@ -62,10 +62,10 @@ def project_endpoint():
     with application.db.cursor() as sql:
         if 'project' in request.args:
             # booking data for XJoin (filters for assets based on project)
-            return json.dumps(sql.selectAllDict("SELECT DISTINCT(asset_id) FROM booking WHERE project=:project_id AND {}".format(EXTANT_CLAUSE), project_id=request.args['project']))
+            return json.dumps(sql.selectAllDict("SELECT DISTINCT(asset_id) FROM booking WHERE project=:project_id AND {0}".format(EXTANT_CLAUSE), project_id=request.args['project']))
         if 'user' in request.args:
             # booking data for XJoin (filters for assets based on user)
-            return json.dumps(sql.selectAllDict("SELECT DISTINCT(asset_id) FROM booking WHERE user_id=:user_id AND {}".format(EXTANT_CLAUSE), user_id=request.args['user']))
+            return json.dumps(sql.selectAllDict("SELECT DISTINCT(asset_id) FROM booking WHERE user_id=:user_id AND {0}".format(EXTANT_CLAUSE), user_id=request.args['user']))
     return "Unknown filter arguments", 400
 
 
