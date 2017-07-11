@@ -95,6 +95,7 @@ export class BookingComponent {
   }
 
   get canToday(): boolean {
+    if (this.booking.due_out_date == this.today && this.booking.due_in_date == this.today) return false;
     let dueOutOk = this.booking.canEditDueOutDate(this.user) || this.booking.due_out_date == this.today;
     return ! this.editing || (dueOutOk && this.booking.canEditDueInDate(this.user));
   }
