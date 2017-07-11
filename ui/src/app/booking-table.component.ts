@@ -34,6 +34,7 @@ import { DateRange } from './date-range';
                      <th *ngIf="! bookings.isByAsset">Checked Out</th>
                      <th>Due In</th>
                      <th *ngIf="! bookings.isByAsset">Checked In</th>
+                     <th><input type="checkbox" (click)="onSelectAll()"/></th>
                      <th>&nbsp;</th>
                    </tr>
                  </thead>
@@ -58,11 +59,22 @@ import { DateRange } from './date-range';
                        <span *ngIf="bookings.isByAsset && booking.in_date > booking.due_in_date"><br>({{booking.in_date | date:'dd/MM/yyyy'}})</span>
                      </td>
                      <td *ngIf="! bookings.isByAsset">{{booking.in_date | date:'dd/MM/yyyy'}}</td>
+                     <td class="icons"><input type="checkbox" [(ngModel)]="selected[booking.booking_id]"/></td>
                      <td class="icons">
                        <span *ngIf="booking.canEdit(user)" class="glyphicon glyphicon-pencil" (click)="onEdit(booking)" data-dismiss="modal" data-toggle="modal" data-target="#bookingModal"></span>
                        <span *ngIf="booking.canDelete(user)" class="glyphicon glyphicon-trash" (click)="onDelete(booking)"></span>
                        <span *ngIf="bookings.canCheckOut(user, booking)" class="glyphicon glyphicon-export" (click)="onCheck(booking, true)" [ngClass]="{overdue: booking.overdueOut}"></span>
                        <span *ngIf="booking.canCheckIn(user)" class="glyphicon glyphicon-import" (click)="onCheck(booking, null)" data-dismiss="modal" data-toggle="modal" data-target="#conditionModal" [ngClass]="{overdue: booking.overdueIn}"></span>
+                     </td>
+                   </tr>
+                   <tr *ngIf="selectedCount > 0">
+                     <td colspan="8"></td>
+                     <td colspan="2" align="right">{{selectedCount}} bookings</td>
+                     <td>
+                       <span *ngIf="canEditGroup" class="glyphicon glyphicon-pencil" (click)="onEditGroup()" data-dismiss="modal" data-toggle="modal" data-target="#bookingModal"></span>
+                       <span *ngIf="canDeleteGroup" class="glyphicon glyphicon-trash" (click)="onDeleteGroup()"></span>
+                       <span *ngIf="canCheckOutGroup" class="glyphicon glyphicon-export" (click)="onCheckGroup(true)" [ngClass]="{overdue: overdueOutGroup}"></span>
+                       <span *ngIf="canCheckInGroup" class="glyphicon glyphicon-import" (click)="onCheckGroup(null)" data-dismiss="modal" data-toggle="modal" data-target="#conditionModal" [ngClass]="{overdue: overdueInGroup}"></span>
                      </td>
                    </tr>
                  </tbody>
@@ -88,6 +100,8 @@ export class BookingTableComponent {
 
   @Output('event') event = new EventEmitter<any>();
 
+  selected: any = { };
+
   constructor(private dataService: DataService) {}
 
   onRange() {
@@ -112,5 +126,66 @@ export class BookingTableComponent {
   onClick(asset_id: string) {
     this.dataService.getAsset(asset_id)
                     .subscribe(asset => this.event.emit({asset: asset}));
+  }
+
+  // group selection:
+
+  get selectedCount(): number {
+    return Object.keys(this.selected).length;
+  }
+
+  // if less than all selected, select all, otherwise if all selected, select none
+  onSelectAll() {
+    if (this.selectedCount < this.bookings.length) {
+      for (let booking of this.bookings) {
+        this.selected[booking.booking_id] = true;
+      }
+    } else {
+      this.selected = { };
+    }
+  }
+
+  canGroup(f): boolean {
+    for (let booking_id in this.selected) {
+      let booking = this.bookings.find(b => b.booking_id == booking_id);
+      if (! f(booking)) return false;
+    }
+    return true;
+  }
+
+  get canEditGroup(): boolean {
+    return this.canGroup(b => b.canEdit(this.user));
+  }
+
+  get canDeleteGroup(): boolean {
+    return this.canGroup(b => b.canDelete(this.user));
+  }
+
+  get canCheckOutGroup(): boolean {
+    return this.canGroup(b => this.bookings.canCheckOut(this.user, b));
+  }
+
+  get canCheckInGroup(): boolean {
+    return this.canGroup(b => b.canCheckIn(this.user));
+  }
+
+  get bookingGroup(): Array<Booking> {
+    let bs = [];
+    for (let booking_id in this.selected) {
+      if (this.selected[booking_id] !== true) continue;
+      bs.push(Object.assign({}, this.bookings.find(b => b.booking_id == booking_id)));
+    }
+    return bs;
+  }
+
+  onEditGroup() {
+    this.event.emit({editBookingGroup: this.bookingGroup});
+  }
+
+  onDeleteGroup() {
+    this.dataService.deleteBookings(this.bookingGroup)
+                    .subscribe(() => {
+                      this.bookings.splice(this.bookings.indexOf(booking), 1);
+                    });
   }
 }
