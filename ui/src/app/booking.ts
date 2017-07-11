@@ -5,9 +5,9 @@ import { today } from './today';
 export class Booking {
   constructor(public booking_id: string='',
               public asset_id: string='',
-              public barcode: string='',
-              public manufacturer: string='',
-              public model: string='',
+              public barcode: string=undefined,
+              public manufacturer: string=undefined,
+              public model: string=undefined,
               public user_id: string='',
               public project: string=undefined,
               public condition: string=undefined,

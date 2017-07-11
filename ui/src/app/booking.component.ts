@@ -18,7 +18,10 @@ declare var $;
                    <div class="modal-content">
                      <div class="modal-header">
                        <button type="button" class="close" data-dismiss="modal">&times;</button>
-                       <h4 class="modal-title"><span *ngIf="editing">Editing Booking</span><span *ngIf="! editing">New Booking</span><span *ngIf="asset"> for <b *ngIf="asset.id_number != undefined">{{asset.id_number}}</b> <i *ngIf="asset.manufacturer != undefined">{{asset.manufacturer | enum:'manufacturer'}} </i>{{asset.model}}</span></h4>
+                       <h4 class="modal-title">
+                         <span *ngIf="editing">Editing Booking</span><span *ngIf="! editing">New Booking</span>
+                         <span> for <i *ngIf="manufacturer != undefined">{{manufacturer | enum:'manufacturer'}} </i>{{model}} <b>{{barcode}}</b></span>
+                       </h4>
                      </div>
                      <div class="modal-body">
                        <div class="form-group">
@@ -132,6 +135,24 @@ export class BookingComponent {
                         Observable.throw(error);
                       }
                     });
+  }
+
+  // attempt to return the booking property, if not, return the asset property, default ''
+  //FIXME this existence of this mechanism exposes the horrible design choice ;)
+  defer(property: string): any {
+    if (this.booking != undefined && this.booking[property] != undefined) {
+      return this.booking[property];
+    }
+    return this.asset != undefined ? this.asset[property] : '';
+  }
+  get barcode(): string {
+    return this.defer('barcode');
+  }
+  get manufacturer(): string {
+    return this.defer('manufacturer');
+  }
+  get model(): string {
+    return this.defer('model');
   }
 
   //FIXME the following three methods are similar as those in asset.component.ts
