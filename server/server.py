@@ -261,10 +261,12 @@ def enums_endpoint(field=None):
             values = request.get_json()
             if field != 'user':
                 counts = get_counts(sql, field)
+                print counts, values
                 for value in values:
                     if str(value['value']) in counts:
                         del counts[str(value['value'])]
                 # anything left in counts is going to be deleted, so check they have 0 count
+                print counts
                 for value in counts:
                     if counts[value] > 0:
                         return "Bad options", 400

@@ -381,8 +381,8 @@ export class DataService {
     }
   }
 
-  deleteBooking(booking: Booking): Observable<void> {
-    return this.delete(`booking/${booking.booking_id}`);
+  deleteBooking(booking_id: string): Observable<void> {
+    return this.delete(`booking/${booking_id}`);
   }
 
   // add or update a booking (if editFields is undefined, we are adding)

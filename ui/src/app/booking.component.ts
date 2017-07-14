@@ -18,33 +18,36 @@ declare var $;
                    <div class="modal-content">
                      <div class="modal-header">
                        <button type="button" class="close" data-dismiss="modal">&times;</button>
-                       <h4 class="modal-title">
+                       <h4 *ngIf="group == undefined" class="modal-title">
                          <span *ngIf="editing">Editing Booking</span><span *ngIf="! editing">New Booking</span>
                          <span> for <i *ngIf="manufacturer != undefined">{{manufacturer | enum:'manufacturer'}} </i>{{model}} <b>{{barcode}}</b></span>
+                       </h4>
+                       <h4 *ngIf="group != undefined" class="modal-title">
+                         <span>Editing {{group.length}} Bookings</span>
                        </h4>
                      </div>
                      <div class="modal-body">
                        <div class="form-group">
                          <label for="project">{{fieldMap.projectInput.label}}</label>
-                         <select [disabled]="editing && ! booking.canEditProject(user)" class="form-control" [(ngModel)]="booking.project" [name]="fieldMap.projectInput.field">
+                         <select [disabled]="! canEditProject" class="form-control" [(ngModel)]="booking.project" [name]="fieldMap.projectInput.field">
                            <option *ngFor="let o of projectOptions" [value]="o.value">{{o.label}}</option>
                          </select>
                        </div>
                        <div class="form-group">
                          <label for="dueOutDate">Due Out Date</label>
-                         <input type="date" required min="{{today}}" [disabled]="editing && ! booking.canEditDueOutDate(user)" class="form-control" [(ngModel)]="booking.due_out_date" name="dueOutDate" #f_dueOutDate="ngModel">
-                         <div [hidden]="! booking.canEditDueOutDate(user) || f_dueOutDate.valid" class="alert alert-danger">
+                         <input type="date" required min="{{today}}" [disabled]="! canEditDueOutDate" class="form-control" [(ngModel)]="booking.due_out_date" name="dueOutDate" #f_dueOutDate="ngModel">
+                         <div [hidden]="! canEditDueOutDate || f_dueOutDate.valid" class="alert alert-danger">
                            Due out date is required
                          </div>
                        </div>
                        <div class="form-group">
                          <label for="dueInDate">Due In Date</label>
-                         <input type="date" required min="{{booking.due_out_date}}" [disabled]="editing && ! booking.canEditDueInDate(user)" class="form-control" [(ngModel)]="booking.due_in_date" name="dueInDate" #f_dueInDate="ngModel">
-                         <div [hidden]="! booking.canEditDueInDate(user) || (f_dueInDate.valid && booking.due_in_date >= booking.due_out_date)" class="alert alert-danger">
+                         <input type="date" required min="{{booking.due_out_date}}" [disabled]="! canEditDueInDate" class="form-control" [(ngModel)]="booking.due_in_date" name="dueInDate" #f_dueInDate="ngModel">
+                         <div [hidden]="! canEditDueInDate || (f_dueInDate.valid && booking.due_in_date >= booking.due_out_date)" class="alert alert-danger">
                            Due in date is required, and should be the same or after the due out date
                          </div>
                        </div>
-                       <div class="form-group">
+                       <div *ngIf="group == undefined" class="form-group">
                          <label for="notes">Notes</label>
                          <textarea class="form-control" [(ngModel)]="booking.notes" name="notes" rows="4"></textarea>
                        </div>
@@ -73,19 +76,36 @@ export class BookingComponent {
 
   // collects form input values
   booking: Booking;
+  group: Booking[];
 
   @Input('booking') set _booking(booking: Booking) {
     // default some values to their previous values
     if (booking != undefined && this.booking != undefined) {
       for (let field of ['project', 'due_in_date', 'due_out_date', 'notes']) {
-        if (booking[field] == undefined || booking[field] == '') {
+        if (booking[field] === undefined || booking[field] === '') {
           booking[field] = this.booking[field];
         }
       }
     }
     this.booking = booking;
-    this.editing = booking.booking_id != '';
+    this.editing = booking == undefined || booking.booking_id != '';
     this.clash = undefined;
+  }
+
+  @Input('group') set _group(group: Booking[]) {
+    this.group = group;
+    if (group != undefined) {
+      this.booking = new Booking();
+      for (let booking of group) {
+        for (let field of ['project', 'due_in_date', 'due_out_date', 'notes']) {
+          if (this.booking[field] == undefined) {
+            this.booking[field] = booking[field];
+          } else if (this.booking[field] != booking[field]) {
+            this.booking[field] = '';
+          }
+        }
+      }
+    }
   }
 
   @Output('event') event = new EventEmitter<any>();
@@ -112,9 +132,9 @@ export class BookingComponent {
     let editFields: any = undefined;
     if (this.editing) {
       editFields = {};
-      if (this.booking.canEditProject(this.user)) editFields.project = true;
-      if (this.booking.canEditDueOutDate(this.user)) editFields.dueOutDate = true;
-      if (this.booking.canEditDueInDate(this.user)) editFields.dueInDate = true;
+      if (this.canEditProject) editFields.project = true;
+      if (this.canEditDueOutDate) editFields.dueOutDate = true;
+      if (this.canEditDueInDate) editFields.dueInDate = true;
     }
     this.booking.user_id = this.user.user_id;
     if (! this.editing && this.asset) {
@@ -134,6 +154,22 @@ export class BookingComponent {
                         Observable.throw(error);
                       }
                     });
+  }
+
+  submitGroup() {
+    let editFields: any = {};
+    if (this.canEditProject) editFields.project = true;
+    if (this.canEditDueOutDate) editFields.dueOutDate = true;
+    if (this.canEditDueInDate) editFields.dueInDate = true;
+    let obs = [];
+    for (let booking of this.group) {
+      // update booking values from modal form fields
+      if (this.canEditProject) booking.project = this.booking.project;
+      if (this.canEditDueOutDate) booking.due_out_date = this.booking.due_out_date;
+      if (this.canEditDueInDate) booking.due_in_date = this.booking.due_in_date;
+      obs.push(this.dataService.updateBooking(booking, editFields));
+    }
+    Observable.forkJoin(obs).subscribe(() => this.event.emit({addUpdateBooking: true}));
   }
 
   // attempt to return the booking property, if not, return the asset property, default ''
@@ -161,5 +197,30 @@ export class BookingComponent {
 
   get projectOptions(): any[] {
     return this.options(this.fieldMap.projectInput.field).filter(o => (this.results.projects[o.value] || {}).active);
+  }
+
+  // group bookings
+
+  canGroup(property: string): boolean {
+    if (this.group == undefined) {
+      return ! this.editing || this.booking[property](this.user);
+    } else {
+      for (let booking of this.group) {
+        if (! booking[property](this.user)) return false;
+      }
+      return true;
+    }
+  }
+
+  get canEditProject(): boolean {
+    return this.canGroup('canEditProject');
+  }
+
+  get canEditDueOutDate(): boolean {
+    return this.canGroup('canEditDueOutDate');
+  }
+
+  get canEditDueInDate(): boolean {
+    return this.canGroup('canEditDueInDate');
   }
 }

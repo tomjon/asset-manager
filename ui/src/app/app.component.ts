@@ -8,6 +8,8 @@ import { User, ADMIN_ROLE, BOOK_ROLE, VIEW_ROLE } from './user';
 import { Booking, Bookings } from './booking';
 import { FieldMap } from './field-map';
 import { EnumerationsComponent } from './enumerations.component';
+import { Observable } from 'rxjs/Observable'; //FIXME didn't we add this in the module?
+import 'rxjs/add/observable/forkJoin'; //FIXME didn't we add this in the module?
 
 //FIXME instance of Search to live in DataService? tidies up some dependencies. There are now several 'globals'! :P :(
 
@@ -29,7 +31,7 @@ import { EnumerationsComponent } from './enumerations.component';
                  </div>
                </div>
              </div>
-             <badass-booking [user]="user" [asset]="asset" [booking]="booking" [results]="results" (event)="onEvent($event)"></badass-booking>
+             <badass-booking [user]="user" [asset]="asset" [booking]="booking" [group]="bookingGroup" [results]="results" (event)="onEvent($event)"></badass-booking>
              <badass-notification [notifications]="notifications"></badass-notification>
              <badass-enumerations [search]="search" [results]="results"></badass-enumerations>
              <badass-user-bookings [user]="user" [users]="users" [range]="range" [bookings]="userBookings" (event)="onEvent($event)"></badass-user-bookings>
@@ -49,6 +51,7 @@ export class AppComponent {
   user: User = new User(); // start with an anonymous user
   users: User[] = []; // all users, only populated when user is an Admin
   booking: Booking; // the booking currently being edited (or selection of condition)
+  bookingGroup: Booking[]; // the bookings (plural) currently being edited (or selection of condition)
   notifications: any[];
   assetBookings: Bookings;
   userBookings: Bookings;
@@ -155,8 +158,10 @@ export class AppComponent {
                     });
   }
 
+  // if necessary, reload bookings for the displayed asset or the displayed user bookings
+  //FIXME why is this needed?
   _updateBookings(asset_id: string, user: boolean) {
-    if (this.asset && asset_id == this.asset.id) {
+    if (asset_id == undefined || (this.asset && asset_id == this.asset.id)) {
       this.loadAssetBookings();
     }
     if (user) {
@@ -202,6 +207,11 @@ export class AppComponent {
     }
     else if (event.editBooking != undefined) {
       this.booking = event.editBooking;
+      this.bookingGroup = undefined;
+    }
+    else if (event.editBookingGroup != undefined) {
+      this.booking = new Booking();
+      this.bookingGroup = event.editBookingGroup;
     }
     else if (event.asset !== undefined) {
       // event.asset == null indicates unselected table row
@@ -215,7 +225,9 @@ export class AppComponent {
       this.doSearch();
     }
     else if (event.addUpdateBooking != undefined) {
-      if (this.assetBookings) {
+      if (event.addUpdateBooking === true) {
+        this._updateBookings(undefined, true); //FIXME again, just update everything when submitting edits to a group of bookings
+      } else if (this.assetBookings) {
         let index = this.assetBookings.findIndex(booking => booking.booking_id == event.addUpdateBooking.booking_id);
         if (index != -1) {
           this.assetBookings.splice(index, 1, event.addUpdateBooking);
@@ -229,6 +241,7 @@ export class AppComponent {
         this.dataService.check(event.check.booking.asset_id)
                         .subscribe(() => this._updateBookings(event.check.booking.asset_id, event.check.user));
       } else if (event.check.out === null) {
+        // necessary for condition update modal
         this.booking = event.check.booking;
         if (this.booking.condition == undefined) {
           this.booking.condition = this.asset.condition;
@@ -243,6 +256,26 @@ export class AppComponent {
                             this.asset = Object.assign({}, this.asset); //FIXME: force reload of asset in asset component
                           }
                         });
+      }
+    }
+    else if (event.checkGroup != undefined) {
+      if (event.checkGroup.out === true) {
+        Observable.forkJoin(event.checkGroup.bookings.map(b => this.dataService.check(b.asset_id)))
+                  .subscribe(() => this._updateBookings(undefined, true)); //FIXME too hard to work out if we need to update, so do it anyway
+      } else if (event.checkGroup.out === null) {
+        // necessary for condition update modal
+        this.booking = new Booking();
+        //FIXME could take 'average' condition from all assets in the booking group? hm
+      } else {
+        Observable.forkJoin(event.checkGroup.bookings.map(b => this.dataService.check(b.asset_id, b.condition)))
+                  .subscribe(() => {
+                    this._updateBookings(undefined, true);
+                    this.doSearch();
+/*                          if (this.asset.id == event.check.booking.asset_id) {
+                            this.asset.condition = event.check.booking.condition;
+                            this.asset = Object.assign({}, this.asset); //FIXME: force reload of asset in asset component
+                          }*/
+                  });
       }
     }
     else if (event.range != undefined) {
