@@ -10,8 +10,8 @@ def import_project(sql, enum_id, tpr, title):
         name starting with the TPR (followed by whitespace or punctuation). If
         it finds a match, activate the project; otherwise add a new active one.
     """
-    label = "{} - {}".format(tpr, title)
-    values = {'enum_id': enum_id, 'template': '{} -%'.format(tpr)}
+    label = "{0} - {1}".format(tpr, title)
+    values = {'enum_id': enum_id, 'template': '{0} -%'.format(tpr)}
     sql.execute("SELECT value FROM enum_entry WHERE enum_id=:enum_id AND label LIKE :template", values)
     row = sql.fetchone()
     if row is not None:
