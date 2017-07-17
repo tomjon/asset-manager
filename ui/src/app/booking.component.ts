@@ -28,27 +28,28 @@ declare var $;
                      </div>
                      <div class="modal-body">
                        <div class="form-group">
-                         <label for="project">{{fieldMap.projectInput.label}}</label>
+                         <label for="project">{{fieldMap.projectInput.label}} <input *ngIf="group != undefined" title="Check to set project for all assets in group" name="editProject" type="checkbox" [disabled]="! canEditProject" [(ngModel)]="editFields.project"/></label>
                          <select [disabled]="! canEditProject" class="form-control" [(ngModel)]="booking.project" [name]="fieldMap.projectInput.field">
-                           <option *ngFor="let o of projectOptions" [value]="o.value">{{o.label}}</option>
+                           <option *ngFor="let o of projectOptions" [value]="o.value" [disabled]="o.disabled">{{o.label}}</option>
                          </select>
                        </div>
                        <div class="form-group">
-                         <label for="dueOutDate">Due Out Date</label>
-                         <input type="date" required min="{{today}}" [disabled]="! canEditDueOutDate" class="form-control" [(ngModel)]="booking.due_out_date" name="dueOutDate" #f_dueOutDate="ngModel">
+                         <label for="dueOutDate">Due Out Date <input *ngIf="group != undefined" title="Check to set due out date for all assets in group" name="editDueOutDate" type="checkbox" [disabled]="! canEditDueOutDate" [(ngModel)]="editFields.dueOutDate"/></label>
+                         <input type="date" required [attr.min]="canEditDueOutDate ? today : null" [disabled]="! canEditDueOutDate" class="form-control" [(ngModel)]="booking.due_out_date" name="dueOutDate" #f_dueOutDate="ngModel">
                          <div [hidden]="! canEditDueOutDate || f_dueOutDate.valid" class="alert alert-danger">
                            Due out date is required
                          </div>
                        </div>
                        <div class="form-group">
-                         <label for="dueInDate">Due In Date</label>
+                         <label for="dueInDate">Due In Date <input *ngIf="group != undefined" title="Check to set due in date for all assets in group" name="editDueInDate" type="checkbox" [disabled]="! canEditDueInDate" [(ngModel)]="editFields.dueInDate"/></label>
                          <input type="date" required min="{{booking.due_out_date}}" [disabled]="! canEditDueInDate" class="form-control" [(ngModel)]="booking.due_in_date" name="dueInDate" #f_dueInDate="ngModel">
                          <div [hidden]="! canEditDueInDate || (f_dueInDate.valid && booking.due_in_date >= booking.due_out_date)" class="alert alert-danger">
                            Due in date is required, and should be the same or after the due out date
                          </div>
                        </div>
-                       <div *ngIf="group == undefined" class="form-group">
-                         <label for="notes">Notes</label>
+                       <div class="form-group">
+                         <label for="notes">Notes <input *ngIf="group != undefined" title="Check to set notes for all assets in group" name="editNotes" type="checkbox" [(ngModel)]="editFields.notes"/></label>
+                         <p *ngIf="group != undefined && editFields.notes" class="warn">Text entered here will overwrite existing notes on all {{group.length}} assets</p>
                          <textarea class="form-control" [(ngModel)]="booking.notes" name="notes" rows="4"></textarea>
                        </div>
                        <div *ngIf="clash" class="alert alert-danger">
@@ -57,14 +58,15 @@ declare var $;
                      </div>
                      <div class="modal-footer">
                        <p class="info"><span class="glyphicon glyphicon-info-sign"></span> Use the <i>Today</i> button for &quot;One Day Booking&quot;</p>
-                       <button type="button" class="btn btn-default" (click)="onToday()" [disabled]="! canToday">Today</button>
+                       <button type="button" class="btn btn-default" title="Set due out and due in dates to today, where possible" (click)="onToday()" [disabled]="! canToday">Today</button>
                        <button type="button" class="btn btn-default" (click)="onSubmit()" [disabled]="! form.form.valid">Submit</button>
                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                      </div>
                    </div>
                  </div>
                </form>
-             </div>`
+             </div>`,
+  styles: ['.warn { font-style: italic }']
 })
 export class BookingComponent {
   editing: boolean = false;
@@ -77,6 +79,7 @@ export class BookingComponent {
   // collects form input values
   booking: Booking;
   group: Booking[];
+  editFields: any = {};
 
   @Input('booking') set _booking(booking: Booking) {
     // default some values to their previous values
@@ -101,10 +104,18 @@ export class BookingComponent {
           if (this.booking[field] == undefined) {
             this.booking[field] = booking[field];
           } else if (this.booking[field] != booking[field]) {
-            this.booking[field] = '';
+            if (field == 'project') {
+              this.booking[field] = '';
+            } else if (booking[field] > this.booking[field]){
+              this.booking[field] = booking[field];
+            }
           }
         }
       }
+      this.editFields.project = this.canEditProject;
+      this.editFields.dueOutDate = this.canEditDueOutDate;
+      this.editFields.dueInDate = this.canEditDueInDate;
+      this.editFields.notes = true;
     }
   }
 
@@ -122,13 +133,21 @@ export class BookingComponent {
 
   onToday() {
     if (! this.canToday) return;
-    this.booking.due_out_date = this.today;
-    this.booking.due_in_date = this.today;
+    if (this.canEditDueOutDate) {
+      this.booking.due_out_date = this.today;
+    }
+    if (this.canEditDueInDate) {
+      this.booking.due_in_date = this.today;
+    }
   }
 
   constructor(private enumService: EnumService, private dataService: DataService, private fieldMap: FieldMap) {}
 
   onSubmit() {
+    this.group != undefined ? this.submitGroup(): this.submit();
+  }
+
+  submit() {
     let editFields: any = undefined;
     if (this.editing) {
       editFields = {};
@@ -157,19 +176,25 @@ export class BookingComponent {
   }
 
   submitGroup() {
-    let editFields: any = {};
-    if (this.canEditProject) editFields.project = true;
-    if (this.canEditDueOutDate) editFields.dueOutDate = true;
-    if (this.canEditDueInDate) editFields.dueInDate = true;
     let obs = [];
     for (let booking of this.group) {
       // update booking values from modal form fields
-      if (this.canEditProject) booking.project = this.booking.project;
-      if (this.canEditDueOutDate) booking.due_out_date = this.booking.due_out_date;
-      if (this.canEditDueInDate) booking.due_in_date = this.booking.due_in_date;
-      obs.push(this.dataService.updateBooking(booking, editFields));
+      booking.project = this.booking.project;
+      booking.due_out_date = this.booking.due_out_date;
+      booking.due_in_date = this.booking.due_in_date;
+      booking.notes = this.editFields.notes ? this.booking.notes : undefined;
+      obs.push(this.dataService.updateBooking(booking, this.editFields));
     }
-    Observable.forkJoin(obs).subscribe(() => this.event.emit({addUpdateBooking: true}));
+    Observable.forkJoin(obs).subscribe(() => {
+        $('#bookingModal').modal('hide');
+        this.event.emit({addUpdateBooking: true});
+      }, error => {
+      if (error.status == 409) {
+        this.clash = error.rsp.json();
+      } else {
+        Observable.throw(error);
+      }
+    });
   }
 
   // attempt to return the booking property, if not, return the asset property, default ''
@@ -196,7 +221,11 @@ export class BookingComponent {
   }
 
   get projectOptions(): any[] {
-    return this.options(this.fieldMap.projectInput.field).filter(o => (this.results.projects[o.value] || {}).active);
+    return this.options(this.fieldMap.projectInput.field)
+               .map(o => {
+                 o.disabled = !(this.results.projects[o.value] || {}).active;
+                 return o;
+               });
   }
 
   // group bookings

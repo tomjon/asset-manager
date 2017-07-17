@@ -31,11 +31,11 @@ import 'rxjs/add/observable/forkJoin'; //FIXME didn't we add this in the module?
                  </div>
                </div>
              </div>
-             <badass-booking [user]="user" [asset]="asset" [booking]="booking" [group]="bookingGroup" [results]="results" (event)="onEvent($event)"></badass-booking>
              <badass-notification [notifications]="notifications"></badass-notification>
              <badass-enumerations [search]="search" [results]="results"></badass-enumerations>
              <badass-user-bookings [user]="user" [users]="users" [range]="range" [bookings]="userBookings" (event)="onEvent($event)"></badass-user-bookings>
              <badass-project-bookings [user]="user" [range]="range" (event)="onEvent($event)"></badass-project-bookings>
+             <badass-booking [user]="user" [asset]="asset" [booking]="booking" [group]="bookingGroup" [results]="results" (event)="onEvent($event)"></badass-booking>
              <badass-booking-condition [user]="user" [search]="search" [booking]="booking" (event)="onEvent($event)"></badass-booking-condition>
              <div id="blocker"></div>`,
   styles: ['div.container-fluid { margin-top: 10px }',
@@ -225,9 +225,8 @@ export class AppComponent {
       this.doSearch();
     }
     else if (event.addUpdateBooking != undefined) {
-      if (event.addUpdateBooking === true) {
-        this._updateBookings(undefined, true); //FIXME again, just update everything when submitting edits to a group of bookings
-      } else if (this.assetBookings) {
+      this._updateBookings(undefined, true); //FIXME again, just update everything
+      if (this.assetBookings) {
         let index = this.assetBookings.findIndex(booking => booking.booking_id == event.addUpdateBooking.booking_id);
         if (index != -1) {
           this.assetBookings.splice(index, 1, event.addUpdateBooking);

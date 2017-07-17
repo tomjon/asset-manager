@@ -669,7 +669,7 @@ def booking_endpoint(booking_id=None):
                 pass
 
             fields = [field for field in ['project', 'due_out_date', 'due_in_date'] if field in request.args]
-            notes = request.get_data()
+            notes = request.get_data() if 'notes' in request.args else None
             if notes is not None:
                 fields.append('notes')
             if len(fields) == 0:
