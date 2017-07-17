@@ -49,7 +49,7 @@ export class BookingConditionComponent {
   constructor(private dataService: DataService, private enumService: EnumService, private fieldMap: FieldMap) {}
 
   onCheckIn() {
-    this.event.emit({check: {booking: this.booking, out: false}});
+    this.event.emit({checkInCondition: this.booking.condition});
   }
 
   //FIXME add new and options stuff... need to move this out

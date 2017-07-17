@@ -2,7 +2,7 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { DataService } from './data.service';
 import { EnumService } from './enum.service';
 import { EnumPipe } from './enum.pipe';
-import { User, ADMIN_ROLE } from './user';
+import { User } from './user';
 import { Booking, Bookings } from './booking';
 import { DateRange } from './date-range';
 
@@ -64,7 +64,7 @@ import { DateRange } from './date-range';
                        <span *ngIf="booking.canEdit(user)" class="glyphicon glyphicon-pencil" (click)="onEdit(booking)" data-toggle="modal" data-target="#bookingModal"></span>
                        <span *ngIf="booking.canDelete(user)" class="glyphicon glyphicon-trash" (click)="onDelete(booking)"></span>
                        <span *ngIf="bookings.canCheckOut(user, booking)" class="glyphicon glyphicon-export" (click)="onCheck(booking, true)" [ngClass]="{overdue: booking.overdueOut}"></span>
-                       <span *ngIf="booking.canCheckIn(user)" class="glyphicon glyphicon-import" (click)="onCheck(booking, null)" data-toggle="modal" data-target="#conditionModal" [ngClass]="{overdue: booking.overdueIn}"></span>
+                       <span *ngIf="booking.canCheckIn(user)" class="glyphicon glyphicon-import" (click)="onCheck(booking, false)" data-toggle="modal" data-target="#conditionModal" [ngClass]="{overdue: booking.overdueIn}"></span>
                      </td>
                    </tr>
                    <tr *ngIf="selectedCount > 1">
@@ -74,7 +74,7 @@ import { DateRange } from './date-range';
                        <span *ngIf="canEditGroup" class="glyphicon glyphicon-pencil" (click)="onEditGroup()" data-toggle="modal" data-target="#bookingModal"></span>
                        <span *ngIf="canDeleteGroup" class="glyphicon glyphicon-trash" (click)="onDeleteGroup()"></span>
                        <span *ngIf="canCheckOutGroup" class="glyphicon glyphicon-export" (click)="onCheckGroup(true)" [ngClass]="{overdue: overdueOutGroup}"></span>
-                       <span *ngIf="canCheckInGroup" class="glyphicon glyphicon-import" (click)="onCheckGroup(null)" data-toggle="modal" data-target="#conditionModal" [ngClass]="{overdue: overdueInGroup}"></span>
+                       <span *ngIf="canCheckInGroup" class="glyphicon glyphicon-import" (click)="onCheckGroup(false)" data-toggle="modal" data-target="#conditionModal" [ngClass]="{overdue: overdueInGroup}"></span>
                      </td>
                    </tr>
                  </tbody>

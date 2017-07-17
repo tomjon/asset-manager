@@ -236,37 +236,43 @@ export class AppComponent {
       }
     }
     else if (event.check != undefined) {
-      if (event.check.out === true) {
+      if (event.check.out) {
         this.dataService.check(event.check.booking.asset_id)
                         .subscribe(() => this._updateBookings(event.check.booking.asset_id, event.check.user));
-      } else if (event.check.out === null) {
+      } else {
         // necessary for condition update modal
         this.booking = event.check.booking;
+        this.bookingGroup = undefined;
         if (this.booking.condition == undefined) {
           this.booking.condition = this.asset.condition;
         }
-      } else {
-        this.dataService.check(event.check.booking.asset_id, event.check.booking.condition)
-                        .subscribe(() => {
-                          this._updateBookings(event.check.booking.asset_id, event.check.user);
-                          this.doSearch();
-                          if (this.asset.id == event.check.booking.asset_id) {
-                            this.asset.condition = event.check.booking.condition;
-                            this.asset = Object.assign({}, this.asset); //FIXME: force reload of asset in asset component
-                          }
-                        });
       }
     }
     else if (event.checkGroup != undefined) {
-      if (event.checkGroup.out === true) {
+      if (event.checkGroup.out) {
         Observable.forkJoin(event.checkGroup.bookings.map(b => this.dataService.check(b.asset_id)))
                   .subscribe(() => this._updateBookings(undefined, true)); //FIXME too hard to work out if we need to update, so do it anyway
-      } else if (event.checkGroup.out === null) {
+      } else {
         // necessary for condition update modal
         this.booking = new Booking();
+        this.bookingGroup = event.checkGroup.bookings;
         //FIXME could take 'average' condition from all assets in the booking group? hm
+      }
+    }
+    else if (event.checkInCondition != undefined) {
+      if (this.bookingGroup == undefined) {
+        console.log("Book single condfition");
+        this.dataService.check(this.booking.asset_id, event.checkInCondition)
+                        .subscribe(() => {
+                          this._updateBookings(this.booking.asset_id, event.check.user);
+                          this.doSearch();
+                          if (this.asset.id == this.booking.asset_id) {
+                            this.asset.condition = event.checkInCondition;
+                            this.asset = Object.assign({}, this.asset); //FIXME: force reload of asset in asset component
+                          }
+                        });
       } else {
-        Observable.forkJoin(event.checkGroup.bookings.map(b => this.dataService.check(b.asset_id, b.condition)))
+        Observable.forkJoin(this.bookingGroup.map(b => this.dataService.check(b.asset_id, event.checkInCondition)))
                   .subscribe(() => {
                     this._updateBookings(undefined, true);
                     this.doSearch();

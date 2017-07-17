@@ -410,7 +410,7 @@ export class DataService {
 
   // no condition means we are checking out, otherwise checking in
   check(asset_id: string, condition: string=undefined): Observable<void> {
-    return this.put(`check/${asset_id}`, condition);
+    return this.put(`check/${asset_id}`, condition, {}, 'text/plain');
   }
 
   getNotifications(): Observable<Notification[]> {

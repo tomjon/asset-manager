@@ -92,7 +92,7 @@ CHECK_OUT_SQL = """
          AND (user_id=:user_id OR (SELECT COUNT(*) FROM user WHERE user_id=:user_id AND role={0})=1)
          AND date('now') >= due_out_date AND date('now') <= due_in_date
          AND out_date IS NULL AND in_date IS NULL
-""".format(ADMIN_ROLE)
+""".format(BOOK_ROLE)
 
 # also check that the condition value is valid
 CHECK_IN_SQL = """
@@ -103,7 +103,7 @@ CHECK_IN_SQL = """
          AND date('now') >= due_out_date
          AND out_date IS NOT NULL AND in_date IS NULL
          AND (SELECT COUNT(*) FROM enum, enum_entry WHERE field='{1}' AND enum.enum_id=enum_entry.enum_id AND value=:condition)=1
-""".format(ADMIN_ROLE, CONDITION_FIELD)
+""".format(BOOK_ROLE, CONDITION_FIELD)
 
 GET_ATTACHMENT_SQL = """
   SELECT name, data

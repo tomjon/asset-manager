@@ -1,4 +1,4 @@
-import { User, ADMIN_ROLE } from './user';
+import { User, BOOK_ROLE, ADMIN_ROLE } from './user';
 import { today } from './today';
 
 // accommodates all the 'extra' fields provided by the server
@@ -28,7 +28,7 @@ export class Booking {
   }
 
   canCheckIn(user: User): boolean {
-    if (user.user_id != this.user_id && user.role != ADMIN_ROLE) return false;
+    if (user.user_id != this.user_id && user.role != BOOK_ROLE) return false;
     return this.isOut;
   }
 
@@ -111,7 +111,7 @@ export class Bookings extends Array<Booking> {
   }
 
   canCheckOut(user: User, booking: Booking): boolean {
-    if (user.user_id != booking.user_id && user.role != ADMIN_ROLE) return false;
+    if (user.user_id != booking.user_id && user.role != BOOK_ROLE) return false;
     return this.out_asset_ids[booking.asset_id] == undefined && booking.out_date == null && booking.in_date == null && today() >= booking.due_out_date && today() <= booking.due_in_date;
   }
 }
