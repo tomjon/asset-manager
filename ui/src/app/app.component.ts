@@ -148,6 +148,7 @@ export class AppComponent {
     if (user.user_id == undefined) {
       this.reset();
       this.doSearch();
+      this.assetBookings = undefined;
     }
     this._updateBookings(undefined, true); //FIXME update all bookings :(
   }
