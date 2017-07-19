@@ -267,7 +267,7 @@ export class AppComponent {
       if (this.bookingGroup == undefined) {
         this.dataService.check(this.booking.asset_id, event.checkInCondition)
                         .subscribe(() => {
-                          this._updateBookings(this.booking.asset_id, event.check.user);
+                          this._updateBookings(this.booking.asset_id, true);
                           this.doSearch();
                           if (this.asset.id == this.booking.asset_id) {
                             this.asset.condition = event.checkInCondition;
@@ -279,10 +279,6 @@ export class AppComponent {
                   .subscribe(() => {
                     this._updateBookings(undefined, true);
                     this.doSearch();
-/*                          if (this.asset.id == event.check.booking.asset_id) {
-                            this.asset.condition = event.check.booking.condition;
-                            this.asset = Object.assign({}, this.asset); //FIXME: force reload of asset in asset component
-                          }*/
                   });
       }
     }
