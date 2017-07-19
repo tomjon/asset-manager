@@ -89,6 +89,7 @@ export class AppComponent {
   }
 
   loadAssetBookings() {
+    if (this.user.role != BOOK_ROLE && this.user.role != ADMIN_ROLE) return;
     if (this.asset && this.asset.id && this.showBookings()) {
       this.dataService.getAssetBookings(this.asset, this.range)
                       .subscribe(bookings => {
@@ -100,6 +101,7 @@ export class AppComponent {
   }
 
   loadUserBookings() {
+    if (this.user.role != BOOK_ROLE && this.user.role != ADMIN_ROLE) return;
     this.dataService.getUserBookings(this.user.user_id, this.range).subscribe(userBookings => this.userBookings = userBookings);
   }
 
@@ -147,6 +149,7 @@ export class AppComponent {
       this.reset();
       this.doSearch();
     }
+    this._updateBookings(undefined, true); //FIXME update all bookings :(
   }
 
   doSearch() {
@@ -261,7 +264,6 @@ export class AppComponent {
     }
     else if (event.checkInCondition != undefined) {
       if (this.bookingGroup == undefined) {
-        console.log("Book single condfition");
         this.dataService.check(this.booking.asset_id, event.checkInCondition)
                         .subscribe(() => {
                           this._updateBookings(this.booking.asset_id, event.check.user);
