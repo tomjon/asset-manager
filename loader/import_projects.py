@@ -45,7 +45,7 @@ if __name__ == '__main__':
             if count == 1: continue # ignore first line
             try:
                 line = line.decode('ascii', 'ignore').encode('utf8').strip()
-                tpr, status, title, assets = line.split(',')
+                tpr, status, title, assets = [x.strip('"') for x in line.split(',')]
                 projects.append((tpr, title))
             except ValueError:
                 print >>sys.stderr, "Bad CSV line:", line

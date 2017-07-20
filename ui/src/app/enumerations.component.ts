@@ -218,13 +218,20 @@ export class EnumerationsComponent {
   }
 
   get canDelete(): boolean {
-    if (this.field == undefined || this.field == 'user') return false;
-    return this.values.length == 1 && ! this.results.facets[this.field][this.values[0]];
+    if (this.field == undefined || this.field == 'user' || this.values.length == 0) return false;
+    for (let value of this.values) {
+      if (this.results.facets[this.field][value] > 0) {
+        return false;
+      }
+    }
+    return true;
   }
 
   onDelete() {
     if (! this.canDelete) return;
-    this.options.find(o => o.value == this.values[0]).deleted = true;
+    for (let value of this.values) {
+      this.options.find(o => o.value == value).deleted = true;
+    }
     this.values = [];
     this.pristine = false;
   }
