@@ -112,7 +112,6 @@ import { User, ADMIN_ROLE } from './user';
 })
 export class EnumerationsComponent {
   @Input('search') search: Search;
-  @Input('results') results: Results;
 
   @ViewChild('form') form: HTMLFormElement;
 
@@ -123,6 +122,7 @@ export class EnumerationsComponent {
   label: string; // label currently being edited
   isNew: boolean; // whether to show 'New Label' dialog (true), or 'Edit Label' (false)
   mergeTarget: number; // target for the merge source
+  results: Results = new Results();
 
   constructor(private dataService: DataService, private enumService: EnumService, private fieldMap: FieldMap) {}
 
@@ -143,12 +143,15 @@ export class EnumerationsComponent {
   }
 
   optionLabel(option): string {
+    if (this.results.facets[this.field] == undefined) return '';
     let count = this.field == 'user' ? '' : ` (${this.results.facets[this.field][option.value] || '0'})`;
     return `${option.label}${count}`;
   }
 
   public onSelect() {
+    //FIXME pretty terrible fix for issue #116 to load counts - will do it every selection. Need this because there is no 'open' hook
     if (this.field != undefined) {
+      this.dataService.search(new Search(this.fieldMap)).subscribe(results => this.results = results);
       this.options = this.enumService.get(this.field).options(false, false);
       this.pristine = true;
     }

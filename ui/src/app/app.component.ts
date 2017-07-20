@@ -32,7 +32,7 @@ import 'rxjs/add/observable/forkJoin'; //FIXME didn't we add this in the module?
                </div>
              </div>
              <badass-notification [notifications]="notifications"></badass-notification>
-             <badass-enumerations [search]="search" [results]="results"></badass-enumerations>
+             <badass-enumerations [search]="search"></badass-enumerations>
              <badass-user-bookings [user]="user" [users]="users" [range]="range" [bookings]="userBookings" (event)="onEvent($event)"></badass-user-bookings>
              <badass-project-bookings [user]="user" [range]="range" (event)="onEvent($event)"></badass-project-bookings>
              <badass-booking [user]="user" [asset]="asset" [booking]="booking" [group]="bookingGroup" [results]="results" (event)="onEvent($event)"></badass-booking>
@@ -89,6 +89,7 @@ export class AppComponent {
   }
 
   loadAssetBookings() {
+    if (this.user.role != BOOK_ROLE && this.user.role != ADMIN_ROLE) return;
     if (this.asset && this.asset.id && this.showBookings()) {
       this.dataService.getAssetBookings(this.asset, this.range)
                       .subscribe(bookings => {
@@ -100,6 +101,7 @@ export class AppComponent {
   }
 
   loadUserBookings() {
+    if (this.user.role != BOOK_ROLE && this.user.role != ADMIN_ROLE) return;
     this.dataService.getUserBookings(this.user.user_id, this.range).subscribe(userBookings => this.userBookings = userBookings);
   }
 
@@ -146,7 +148,9 @@ export class AppComponent {
     if (user.user_id == undefined) {
       this.reset();
       this.doSearch();
+      this.assetBookings = undefined;
     }
+    this._updateBookings(undefined, true); //FIXME update all bookings :(
   }
 
   doSearch() {
@@ -261,10 +265,9 @@ export class AppComponent {
     }
     else if (event.checkInCondition != undefined) {
       if (this.bookingGroup == undefined) {
-        console.log("Book single condfition");
         this.dataService.check(this.booking.asset_id, event.checkInCondition)
                         .subscribe(() => {
-                          this._updateBookings(this.booking.asset_id, event.check.user);
+                          this._updateBookings(this.booking.asset_id, true);
                           this.doSearch();
                           if (this.asset.id == this.booking.asset_id) {
                             this.asset.condition = event.checkInCondition;
@@ -276,10 +279,6 @@ export class AppComponent {
                   .subscribe(() => {
                     this._updateBookings(undefined, true);
                     this.doSearch();
-/*                          if (this.asset.id == event.check.booking.asset_id) {
-                            this.asset.condition = event.check.booking.condition;
-                            this.asset = Object.assign({}, this.asset); //FIXME: force reload of asset in asset component
-                          }*/
                   });
       }
     }
