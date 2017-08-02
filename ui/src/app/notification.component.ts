@@ -9,6 +9,7 @@ import { EnumPipe } from './enum.pipe';
 import { Enum } from './enum';
 import { User, ADMIN_ROLE } from './user';
 import { pristine } from './pristine';
+import { BOOKED_DATE } from './field-map';
 
 @Component({
   selector: 'badass-notification',
@@ -61,6 +62,10 @@ import { pristine } from './pristine';
                        </ul>
                        <div class="tab-content">
                          <div class="form-group">
+                           <label for="triggerType">Report</label>
+                           <input type="checkbox" name="triggerType" [(ngModel)]="isReport" />
+                         </div>
+                         <div *ngIf="activeTrigger.column != undefined || activeTrigger.field != undefined" class="form-group">
                            <div class="col-lg-4">
                              <label for="triggerColumn">Column</label>
                              <select class="form-control" [(ngModel)]="activeTrigger.column" name="triggerColumn" (ngModelChange)="activeTrigger.field = undefined">
@@ -191,6 +196,15 @@ export class NotificationComponent {
       }
     }
     return false;
+  }
+
+  get isReport(): boolean {
+    return this.activeTrigger.column == undefined && this.activeTrigger.field == undefined;
+  }
+
+  set isReport(value: boolean) {
+    this.activeTrigger.column = value ? undefined : BOOKED_DATE.column;
+    this.activeTrigger.field = undefined;
   }
 
   //FIXME this is copied from elsewhere... code reuse :(

@@ -110,13 +110,6 @@ CREATE TABLE trigger_filter(
 	value VARCHAR(64)
 );
 
-CREATE TABLE notification_sent(
-	sent_id INTEGER PRIMARY KEY,
-	notification_id INTEGER,
-	asset_id INTEGER,
-	sent DATE
-);
-
 /**
  * Create and populate the 'role' and 'every' enums, and create the 'project', 'user' and 'condition' enums, which are
  * all required for the system to run. The labels for roles can be edited later, but the

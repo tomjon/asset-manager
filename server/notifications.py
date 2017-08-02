@@ -59,11 +59,11 @@ def _get_enumeration_value(sql, key, value):
     except NoResult:
         return "<bad key or no value>"
 
-def _eval_template(sql, template, values, asset):
+def _eval_line(sql, line, values, asset):
     result = []
     pos = 0
-    for match in BRACKETS_RE.finditer(template):
-        result.append(template[pos:match.start()])
+    for match in BRACKETS_RE.finditer(line):
+        result.append(line[pos:match.start()])
         for index, brackets, source in [(0, '[]', values), (1, '<>', asset)]:
             if match.groups()[index] is not None:
                 key = match.groups()[index].lower()
@@ -78,8 +78,18 @@ def _eval_template(sql, template, values, asset):
                     value = _get_enumeration_value(sql, key, value)
                 result.append(value)
         pos = match.end()
-    result.append(template[pos:])
+    result.append(line[pos:])
     return ''.join([str(x) for x in result])
+
+def _eval_template(sql, template, values, asset, assets):
+    lines = []
+    for line in template.split('\n'):
+        if assets is not None and len(line) > 0 and line[0] == '*':
+            for asset in assets:
+                lines.append(_eval_line(sql, line[1:], values, asset))
+        else:
+            lines.append(_eval_line(sql, line, values, asset))
+    return '\n'.join(lines)
 
 
 class Filter(object):
@@ -93,7 +103,7 @@ class Filter(object):
         assert operator in OPERATORS
 
     def _apply(self, values, asset):
-        test_value = values[self.column] if self.column is not None else asset[self.field]
+        test_value = values[self.column] if self.column is not None else asset.get(self.field, None)
         if self.value == 'now':
             value = datetime.datetime.now().isoformat()[:10]
         elif self.value == 'null':
@@ -127,8 +137,9 @@ class Trigger(object):
 class Notification(object):
     """ Class representing a notification specification.
     """
-    def __init__(self, roles, triggers, notification_id=None, title_template=None, body_template=None, every=None, offset=None, run=None, **_):
+    def __init__(self, roles, triggers, notification_id=None, name=None, title_template=None, body_template=None, every=None, offset=None, run=None, **_):
         self.id = notification_id
+        self.name = name
         self.title_template = title_template # title_template can refer to booking or user table column values like [column] and asset field values like <field>
         self.body_template = body_template # as title_template
         self.roles = roles # the roles associated with this notification (all users with any of these roles are cc'd in the mail, if triggered)
@@ -137,10 +148,10 @@ class Notification(object):
         self.offset = int(offset) if offset is not None else None
         self.run = run
 
-    def _mail(self, sql, values, asset):
-        title = _eval_template(sql, self.title_template, values, asset)
-        body = _eval_template(sql, self.body_template, values, asset)
-        mail = Email((values['label'], values['email']) if values is not None else None, title, body)
+    def _mail(self, sql, values, asset, assets):
+        title = _eval_template(sql, self.title_template, values, asset, assets)
+        body = _eval_template(sql, self.body_template, values, asset, assets)
+        mail = Email((values['label'], values['email']) if values is not None else None, title.split('\n')[0], body) # truncate title to one line
         for user in sql.selectAllDict("SELECT label, email FROM user, enum, enum_entry WHERE role IN ({0}) AND field='user' AND enum.enum_id=enum_entry.enum_id AND value=user.user_id".format(','.join([str(role_id) for role_id in self.roles]))):
             mail.add_cc((user['label'], user['email']))
         return mail
@@ -168,10 +179,6 @@ class Notification(object):
             raise Exception("Bad value for 'every' for notification id {0}".format(self.id))
         return sql.selectSingle("SELECT :run < DATE(:now, :every, :offset)", run=self.run, now=now, every=every, offset=offset) == 1
 
-    def _insert_sent(self, now, sql, asset_id):
-        if not debug:
-            sql.insert("INSERT INTO notification_sent VALUES (NULL, :notification_id, :asset_id, DATE(:now))", notification_id=self.id, asset_id=asset_id, now=now)
-
     def _sign(self, x):
         # return the integer x with sign
         return '{0}{1}'.format('+' if x >= 0 else '', str(x))
@@ -179,7 +186,7 @@ class Notification(object):
     def run_now(self, now, sql, index):
         """ Triggers are ORed - if any fire, yield a mail.
         """
-        log.debug("Running notification: %s", self.id)
+        log.debug("Running notification %s: %s", self.id, self.name)
         if not debug:
             sql.insert("UPDATE notification SET run=DATE(:now) WHERE notification_id=:notification_id", notification_id=self.id, now=now)
         for trigger in self.triggers:
@@ -189,7 +196,6 @@ class Notification(object):
                     if asset is None:
                         log.debug("Asset with id %d no longer exists - skipping", values['asset_id'])
                         continue
-                    self._insert_sent(now, sql, values['asset_id'])
                     if trigger._filter(values, asset):
                         yield self._mail(sql, values, asset)
             elif trigger.field is not None:
@@ -197,10 +203,13 @@ class Notification(object):
                     q = '{0}:[* TO {1}{2}DAYS]'.format(trigger.field, now.upper(), self._sign(-trigger.days))
                 else:
                     q = '{0}:[{1}{2}DAYS TO *]'.format(trigger.field, now.upper(), self._sign(trigger.days))
-                for asset in index.search({'q': q})['response']['docs']:
-                    self._insert_sent(now, sql, asset['id'])
-                    if trigger._filter(None, asset):
-                        yield self._mail(sql, None, asset)
+                #FIXME here and below it would be better to allow SOLR to do the filtering
+                for asset in filter(lambda x: trigger._filter(None, x), index.search({'q': q, 'rows': 100000})['response']['docs']):
+                    yield self._mail(sql, None, asset)
+            else:
+                # it's a report, which means trigger all assets (satisfying filters), and group hits into one email
+                assets = filter(lambda x: trigger._filter(None, x), index.search({'q': '*', 'rows': 100000})['response']['docs'])
+                yield self._mail(sql, None, None, assets)
 
 
 def run_notifications(now, db, index):
