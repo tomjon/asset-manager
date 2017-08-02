@@ -83,7 +83,8 @@ import { pristine } from './pristine';
                            <li *ngFor="let filter of activeTrigger.filters; let index=index" class="active">
                              <a class="trigger-filter">
                                <span class="filter-label">Filter</span>
-                               {{filter.column != null ? filter.column : filter.field}} {{operatorLabel(filter)}} <i>{{filter.value.toUpperCase()}}</i>
+                               <ng-container *ngIf="filter.field == undefined || fieldMap.get(filter.field).type != 'enum'">{{filter.column != null ? filter.column : filter.field}} {{operatorLabel(filter)}} <i>{{filter.value.toUpperCase()}}</i></ng-container>
+                               <ng-container *ngIf="filter.field != undefined && fieldMap.get(filter.field).type == 'enum'">{{filter.column != null ? filter.column : filter.field}} {{operatorLabel(filter)}} {{enumService.get(filter.field).label(filter.value)}}</ng-container>
                                <span class="glyphicon glyphicon-trash" (click)="onDeleteFilter(index)"></span>
                              </a>
                            </li>
@@ -93,14 +94,19 @@ import { pristine } from './pristine';
                                  <option *ngFor="let o of fieldMap.filterColumns" [value]="o.column">{{o.label}}</option>
                                </select>
                                <select [(ngModel)]="newFilter.field" name="newFilterField" (ngModelChange)="newFilter.column = undefined">
-                                 <option *ngFor="let o of fieldMap.filterInputs" [value]="o.field">{{o.label}}</option>
+                                 <option *ngFor="let o of fieldMap.allInputs" [value]="o.field">{{o.label}}</option>
                                </select>
                                <select [(ngModel)]="newFilter.operator" name="newFilterOperator">
                                  <option *ngFor="let o of fieldMap.filterOperators" [value]="o.value">{{o.label}}</option>
                                </select>
-                               <select [(ngModel)]="newFilter.value" name="newFilterValue">
+                               <select *ngIf="newFilter.column != undefined" [(ngModel)]="newFilter.value" name="newFilterValue">
                                  <option value="null">NULL</option>
                                  <option value="now">NOW</option>
+                               </select>
+                               <select *ngIf="newFilter.field != undefined" [(ngModel)]="newFilter.value" name="newFilterValue">
+                                 <option *ngFor="let o of options(newFilter.field)" [value]="o.value">{{o.label}}</option>
+                                 <option *ngIf="fieldMap.get(newFilter.field).type != 'enum'" value="null">NULL</option>
+                                 <option *ngIf="fieldMap.get(newFilter.field).type == 'date'" value="now">NOW</option>
                                </select>
                                <span class="glyphicon glyphicon-plus-sign" (click)="onNewFilter()"></span>
                              </a>
@@ -185,6 +191,14 @@ export class NotificationComponent {
       }
     }
     return false;
+  }
+
+  //FIXME this is copied from elsewhere... code reuse :(
+  options(field: string) {
+    let input = this.fieldMap.get(field);
+    if (input.type != 'enum') return [];
+    let e: Enum = this.enumService.get(field);
+    return e.options(true, false);
   }
 
   onSelect() {

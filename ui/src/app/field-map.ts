@@ -5,6 +5,7 @@ var DESCRIPTION = {'field': 'description', 'label': 'Description', 'type': 'text
 var START_FREQ = {'field': 'start_freq', 'label': 'Start Frequency', 'type': 'freq'};
 var STOP_FREQ = {'field': 'stop_freq', 'label': 'Stop Frequency', 'type': 'freq'};
 var CONDITION = {'field': 'condition', 'label': 'Condition', 'type': 'enum'};
+var CONDITION_DATE = {'field': 'condition_date', 'label': 'Condition Updated', 'type': 'date'};
 var FAR_ID = {'field': 'far_id', 'label': 'FAR ID', 'type': 'text'};
 var SAP_ID = {'field': 'sap_id', 'label': 'SAP ID', 'type': 'text'};
 //FIXME should be type: barcode and display an actual barcode
@@ -63,7 +64,7 @@ export class FieldMap {
   private map: any = {};
 
   public allInputs: any[] = [
-    CATEGORY, DESCRIPTION, START_FREQ, STOP_FREQ, CONDITION, FAR_ID,
+    CATEGORY, DESCRIPTION, START_FREQ, STOP_FREQ, CONDITION, CONDITION_DATE, FAR_ID,
     CALIBRATION_DATE, CALIBRATION_DUE, CALIBRATION_TYPE, LOCATION, RACK, SHELF,
     MANUFACTURER, MODEL, SERIAL_NUMBER, OWNER, SAP_ID, BARCODE,
     AUDIT_DATE, PAT_DUE_DATE, URLS
@@ -100,8 +101,6 @@ export class FieldMap {
     BOOKED_DATE, DUE_OUT_DATE, DUE_IN_DATE, OUT_DATE, IN_DATE
   ];
 
-  public filterInputs: any[] = []; // built in constructor
-
   public filterOperators: any[] = FILTER_OPERATORS;
 
   public conditionInput: any = CONDITION;
@@ -114,7 +113,6 @@ export class FieldMap {
         this.enumFields.push(input.field);
       }
       if (input.type == 'date') this.triggerInputs.push(input);
-      if (input.type != 'enum') this.filterInputs.push(input); // FIXME if you want enums, you have to provide labels in the UI
     }
     this.enumInputs.push(PROJECT);
     this.enumInputs.push(USER);

@@ -99,7 +99,8 @@ class Filter(object):
         elif self.value == 'null':
             value = None
         else:
-            raise Exception("Invalid value")
+            # must be an enum value
+            value = self.value
         return eval("test_value{0}value".format(self.operator))
 
     def __repr__(self):
@@ -192,7 +193,11 @@ class Notification(object):
                     if trigger._filter(values, asset):
                         yield self._mail(sql, values, asset)
             elif trigger.field is not None:
-                for asset in index.search({'q': '{0}:[* TO {1}{2}DAYS]'.format(trigger.field, now.upper(), self._sign(-trigger.days))})['response']['docs']:
+                if trigger.days >= 0:
+                    q = '{0}:[* TO {1}{2}DAYS]'.format(trigger.field, now.upper(), self._sign(-trigger.days))
+                else:
+                    q = '{0}:[{1}{2}DAYS TO *]'.format(trigger.field, now.upper(), self._sign(trigger.days))
+                for asset in index.search({'q': q})['response']['docs']:
                     self._insert_sent(now, sql, asset['id'])
                     if trigger._filter(None, asset):
                         yield self._mail(sql, None, asset)
