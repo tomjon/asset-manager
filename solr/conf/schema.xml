@@ -142,6 +142,8 @@
     <field name="notes" type="string" indexed="false" stored="true" required="false" multiValued="true" />
 
     <field name="condition" type="string" indexed="true" stored="true" required="false" multiValued="false" />
+    <field name="condition_date" type="date" indexed="true" stored="true" required="false" multiValued="false" />
+
     <field name="calibration_date" type="date" indexed="true" stored="true" required="false" multiValued="false" />
     <field name="calibration_due" type="date" indexed="true" stored="true" required="false" multiValued="false" />
     <field name="calibration_type" type="string" indexed="true" stored="true" required="false" multiValued="false" />

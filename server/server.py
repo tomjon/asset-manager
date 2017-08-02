@@ -26,6 +26,7 @@ else:
 application.solr = AssetIndex(SOLR_COLLECTION)
 
 CONDITION_FIELD = 'condition'
+CONDITION_DATE_FIELD = 'condition_date'
 
 XJOIN_PREFIX = 'xjoin_'
 
@@ -721,6 +722,7 @@ def book_endpoint(asset_id):
             if sql.update(CHECK_IN_SQL, asset_id=asset_id, user_id=current_user.user_id, condition=condition) < 1:
                 return "Bad request", 400
             application.solr.update_field(asset_id, CONDITION_FIELD, condition)
+            application.solr.update_field(asset_id, CONDITION_DATE_FIELD, 'NOW')
         return json.dumps({})
 
 
