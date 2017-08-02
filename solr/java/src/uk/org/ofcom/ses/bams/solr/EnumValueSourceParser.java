@@ -28,7 +28,12 @@ public class EnumValueSourceParser extends ValueSourceParser {
 	public static final String INIT_URL= "url";
 	public static final String INIT_DEFAULT_NO_VALUE = "default_no_value";
 	public static final String INIT_DEFAULT_NO_ORDER = "default_no_order";
-	public static final String INIT_RELOAD_PREFIX = "reload_prefix";
+	
+	public static final int OP_ENUM = 0; // normal operation - evaulate enum
+	public static final int OP_RELOAD = 1; // reload enums (and still evaluate enum)
+	public static final int OP_RELOAD_ONLY = 2; // reload enum (give default value for all docs)
+	
+	private static String DUMMY_FIELD = new String();
 	
 	// map from enum name (==field name) => map from value => order
 	private Map<String, Map<String, Long>> enumValues = new HashMap<>();
@@ -42,12 +47,13 @@ public class EnumValueSourceParser extends ValueSourceParser {
 	// default order if the enumeration is missing the doc field value
 	private long defaultNoOrder;
 	
-	// reload key, if this is encountered as argument, we reload enums
-	private String reloadPrefix;
+	// reload count - this is a query cache buster
+	private int count;
 
-	private void loadEnums() {
-		JSONParser parser = new JSONParser();
+	private Map<String, Map<String, Long>> loadEnums() {
 		try (InputStreamReader in = new InputStreamReader(enumsUrl.openStream())) {
+			Map<String, Map<String, Long>> enumValues = new HashMap<>();
+			JSONParser parser = new JSONParser();
 			JSONObject enums = (JSONObject)parser.parse(in);
 			for (Object field : enums.keySet()) {
 				Map<String, Long> values = new HashMap<String, Long>();
@@ -60,15 +66,18 @@ public class EnumValueSourceParser extends ValueSourceParser {
 					values.put(value, order);
 				}
 			}
+			return enumValues;
 		} catch (IOException | ParseException e) {
 			throw new RuntimeException(e);
+		} finally {
+			++count;
 		}
 	}
 	
 	/**
 	 * Initialise the enumeration from the file indicated.
 	 */
-	public void init(NamedList args) {
+	public void init(@SuppressWarnings("rawtypes") NamedList args) {
 		try {
 			enumsUrl = new URL((String)args.get(INIT_URL));
 		} catch (MalformedURLException e) {
@@ -76,46 +85,54 @@ public class EnumValueSourceParser extends ValueSourceParser {
 		}
 		defaultNoValue = Long.valueOf((String)args.get(INIT_DEFAULT_NO_VALUE));
 		defaultNoOrder = Long.valueOf((String)args.get(INIT_DEFAULT_NO_ORDER));
-		reloadPrefix = (String)args.get(INIT_RELOAD_PREFIX);
-		loadEnums();
+		enumValues = loadEnums();
 	}
 	
-	private String checkForReload(String field) {		
-		if (field.startsWith(reloadPrefix)) {
-			loadEnums();
-			field = field.substring(reloadPrefix.length());
+	private String checkForReload(FunctionQParser fqp) throws SyntaxError {
+		String field = fqp.parseArg();
+		int op = fqp.parseInt();
+		if (op == OP_ENUM) {
+			return field;
+		} else if (op == OP_RELOAD) {
+			enumValues = loadEnums();
+			return field;
+		} else if (op == OP_RELOAD_ONLY) {
+			enumValues = loadEnums();
+			return DUMMY_FIELD;
 		}
-		return field;
+		throw new RuntimeException("Bad operation: " + op);
 	}
 	
 	public ValueSource parse(FunctionQParser fqp) throws SyntaxError {
 		// SOLR document field (==enumeration name) from which to look up values
-		final String field = checkForReload(fqp.parseArg());
+		final String field = checkForReload(fqp);
 		final Map<String, Long> values = enumValues.get(field);
 		
-		if (values == null) {
+		if (values == null && field != DUMMY_FIELD) {
 			throw new RuntimeException("No such enumeration: " + field);
 		}
 		
 		return new ValueSource() {
-
+			// this is used as part of the query cache key
 			public String description() {
-				return "Enumerations evaluated on " + field;
+				return "Enumeration for " + field + " *" + count;
 			}
 
-			public FunctionValues getValues(Map context, LeafReaderContext readerContext) throws IOException {
-				final BinaryDocValues docValues = DocValues.getBinary(readerContext.reader(), field);
+			public FunctionValues getValues(@SuppressWarnings("rawtypes") Map context, LeafReaderContext readerContext) throws IOException {
+				final BinaryDocValues docValues = field != DUMMY_FIELD ? DocValues.getBinary(readerContext.reader(), field) : null;
 
 				return new DoubleDocValues(this) {
-
 					public double doubleVal(int doc) {
-						BytesRef docValue = docValues.get(doc);
-						if (docValue == null) return defaultNoValue;
-						String key = docValue.utf8ToString();
-						if (! values.containsKey(key)) return defaultNoOrder;
-						return values.get(key);
+						if (docValues != null) {
+							BytesRef docValue = docValues.get(doc);
+							if (docValue == null) return defaultNoValue;
+							String key = docValue.utf8ToString();
+							if (! values.containsKey(key)) return defaultNoOrder;
+							return values.get(key);
+						} else {
+							return defaultNoValue;
+						}
 					}
-					
 				};
 			}
 
@@ -126,7 +143,6 @@ public class EnumValueSourceParser extends ValueSourceParser {
 			public boolean equals(Object that) {
 				return that.hashCode() == hashCode();
 			}
-			
 		};
 	}
 

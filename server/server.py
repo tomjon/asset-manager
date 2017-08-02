@@ -352,22 +352,20 @@ def search_endpoint(path=None):
         if len(order) < 2 or order[0] not in '><':
             return "Bad order", 400
         if enum:
+            enum_op = 0
             if reload_enums:
-                reload_prefix = '__'
+                enum_op = 1
                 reload_enums = False
-            else:
-                reload_prefix = ''
-            field = 'enum({0}{1})'.format(reload_prefix, order[1:])
+            field = 'enum({0},{1})'.format(order[1:], enum_op)
         else:
             field = order[1:]
         sort.append('{0} {1}'.format(field, 'asc' if order[0] == '>' else 'desc'))
         params.append(('fq', '{0}:*'.format(order[1:])))
+    if reload_enums:
+        # if reload_enums is still true, we need to add a dummy call to enum()
+        sort.append('enum(foo,2) asc')
     sort.reverse()
     params.append(('sort', ','.join(sort)))
-
-    # if reload_enums is still true, we need to add a dummy call to enum(__*)
-    if reload_enums:
-        params.append(('bq', 'enum(__foo)'))
 
     if path is not None:
         for field_value in path.split('/'):
