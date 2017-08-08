@@ -15,6 +15,8 @@ import { ProjectBookingsComponent} from './project-bookings.component';
 import { AttachmentComponent } from './attachment.component';
 import { NotificationComponent } from './notification.component';
 import { EnumerationsComponent } from './enumerations.component';
+import { CalendarComponent as FullCalendarComponent } from 'angular2-fullcalendar/src/calendar/calendar';
+import { CalendarComponent } from './calendar.component';
 import { EnumPipe } from './enum.pipe';
 import { FieldMap } from './field-map';
 import { DataService } from './data.service';
@@ -37,6 +39,8 @@ import './rxjs-operators';
     AttachmentComponent,
     NotificationComponent,
     EnumerationsComponent,
+    FullCalendarComponent,
+    CalendarComponent,
     EnumPipe
   ],
   imports: [
