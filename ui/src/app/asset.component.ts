@@ -89,7 +89,7 @@ import { DateRange } from './date-range';
                    </div>
                    <div *ngIf="tab == 2">
                      <h3>{{tabs[2]}}</h3>
-                     <badass-calendar class="tab-content" [bookings]="bookings"></badass-calendar>
+                     <badass-calendar class="tab-content" [user]="user" [booking]="booking" [bookings]="bookings" (event)="onEvent($event)"></badass-calendar>
                    </div>
                  </div>
                </div>
@@ -155,6 +155,8 @@ export class AssetComponent {
     }
   }
 
+  @Input() booking: Booking; // the 'global' booking details
+
   bookings: Bookings;
   @Input('bookings') set _bookings(bookings: Bookings) {
     this.bookings = bookings;
@@ -171,6 +173,10 @@ export class AssetComponent {
     if (tab == 0 || this.bookings != undefined) { //FIXME duplicated 'disabled' logic
       this.tab = tab;
     }
+  }
+
+  onEvent(event) {
+    this.event.emit(event);
   }
 
   unitOptions() {

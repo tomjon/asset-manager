@@ -17,3 +17,7 @@
 .info {
   float: left;
 }
+
+tbody.fc-body {
+  cursor: pointer
+}

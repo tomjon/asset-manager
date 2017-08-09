@@ -25,7 +25,7 @@ import 'rxjs/add/observable/forkJoin'; //FIXME didn't we add this in the module?
                    <button *ngIf="showUserBookings()" class="btn" data-toggle="modal" data-target="#userBookingsModal" (click)="loadUserBookings(); loadUsers()">Bookings</button>
                    <button *ngIf="showProjectBookings()" class="btn" data-toggle="modal" data-target="#projectBookingsModal">Projects</button>
                    <button *ngIf="showUsers()" class="btn" data-toggle="modal" data-target="#usersModal" (click)="loadUsers()">Users</button>
-                   <badass-asset [user]="user" [asset]="asset" [search]="search" [range]="range" [bookings]="assetBookings" (event)="onEvent($event)"></badass-asset>
+                   <badass-asset [user]="user" [asset]="asset" [search]="search" [range]="range" [booking]="booking" [bookings]="assetBookings" (event)="onEvent($event)"></badass-asset>
                    <div *ngIf="error" class="alert alert-danger">{{error.message}}</div>
                    <badass-table [user]="user" [assets]="results" [search]="search" [selected]="asset" (event)="onEvent($event)"></badass-table>
                  </div>
