@@ -79,8 +79,18 @@ import { DateRange } from './date-range';
                    </form>
                  </div>
                  <div class="col-lg-4">
-                   <badass-attachment [user]="user" [asset]="asset"></badass-attachment>
-                   <badass-booking-table *ngIf="bookings != undefined" [user]="user" [range]="range" [bookings]="bookings" (event)="onBookingEvent($event)"></badass-booking-table>
+                   <div class="btn-group btn-group-sm selector" role="group">
+                     <button *ngFor="let name of tabs; let i = index" type="button" class="btn" [ngClass]="tab == i ? 'btn-primary' : 'btn-default'" [disabled]="i > 0 && bookings == undefined" (click)="onTabClick(i)">{{name}}</button>
+                   </div>
+                   <badass-attachment *ngIf="tab == 0" [user]="user" [asset]="asset"></badass-attachment>
+                   <div *ngIf="tab == 1">
+                     <h3>{{tabs[1]}}</h3>
+                     <badass-booking-table class="tab-content" [user]="user" [range]="range" [bookings]="bookings" (event)="onBookingEvent($event)"></badass-booking-table>
+                   </div>
+                   <div *ngIf="tab == 2">
+                     <h3>{{tabs[2]}}</h3>
+                     <badass-calendar class="tab-content" [bookings]="bookings"></badass-calendar>
+                   </div>
                  </div>
                </div>
              </div>
@@ -107,15 +117,23 @@ import { DateRange } from './date-range';
            'textarea { resize: none }',
            '.checkOut { margin-left: 20px }',
            '.overdue { color: red }',
-           'badass-booking { display: block; height: 177px; overflow: auto }']
+           'badass-booking-table { display: block; overflow: auto }',
+           '.selector { float: right; margin-top: 10px }',
+           '.tab-content { display: block; margin-top: 20px }',
+           '.item { cursor: pointer }',
+           '.item.active { color: blue; cursor: default }',
+           '.item.disabled { color: lightgrey; cursor: default }']
 })
 export class AssetComponent {
+  private tabs: string[] = ['Attachments', 'Bookings List', 'Bookings Calendar'];
+
   private original: any;
   private asset: any = {};
   private freqs: any = {};
   private addNew: any = {};
   private url: any = {};
   private confirm: any = {};
+  private tab: number = 0;
 
   @ViewChild('form') form: HTMLFormElement;
   @ViewChildren('addNew') addNewInput: QueryList<ElementRef>;
@@ -137,11 +155,23 @@ export class AssetComponent {
     }
   }
 
-  @Input('bookings') bookings: Bookings;
+  bookings: Bookings;
+  @Input('bookings') set _bookings(bookings: Bookings) {
+    this.bookings = bookings;
+    if (bookings == undefined) {
+      this.tab = 0;
+    }
+  }
 
   @Input('search') search;
 
   constructor(private fieldMap: FieldMap, private enumService: EnumService, private dataService: DataService) {}
+
+  onTabClick(tab: number) {
+    if (tab == 0 || this.bookings != undefined) { //FIXME duplicated 'disabled' logic
+      this.tab = tab;
+    }
+  }
 
   unitOptions() {
     return Frequency.unitOptions();

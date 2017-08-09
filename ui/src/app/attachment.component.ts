@@ -26,8 +26,7 @@ declare var $;
                      <h3 class="modal-title">Attachments</h3>
                    </div>
                    <div class="modal-body">
-                     <h4 *ngIf="folder.name != undefined">{{folder.name}} <span class="glyphicon glyphicon-arrow-left" (click)="onFolderUp()"></span>
-</h4>
+                     <h4 *ngIf="folder.name != undefined">{{folder.name}} <span class="glyphicon glyphicon-arrow-left" (click)="onFolderUp()"></span></h4>
                      <div class="thumbnail container" *ngFor="let f of folders" (click)="onClick(f)" [ngClass]="{selected: isSelected(f)}">
                        <div class="thumbnail-img">
                          <span class="glyphicon glyphicon-folder-open" title="{{f.name}}"></span>
