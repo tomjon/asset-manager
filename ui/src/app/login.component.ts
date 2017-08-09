@@ -218,6 +218,7 @@ declare var $;
              </div>`,
   styles: ['table.login label { width: 90px }',
            'table.login input { width: 150px }',
+           'table.users td { white-space: nowrap }',
            '.login td { text-align: right; padding: 2px }',
            'th.assets { background: lightgrey; text-align: center }',
            '.sh { width: 100px }']

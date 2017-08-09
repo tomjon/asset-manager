@@ -8,7 +8,7 @@ import { DateRange } from './date-range';
 
 @Component({
   selector: 'badass-project-bookings',
-  template: `<div id="projectBookingsModal" class="modal fade" role="dialog">
+  template: `<div id="projectBookingsModal" class="modal" role="dialog">
                <div class="modal-dialog">
                  <div class="modal-content">
                    <div class="modal-header">
