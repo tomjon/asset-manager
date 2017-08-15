@@ -148,7 +148,7 @@ class Notification(object):
         self.offset = int(offset) if offset is not None else None
         self.run = run
 
-    def _mail(self, sql, values, asset, assets):
+    def _mail(self, sql, values, asset, assets=None):
         title = _eval_template(sql, self.title_template, values, asset, assets)
         body = _eval_template(sql, self.body_template, values, asset, assets)
         mail = Email((values['label'], values['email']) if values is not None else None, title.split('\n')[0], body) # truncate title to one line
