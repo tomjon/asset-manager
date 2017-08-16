@@ -40,8 +40,6 @@ export class InputComponent {
   // original user input value
   private original: any;
 
-  constructor() { }
-
   // InputValueAccessor calls this to set the input value (ngModel)
   setValue(value: any) {
     this.value = value;

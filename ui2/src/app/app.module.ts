@@ -8,6 +8,7 @@ import { FormComponent } from './form.component';
 import { InputComponent } from './input.component';
 import { InputValueAccessor } from './input.accessor';
 import { ButtonComponent } from './button.component';
+import { InfoComponent } from './info.component';
 
 @NgModule({
   declarations: [
@@ -15,7 +16,8 @@ import { ButtonComponent } from './button.component';
     FormComponent,
     InputComponent,
     InputValueAccessor,
-    ButtonComponent
+    ButtonComponent,
+    InfoComponent
   ],
   imports: [
     BrowserModule,

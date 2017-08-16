@@ -15,7 +15,7 @@ describe('AppComponent', () => {
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       declarations: [ AppComponent, InputComponent, ButtonComponent, FormComponent, InputValueAccessor ],
-      imports: [ FormsModule ] //FIXME why is this necessary to avoid 'unknown element' errors? seems to be because of InputComponent which has <input>
+      imports: [ FormsModule ]
     })
     .compileComponents();
   }));
