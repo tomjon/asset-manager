@@ -10,7 +10,7 @@ const CUSTOM_VALUE_ACCESSOR: Provider = {
 
 @Directive({
   selector: 'bass-input',
-  host: {'(valueChange)': 'onChange($event)'},
+  host: {'(valueChange)': 'onChange($event)', '(blur)': 'onTouched()'},
   providers: [CUSTOM_VALUE_ACCESSOR]
 })
 export class InputValueAccessor implements ControlValueAccessor {
