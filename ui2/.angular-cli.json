@@ -9,6 +9,7 @@
       "outDir": "dist",
       "assets": [
         "assets",
+        "fonts",
         "favicon.ico"
       ],
       "index": "index.html",
@@ -20,6 +21,7 @@
       "prefix": "app",
       "styles": [
         "../node_modules/bootstrap/dist/css/bootstrap.min.css",
+        "assets/bootstrap-glyphicons.css",
         "styles.css"
       ],
       "scripts": [],
